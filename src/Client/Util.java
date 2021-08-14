@@ -29,6 +29,7 @@ import java.util.zip.CRC32;
 /** A miscellaneous utility class */
 public class Util {
 
+  public static boolean hasXdgOpen;
   /** Stores the world populations in the array indices corresponding to the world numbers */
   static int[] worldPopArray;
 
@@ -41,6 +42,162 @@ public class Util {
   public static final float ANGLE_NORTH = 270;
 
   public static String angleNames[] = {"W", "SW", "S", "SE", "E", "NE", "N", "NW"};
+
+  public static final int[] xpLevelTable =
+          new int[] {
+                  0,
+                  0,
+                  83,
+                  174,
+                  276,
+                  388,
+                  512,
+                  650,
+                  801,
+                  969,
+                  1154,
+                  1358,
+                  1584,
+                  1833,
+                  2107,
+                  2411,
+                  2746,
+                  3115,
+                  3523,
+                  3973,
+                  4470,
+                  5018,
+                  5624,
+                  6291,
+                  7028,
+                  7842,
+                  8740,
+                  9730,
+                  10824,
+                  12031,
+                  13363,
+                  14833,
+                  16456,
+                  18247,
+                  20224,
+                  22406,
+                  24815,
+                  27473,
+                  30408,
+                  33648,
+                  37224,
+                  41171,
+                  45529,
+                  50339,
+                  55649,
+                  61512,
+                  67983,
+                  75127,
+                  83014,
+                  91721,
+                  101333,
+                  111945,
+                  123660,
+                  136594,
+                  150872,
+                  166636,
+                  184040,
+                  203254,
+                  224466,
+                  247886,
+                  273742,
+                  302288,
+                  333804,
+                  368599,
+                  407015,
+                  449428,
+                  496254,
+                  547953,
+                  605032,
+                  668051,
+                  737627,
+                  814445,
+                  899257,
+                  992895,
+                  1096278,
+                  1210421,
+                  1336443,
+                  1475581,
+                  1629200,
+                  1798808,
+                  1986068,
+                  2192818,
+                  2421087,
+                  2673114,
+                  2951373,
+                  3258594,
+                  3597792,
+                  3972294,
+                  4385776,
+                  4842295,
+                  5346332,
+                  5902831,
+                  6517253,
+                  7195629,
+                  7944614,
+                  8771558,
+                  9684577,
+                  10692629,
+                  11805606,
+                  13034431,
+                  14391160,
+                  15889109,
+                  17542976,
+                  19368992,
+                  21385073,
+                  23611006,
+                  26068632,
+                  28782069,
+                  31777943,
+                  35085654,
+                  38737661,
+                  42769801,
+                  47221641,
+                  52136869,
+                  57563718,
+                  63555443,
+                  70170840,
+                  77474828,
+                  85539082,
+                  94442737,
+                  104273167,
+                  115126824,
+                  127110256,
+                  140341024,
+                  154948976,
+                  171077440,
+                  188884736,
+                  208545568,
+                  230252880,
+                  254219712,
+                  280681216,
+                  309897088,
+                  342154016,
+                  377768576,
+                  417090208,
+                  460504800,
+                  508438432,
+                  561361408,
+                  619793088,
+                  684306880,
+                  755535936,
+                  834179200,
+                  921008320,
+                  1016875520,
+                  1122721536,
+                  1239584896,
+                  1368612480,
+                  1511070592,
+                  1668356992,
+                  1842015232,
+                  2033749632
+          };
+
 
   private Util() {
     // Empty private constructor to prevent instantiation.
@@ -320,4 +477,45 @@ public class Util {
       throw nfe;
     }
   }
+
+  public static boolean detectBinaryAvailable(String binaryName, String reason) {
+    if (System.getProperty("os.name").contains("Windows")) {
+      return false; // don't trust Windows to run the detection code
+    }
+
+    try {
+      // "whereis" is part of the util-linux package,
+      // It is included in pretty much all unix-like operating systems; i.e. safe to use.
+      final String whereis =
+              execCmd(new String[] {"whereis", "-b", binaryName})
+                      .replace("\n", "")
+                      .replace(binaryName + ": ", "");
+      if (whereis.length() < ("/" + binaryName).length()) {
+        Logger.Error(
+                String.format(
+                        "@|red !!! Please install %s for %s to work on Linux (or other systems with compatible binary) !!!|@",
+                        binaryName, reason));
+        return false;
+      } else {
+        Logger.Info(binaryName + ": " + whereis);
+        return true;
+      }
+    } catch (IOException e) {
+      Logger.Error("Error while detecting " + binaryName + " binary: " + e.getMessage());
+      e.printStackTrace();
+    }
+    return false;
+  }
+
+
+  public static String execCmd(String[] cmdArray) throws java.io.IOException {
+    Process p = Runtime.getRuntime().exec(cmdArray);
+    java.util.Scanner s = new java.util.Scanner(p.getInputStream()).useDelimiter("\\A");
+    String ret = s.hasNext() ? s.next() : "";
+    s.close();
+    // without destroying, closing RSCx will also close whatever was launched
+    p.destroyForcibly();
+    return ret;
+  }
+
 }

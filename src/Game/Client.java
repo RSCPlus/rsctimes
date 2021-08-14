@@ -19,6 +19,15 @@
 package Game;
 
 import java.applet.Applet;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.HashMap;
+
+import Client.Settings;
+import Client.Logger;
+import Client.Util;
 
 public class Client {
 
@@ -29,6 +38,88 @@ public class Client {
   public static KeyboardHandler handler_keyboard;
 
   public static int connection_port = 43594;
+
+  public static int[] base_level;
+  public static int[] xp;
+  public static int[] current_level;
+  public static String[] skill_name;
+
+  public static boolean show_questionmenu = false; // TODO: implement
+
+  public static XPDropHandler xpdrop_handler = new XPDropHandler();
+  public static XPBar xpbar = new XPBar();
+
+  public static String xpUsername = "";
+  public static String modal_text;
+  public static String modal_enteredText;
+  public static String username_login;
+
+  public static final int NUM_SKILLS = 19; // TODO: ?
+  public static boolean firstTimeRunningRSCTimes = false;
+
+  /**
+   * A boolean array that stores if the XP per hour should be shown for a given skill when hovering
+   * on the XP bar.
+   *
+   * <p>This should only be false for a skill if there has been less than 2 XP drops during the
+   * current tracking session, since there is not enough data to calculate the XP per hour.
+   */
+  private static HashMap<String, Boolean[]> showXpPerHour = new HashMap<String, Boolean[]>();
+
+  /** An array to store the XP per hour for a given skill */
+  private static HashMap<String, Double[]> xpPerHour = new HashMap<String, Double[]>();
+
+  // the total XP gained in a given skill within the sample period
+  private static final int TOTAL_XP_GAIN = 0;
+  // the time of the last XP drop in a given skill
+  private static final int TIME_OF_LAST_XP_DROP = 1;
+  // the time of the first XP drop in a given skill within the sample period
+  private static final int TIME_OF_FIRST_XP_DROP = 2;
+  // the total number of XP drops recorded within the sample period, plus 1
+  private static final int TOTAL_XP_DROPS = 3;
+  // the amount of XP gained since last processed
+  private static final int LAST_XP_GAIN = 4;
+
+  // first dimension of this array is skill ID.
+  // second dimension is the constants in block above.
+  private static HashMap<String, Double[][]> lastXpGain = new HashMap<String, Double[][]>();
+
+  // holds players XP since last processing xp drops
+  private static HashMap<String, Float[]> xpLast = new HashMap<String, Float[]>();
+
+  public static HashMap<String, Integer[]> xpGoals = new HashMap<String, Integer[]>();
+  public static HashMap<String, Float[]> lvlGoals = new HashMap<String, Float[]>();
+
+  private static float[] xpGain = new float[18];
+
+
+
+  public static final int MENU_NONE = 0;
+  public static final int MENU_INVENTORY = 1;
+  public static final int MENU_MINIMAP = 2;
+  public static final int MENU_STATS = 3;
+  public static final int MENU_FRIENDS = 4;
+  public static final int MENU_SETTINGS = 5;
+
+  public static final int CHAT_NONE = 0;
+  public static final int CHAT_PRIVATE = 1;
+  public static final int CHAT_PRIVATE_OUTGOING = 2;
+  public static final int CHAT_QUEST = 3;
+  public static final int CHAT_CHAT = 4;
+  public static final int CHAT_PRIVATE_LOG_IN_OUT = 5;
+  public static final int CHAT_TRADE_REQUEST_RECEIVED = 6;
+  public static final int CHAT_OTHER = 7;
+  // used for when you send a player a duel/trade request, follow someone, or drop an item
+
+  public static final int CHAT_INCOMING_OPTION = 8;
+  public static final int CHAT_CHOSEN_OPTION = 9;
+  public static final int CHAT_WINDOWED_MSG = 10;
+
+  public static final int COMBAT_CONTROLLED = 0;
+  public static final int COMBAT_AGGRESSIVE = 1;
+  public static final int COMBAT_ACCURATE = 2;
+  public static final int COMBAT_DEFENSIVE = 3;
+
 
   public static void init() {
 
@@ -42,4 +133,220 @@ public class Client {
     applet.addKeyListener(handler_keyboard);
     applet.setFocusTraversalKeysEnabled(false);
   }
+
+  public static Double fetchLatestVersionNumber() {
+    try {
+      Double currentVersion = 0.0;
+      URL updateURL =
+              new URL(
+                      "https://raw.githubusercontent.com/RSCPlus/rsctimes/master/src/Client/Settings.java");
+
+      // Open connection
+      URLConnection connection = updateURL.openConnection();
+      connection.setConnectTimeout(3000);
+      connection.setReadTimeout(3000);
+      BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      // in our current client version, we are looking at the source file of Settings.java in the
+      // main repository in order to parse what the current version number is.
+      String line;
+      while ((line = in.readLine()) != null) {
+        if (line.contains("VERSION_NUMBER")) {
+          currentVersion =
+                  Double.parseDouble(line.substring(line.indexOf('=') + 1, line.indexOf(';')));
+          Logger.Info(String.format("@|green Current Version: %f|@", currentVersion));
+          break;
+        }
+      }
+
+      // Close connection
+      in.close();
+      return currentVersion;
+    } catch (Exception e) {
+      displayMessage("@dre@Error checking latest version", CHAT_NONE);
+      return Settings.VERSION_NUMBER;
+    }
+  }
+
+  /**
+   * Compares the local value of {@link Settings#VERSION_NUMBER} to the value on the GitHub master
+   * branch.
+   *
+   * <p>Used to check if there is a newer version of the client available.
+   *
+   * @param announceIfUpToDate if a message should be displayed in chat if the client is up-to-date
+   */
+  public static void checkForUpdate(boolean announceIfUpToDate) {
+    double latestVersion = fetchLatestVersionNumber();
+    if (latestVersion > Settings.VERSION_NUMBER) {
+      displayMessage("@gre@A new version of RSCx is available!", CHAT_QUEST);
+      // TODO: before Y10K update this to %9.6f
+      displayMessage(
+              "The latest version is @gre@" + String.format("%8.6f", latestVersion), CHAT_QUEST);
+      displayMessage(
+              "~034~ Your version is @red@" + String.format("%8.6f", Settings.VERSION_NUMBER),
+              CHAT_QUEST);
+      if (Settings.CHECK_UPDATES.get(Settings.currentProfile)) {
+        displayMessage(
+                "~034~ You will receive the update next time you restart rsctimes", CHAT_QUEST);
+      }
+    } else if (announceIfUpToDate) {
+      displayMessage(
+              "You're up to date: @gre@" + String.format("%8.6f", latestVersion), CHAT_QUEST);
+    }
+  }
+
+  /**
+   * Prints a client-side message in chat.
+   *
+   * @param message a message to print
+   * @param chat_type the type of message to send
+   */
+  public static synchronized void displayMessage(String message, int chat_type) {
+    switch (chat_type) {
+      case CHAT_QUEST:
+        message = "@que@" + message;
+        break;
+    }
+    Logger.Info(message); // TODO: remove once this is properly reflected
+    // TODO: rehook this for mud38
+    /*
+    if (Client.state != Client.STATE_GAME || Reflection.displayMessage == null) return;
+
+    try {
+      Reflection.displayMessage.invoke(
+              Client.instance, false, null, 0, message, 0, null, null);
+    } catch (Exception e) {
+    }
+     */
+  }
+  public static float getXPforLevel(int level) {
+    if (level < 2) {
+      return 0;
+    }
+
+    if (level > Util.xpLevelTable.length - 1) {
+      // This probably doesn't ever happen since our lookup table already goes to virtual level 150.
+      // levels 1 to 120 are from the official game, level 121 to 150 are from this formula below
+      float xp = 0.0f;
+      for (int x = 1; x < level; x++) xp += Math.floor(x + 300 * Math.pow(2, x / 7.0f)) / 4.0f;
+      return (float) Math.floor(xp);
+    }
+
+    // speedier to use a lookup table than to always calculate
+    return Util.xpLevelTable[level];
+  }
+
+  public static float getLevelFromXP(float xp) {
+
+    // 136.53725 is the maximum level you can reach in RSC before XP rolls over negative
+    int lvl = 1;
+    while (lvl <= 137 && getXPforLevel(lvl) <= xp) {
+      lvl++;
+    }
+    float xpToLevel = (float) Math.floor(getXPforLevel(lvl) - xp);
+    if (xpToLevel > 0) {
+      lvl--;
+      float xpIntoLevel = (float) Math.floor(xp - getXPforLevel(lvl));
+      float xpBetweenLevels = (getXPforLevel(lvl + 1) - getXPforLevel(lvl));
+      return lvl + (xpIntoLevel / xpBetweenLevels);
+    } else {
+      return lvl;
+    }
+  }
+
+  /**
+   * Returns the minimum XP required until the user reaches the next level in a specified skill.
+   *
+   * @param skill an integer corresponding to a skill
+   * @return the minimum XP required until the user reaches the next level in the specified skill
+   */
+  public static float getXPUntilLevel(int skill) {
+    float xpNextLevel = getXPforLevel(base_level[skill] + 1);
+    return xpNextLevel - getXP(skill);
+  }
+
+  public static float getXPUntilGoal(int skill) {
+    return xpGoals.get(xpUsername)[skill] - getXP(skill);
+  }
+
+  public static Double getLastXpGain(int skill) {
+    return lastXpGain.get(xpUsername)[skill][LAST_XP_GAIN];
+  }
+
+  /**
+   * Returns the user's XP in a specified skill.
+   *
+   * @param skill an integer corresponding to a skill
+   * @return the user's XP in the specified skill
+   */
+  public static float getXP(int skill) {
+    return (float) xp[skill] / 4.0f;
+  }
+
+  /**
+   * Returns the user's base level in a specified skill. This number is <b>not</b> affected by
+   * skills boosts and debuffs.
+   *
+   * @param skill an integer corresponding to a skill
+   * @return the user's base level in the specified skill
+   */
+  public static int getBaseLevel(int skill) {
+    return base_level[skill];
+  }
+
+
+  public static Boolean[] getShowXpPerHour() {
+    return showXpPerHour.get(xpUsername);
+  }
+
+  public static Double[] getXpPerHour() {
+    return xpPerHour.get(xpUsername);
+  }
+
+  public static void resetXPDrops(boolean resetSession) {
+    if (username_login.equals("")) {
+      return;
+    }
+
+    xpUsername = Util.formatString(username_login, 50);
+    if (lastXpGain.get(xpUsername) == null) {
+      lastXpGain.put(xpUsername, new Double[NUM_SKILLS][5]);
+      showXpPerHour.put(xpUsername, new Boolean[NUM_SKILLS]);
+      xpPerHour.put(xpUsername, new Double[NUM_SKILLS]);
+      xpLast.put(xpUsername, new Float[NUM_SKILLS]);
+      for (int skill = 0; skill < NUM_SKILLS; skill++) {
+        lastXpGain.get(xpUsername)[skill][TOTAL_XP_GAIN] = new Double(0);
+        lastXpGain.get(xpUsername)[skill][TIME_OF_FIRST_XP_DROP] =
+                lastXpGain.get(xpUsername)[skill][TIME_OF_LAST_XP_DROP] =
+                        new Double(System.currentTimeMillis());
+        lastXpGain.get(xpUsername)[skill][TOTAL_XP_DROPS] = new Double(0);
+
+        showXpPerHour.get(xpUsername)[skill] = false;
+        xpPerHour.get(xpUsername)[skill] = new Double(0);
+      }
+    }
+    if (xpGoals.get(xpUsername) == null) {
+      xpGoals.put(xpUsername, new Integer[NUM_SKILLS]);
+      lvlGoals.put(xpUsername, new Float[NUM_SKILLS]);
+    }
+
+    for (int skill = 0; skill < NUM_SKILLS; skill++) {
+      xpLast.get(xpUsername)[skill] = getXP(skill);
+
+      if (resetSession) {
+
+        lastXpGain.get(xpUsername)[skill][TOTAL_XP_GAIN] = new Double(0);
+        lastXpGain.get(xpUsername)[skill][TIME_OF_FIRST_XP_DROP] =
+                lastXpGain.get(xpUsername)[skill][TIME_OF_LAST_XP_DROP] =
+                        (double) System.currentTimeMillis();
+        lastXpGain.get(xpUsername)[skill][TOTAL_XP_DROPS] = new Double(0);
+        showXpPerHour.get(xpUsername)[skill] = false;
+      }
+    }
+  }
+
+
+
+
+
 }

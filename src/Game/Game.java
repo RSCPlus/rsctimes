@@ -21,7 +21,10 @@ package Game;
 import Client.JConfig;
 import Client.Launcher;
 import Client.Logger;
+import Client.NotificationsHandler;
+import Client.TrayHandler;
 import Client.Util;
+import Client.WorldMapWindow;
 import java.applet.Applet;
 import java.applet.AppletContext;
 import java.applet.AppletStub;
@@ -38,7 +41,7 @@ public class Game extends JFrame
   // Singleton
   private static Game instance = null;
 
-  private JConfig m_config = new JConfig();
+  private final JConfig m_config = new JConfig();
   private Applet m_applet = null;
   private String m_title = "";
 
@@ -71,7 +74,7 @@ public class Game extends JFrame
     // Add applet to window
     setContentPane(m_applet);
     getContentPane().setBackground(Color.BLACK);
-    getContentPane().setPreferredSize(new Dimension(512, 346));
+    getContentPane().setPreferredSize(new Dimension(512, 334));
     addComponentListener(this);
     pack();
 
@@ -86,11 +89,12 @@ public class Game extends JFrame
 
     Reflection.Load();
     Game.getInstance().resizeFrameWithContents();
-    /*Renderer.init();
+    Renderer.init();
 
+    /* TODO: uncomment when can resize
     if (!Util.isMacOS() && Settings.CUSTOM_CLIENT_SIZE.get(Settings.currentProfile)) {
       Game.getInstance().resizeFrameWithContents();
-    }*/
+    } */
   }
 
   public JConfig getJConfig() {
@@ -106,7 +110,6 @@ public class Game extends JFrame
 
   public void updateTitle() {
     String title = "rsctimes";
-    ;
 
     if (m_title.equals(title)) {
       return;
@@ -124,11 +127,11 @@ public class Game extends JFrame
 
   @Override
   public final void focusLost(FocusEvent e) {
-    /*KeyboardHandler.keyUp = false;
+    KeyboardHandler.keyUp = false;
     KeyboardHandler.keyDown = false;
     KeyboardHandler.keyLeft = false;
     KeyboardHandler.keyRight = false;
-    KeyboardHandler.keyShift = false;*/
+    KeyboardHandler.keyShift = false;
   }
 
   /*
@@ -174,7 +177,12 @@ public class Game extends JFrame
 
   @Override
   public final void windowClosing(WindowEvent e) {
-    dispose();
+      dispose();
+      Launcher.getConfigWindow().disposeJFrame();
+      WorldMapWindow.disposeJFrame();
+      TrayHandler.removeTrayIcon();
+      NotificationsHandler.closeNotificationSoundClip();
+      NotificationsHandler.disposeNotificationHandler();
   }
 
   @Override

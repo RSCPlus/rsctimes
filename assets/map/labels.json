@@ -1,0 +1,172 @@
+[
+	{
+        "text": "Karamja",
+        "x": 1335,
+        "y": 2110,
+        "size": 10,
+        "align": "center"
+    },
+    {
+        "text": "Chaos\nTemple",
+        "x": 1453,
+        "y": 1298,
+        "size": 8,
+        "align": "center"
+    },
+    {
+        "text": "Goblin\nVillage",
+        "x": 1444,
+        "y": 1354,
+        "size": 10,
+        "align": "center"
+    },
+    {
+        "text": "White Knights",
+        "x": 1480,
+        "y": 1696,
+        "size": 8,
+        "align": "center"
+    },
+    { "text": "Rimmington", "x": 1453, "y": 1957, "size": 11, "align": "left" },
+    {
+        "text": "Black\nKnights",
+        "x": 1601,
+        "y": 1305,
+        "size": 8,
+        "align": "center"
+    },
+    {
+        "text": "Monastery",
+        "x": 1654,
+        "y": 1385,
+        "size": 10,
+        "align": "center"
+    },
+    {
+        "text": "Ice\nMountain",
+        "x": 1550,
+        "y": 1394,
+        "size": 12,
+        "align": "center",
+        "bold": true
+    },
+    {
+        "text": "Dwarven\nMine",
+        "x": 1586,
+        "y": 1472,
+        "size": 10,
+        "align": "center"
+    },
+    { "text": "Park", "x": 1565, "y": 1608, "size": 10, "align": "center" },
+	{ "text": "Player houses\n(not yet open)", "x": 1604, "y": 1653, "size": 8, "align": "center" },
+    {
+        "text": "Falador",
+        "x": 1512,
+        "y": 1653,
+        "size": 12,
+        "align": "center",
+        "bold": true
+    },
+    {
+        "text": "Kingdom of\nAsgarnia",
+        "x": 1521,
+        "y": 1753,
+        "size": 12,
+        "align": "center",
+        "bold": true,
+        "colour": "rgb(254, 165, 0)"
+    },
+    {
+        "text": "Port\nSarim",
+        "x": 1655,
+        "y": 1936,
+        "size": 12,
+        "align": "center"
+    },
+    {
+        "text": "Ghost\nTown",
+        "x": 1819,
+        "y": 1360,
+        "size": 10,
+        "align": "center"
+    },
+    {
+        "text": "Barbarian\nVillage",
+        "x": 1754,
+        "y": 1535,
+        "size": 10,
+        "align": "center"
+    },
+    {
+        "text": "Draynor Manor",
+        "x": 1765,
+        "y": 1676,
+        "size": 10,
+        "align": "center"
+    },
+    {
+        "text": "Draynor\nVillage",
+        "x": 1809,
+        "y": 1861,
+        "size": 10,
+        "align": "center"
+    },
+    { "text": "Jail", "x": 1840, "y": 1914, "size": 10, "align": "center" },
+    {
+        "text": "Wizard's\nTower",
+        "x": 1804,
+        "y": 2068,
+        "size": 10,
+        "align": "center"
+    },
+    {
+        "text": "Cooks\nGuild",
+        "x": 1905,
+        "y": 1436,
+        "size": 10,
+        "align": "center"
+    },
+    {
+        "text": "Champions\nGuild",
+        "x": 1955,
+        "y": 1657,
+        "size": 10,
+        "align": "center"
+    },
+    { "text": "Windmill", "x": 1930, "y": 1798, "size": 8, "align": "center" },
+    { "text": "Palace", "x": 2036, "y": 1406, "size": 10, "align": "center" },
+	{ "text": "Player houses\n(not yet open)", "x": 2205, "y": 1510, "size": 8, "align": "center" },
+    {
+        "text": "Varrock",
+        "x": 2028,
+        "y": 1526,
+        "size": 12,
+        "align": "center",
+        "bold": true
+    },
+    {
+        "text": "Kingdom of\nMisthalin",
+        "x": 2021,
+        "y": 1730,
+        "size": 12,
+        "align": "center",
+        "bold": true,
+        "colour": "rgb(254, 165, 0)"
+    },
+    {
+        "text": "Lumbridge",
+        "x": 2042,
+        "y": 1964,
+        "size": 11,
+        "align": "center"
+    },
+    {
+        "text": "Al Kharid",
+        "x": 2199,
+        "y": 2057,
+        "size": 12,
+        "align": "center",
+        "bold": true
+    },
+]
+

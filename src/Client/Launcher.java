@@ -27,19 +27,22 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JProgressBar;
-import javax.swing.SwingUtilities;
+import java.net.URLConnection;
+import java.util.Properties;
+import javax.swing.*;
 
 /** Singleton main class which renders a loading window and the game client window. */
 public class Launcher extends JFrame implements Runnable {
 
   // Singleton
   private static Launcher instance;
+  private static ConfigWindow configWindow;
+  private static WorldMapWindow worldMapWindow;
 
   public static ImageIcon icon = null;
   public static ImageIcon icon_warn = null;
@@ -60,15 +63,12 @@ public class Launcher extends JFrame implements Runnable {
     getContentPane().setBackground(Color.BLACK);
 
     // Set window icon
-    URL iconURL = getResource("/assets/icon.png");
+    URL iconURL = getResource("/assets/RSCX.logo.png");
     if (iconURL != null) {
       icon = new ImageIcon(iconURL);
       setIconImage(icon.getImage());
     }
-    iconURL = getResource("/assets/icon_warn.png");
-    if (iconURL != null) {
-      icon_warn = new ImageIcon(iconURL);
-    }
+
 
     // Set size
     getContentPane().setPreferredSize(new Dimension(280, 32));
@@ -93,6 +93,104 @@ public class Launcher extends JFrame implements Runnable {
   /** Generates a config file if needed and launches the main client window. */
   @Override
   public void run() {
+    if (Settings.UPDATE_CONFIRMATION.get(Settings.currentProfile)) {
+      Client.firstTimeRunningRSCTimes = true;
+      int response =
+              JOptionPane.showConfirmDialog(
+                      this,
+                      "rsctimes has an automatic update feature.\n"
+                              + "\n"
+                              + "When enabled, rsctimes will prompt for and install updates when launching the client.\n"
+                              + "The updates are obtained from our 'Latest' release on GitHub.\n"
+                              + "\n"
+                              + "Would you like to enable this feature?\n"
+                              + "\n"
+                              + "NOTE: This option can be toggled in the Settings interface under the General tab.",
+                      "rsctimes",
+                      JOptionPane.YES_NO_OPTION,
+                      JOptionPane.INFORMATION_MESSAGE,
+                      icon);
+      if (response == JOptionPane.YES_OPTION || response == JOptionPane.CLOSED_OPTION) {
+        Settings.CHECK_UPDATES.put(Settings.currentProfile, true);
+        JOptionPane.showMessageDialog(
+                this,
+                "rsctimes is set to check for updates on GitHub at every launch!",
+                "rsctimes",
+                JOptionPane.INFORMATION_MESSAGE,
+                icon);
+      } else if (response == JOptionPane.NO_OPTION) {
+        Settings.CHECK_UPDATES.put(Settings.currentProfile, false);
+        JOptionPane.showMessageDialog(
+                this,
+                "rsctimes will not check for updates automatically.\n"
+                        + "\n"
+                        + "You will not get notified when new releases are available. To update your client, you\n"
+                        + "will need to do it manually by replacing 'rsctimes.jar' in your rsctimes directory.\n"
+                        + "\n"
+                        + "You can enable GitHub updates again in the Settings interface under the General tab.",
+                "rsctimes",
+                JOptionPane.INFORMATION_MESSAGE,
+                icon_warn);
+      }
+      Settings.UPDATE_CONFIRMATION.put(Settings.currentProfile, false);
+      Settings.save();
+    }
+
+    if (Settings.CHECK_UPDATES.get(Settings.currentProfile)) {
+      setStatus("Checking for rsctimes update...");
+      double latestVersion = Client.fetchLatestVersionNumber();
+      if (Settings.VERSION_NUMBER < latestVersion) {
+        setStatus("rsctimes update is available");
+        // TODO: before Y10K update this to %9.6f
+        int response =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        "An rsctimes client update is available!\n"
+                                + "\n"
+                                + "Latest: "
+                                + String.format("%8.6f", latestVersion)
+                                + "\n"
+                                + "Installed: "
+                                + String.format("%8.6f", Settings.VERSION_NUMBER)
+                                + "\n"
+                                + "\n"
+                                + "Would you like to update now?",
+                        "rsctimes",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE,
+                        icon);
+        if (response == JOptionPane.YES_OPTION) {
+          if (updateJar()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "rsctimes has been updated successfully!\n"
+                            + "\n"
+                            + "The client requires a restart, and will now exit.",
+                    "rsctimes",
+                    JOptionPane.INFORMATION_MESSAGE,
+                    icon);
+            System.exit(0);
+          } else {
+            response =
+                    JOptionPane.showConfirmDialog(
+                            this,
+                            "rsctimes has failed to update, please try again later.\n"
+                                    + "\n"
+                                    + "Would you like to continue without updating?",
+                            "rsctimes",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.ERROR_MESSAGE,
+                            icon_warn);
+            if (response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) {
+              System.exit(0);
+            }
+          }
+        }
+      }
+    }
+
+
+
     JConfig config = Game.getInstance().getJConfig();
     config.create(1);
 
@@ -132,6 +230,52 @@ public class Launcher extends JFrame implements Runnable {
     dispose();
     game.start();
   }
+
+  public boolean updateJar() {
+    boolean success = true;
+
+    setStatus("Starting rsctimes update...");
+    setProgress(0, 1);
+
+    try {
+      URL url = new URL("https://github.com/RSCPlus/rsctimes/releases/download/Latest/rsctimes.jar");
+
+      // Open connection
+      URLConnection connection = url.openConnection();
+      connection.setConnectTimeout(3000);
+      connection.setReadTimeout(3000);
+
+      int size = connection.getContentLength();
+      int offset = 0;
+      byte[] data = new byte[size];
+
+      InputStream input = url.openStream();
+
+      int readSize;
+      while ((readSize = input.read(data, offset, size - offset)) != -1) {
+        offset += readSize;
+        setStatus("Updating rsctimes (" + (offset / 1024) + "KiB / " + (size / 1024) + "KiB)");
+        setProgress(offset, size);
+      }
+
+      if (offset != size) {
+        success = false;
+      } else {
+        // TODO: Get the jar filename in Settings.initDir
+        File file = new File(Settings.Dir.JAR + "/rsctimes.jar");
+        FileOutputStream output = new FileOutputStream(file);
+        output.write(data);
+        output.close();
+
+        setStatus("rsctimes update complete");
+      }
+    } catch (Exception e) {
+      success = false;
+    }
+
+    return success;
+  }
+
 
   /**
    * Changes the launcher progress bar text and pauses the thread for 5 seconds.
@@ -179,6 +323,7 @@ public class Launcher extends JFrame implements Runnable {
             }
 
             m_progressBar.setValue(value * 100 / total);
+            try {Thread.sleep(100); } catch (Exception e ) {System.out.println("AAAAAAAA interupt");}
           }
         });
   }
@@ -190,7 +335,7 @@ public class Launcher extends JFrame implements Runnable {
   public static void main(String[] args) {
     Logger.start();
     Settings.initDir();
-    /*Properties props = Settings.initSettings();
+    Properties props = Settings.initSettings();
 
     if (Settings.javaVersion >= 9) {
       Logger.Error(
@@ -203,9 +348,14 @@ public class Launcher extends JFrame implements Runnable {
               + "You may encounter additional bugs, for best results use version 8.");
     }
 
+    setConfigWindow(new ConfigWindow());
     Settings.loadKeybinds(props);
-    Settings.successfullyInitted = true;*/
+    Settings.successfullyInitted = true;
+    setWorldMapWindow(new WorldMapWindow());
+    TrayHandler.initTrayIcon();
+    NotificationsHandler.initialize();
     Launcher.getInstance().init();
+
   }
 
   public static Launcher getInstance() {
@@ -278,4 +428,26 @@ public class Launcher extends JFrame implements Runnable {
   public static void finishedLoading() {
     Game.getInstance().getJConfig().changeWorld(1);
   }
+
+
+  /** @return the window */
+  public static ConfigWindow getConfigWindow() {
+    return configWindow;
+  }
+
+  /** @param configWindow the window to set */
+  public static void setConfigWindow(ConfigWindow configWindow) {
+    Launcher.configWindow = configWindow;
+  }
+
+  /** @return the window */
+  public static WorldMapWindow getWorldMapWindow() {
+    return worldMapWindow;
+  }
+
+  /** @param worldMapWindow the window to set */
+  public static void setWorldMapWindow(WorldMapWindow worldMapWindow) {
+    Launcher.worldMapWindow = worldMapWindow;
+  }
+
 }

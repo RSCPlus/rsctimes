@@ -61,6 +61,7 @@ public class JConfig {
    * @param world The desired world to log into
    */
   public void changeWorld(int world) {
+    // TODO: make compatible with rscplus world ini
     if (world == 1) {
       m_data.put("codebase", "http://game.openrsc.com/");
       Game.Client.connection_port = 43593;
