@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -66,6 +68,7 @@ public class Settings {
   public static HashMap<String, Boolean> NOTIFICATION_SOUNDS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SOUND_NOTIFS_ALWAYS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> USE_SYSTEM_NOTIFICATIONS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> FATIGUE_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> PM_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> TRADE_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> UNDER_ATTACK_NOTIFICATIONS = new HashMap<String, Boolean>();
@@ -90,6 +93,7 @@ public class Settings {
   public static boolean noWorldsConfigured = true;
 
   //// nogui
+  public static HashMap<String, Integer> WORLD = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> FIRST_TIME = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> UPDATE_CONFIRMATION = new HashMap<String, Boolean>();
 
@@ -386,6 +390,16 @@ public class Settings {
     LOW_HP_NOTIF_VALUE.put("all", 30);
     LOW_HP_NOTIF_VALUE.put(
             "custom", getPropInt(props, "low_hp_notif_value", LOW_HP_NOTIF_VALUE.get("default")));
+    
+    FATIGUE_NOTIFICATIONS.put("vanilla", false);
+    FATIGUE_NOTIFICATIONS.put("vanilla_resizable", false);
+    FATIGUE_NOTIFICATIONS.put("lite", false);
+    FATIGUE_NOTIFICATIONS.put("default", true);
+    FATIGUE_NOTIFICATIONS.put("heavy", true);
+    FATIGUE_NOTIFICATIONS.put("all", true);
+    FATIGUE_NOTIFICATIONS.put(
+        "custom",
+        getPropBoolean(props, "fatigue_notifications", FATIGUE_NOTIFICATIONS.get("default")));
 
     HIGHLIGHTED_ITEM_NOTIFICATIONS.put("vanilla", false);
     HIGHLIGHTED_ITEM_NOTIFICATIONS.put("vanilla_resizable", false);
@@ -436,6 +450,17 @@ public class Settings {
     UPDATE_CONFIRMATION.put("heavy", false);
     UPDATE_CONFIRMATION.put("all", false);
     UPDATE_CONFIRMATION.put("custom", getPropBoolean(props, "update_confirmation", true));
+    
+    ////world list
+   initWorlds();
+   
+   WORLD.put("vanilla", 1);
+   WORLD.put("vanilla_resizable", 1);
+   WORLD.put("lite", 1);
+   WORLD.put("default", 1);
+   WORLD.put("heavy", 1);
+   WORLD.put("all", 1);
+   WORLD.put("custom", getPropInt(props, "world", WORLD.get("default")));
 
   }
 
@@ -452,6 +477,14 @@ public class Settings {
       if (index != -1) Dir.JAR = Dir.JAR.substring(0, index);
     } catch (Exception e) {
     }
+    
+    // Load other directories
+    Dir.SCREENSHOT = Dir.JAR + "/screenshots";
+    Util.makeDirectory(Dir.SCREENSHOT);
+    Dir.REPLAY = Dir.JAR + "/replay";
+    Util.makeDirectory(Dir.REPLAY);
+    Dir.WORLDS = Dir.JAR + "/worlds";
+    Util.makeDirectory(Dir.WORLDS);
   }
 
   /**
@@ -1054,6 +1087,56 @@ public class Settings {
     Launcher.getConfigWindow().synchronizeWorldTab();
     saveWorlds();
   }
+  
+  public static void initWorlds() {
+	    File[] fList = new File(Dir.WORLDS).listFiles();
+
+	    // Sorts alphabetically
+	    Arrays.sort(
+	        fList,
+	        new Comparator<File>() {
+	          @Override
+	          public int compare(File o1, File o2) {
+	            return o1.getName().compareTo(o2.getName());
+	          }
+	        });
+
+	    int i = 1;
+	    if (fList != null) {
+	      for (File worldFile : fList) {
+	        if (!worldFile.isDirectory()) {
+	          Properties worldProps = new Properties();
+	          try {
+	            FileInputStream in = new FileInputStream(worldFile);
+	            worldProps.load(in);
+	            in.close();
+
+	            WORLD_FILE_PATHS.put(i, worldFile.getAbsolutePath());
+	            WORLD_NAMES.put(i, worldProps.getProperty("name"));
+	            WORLD_URLS.put(i, worldProps.getProperty("url"));
+	            WORLD_PORTS.put(i, Integer.parseInt(worldProps.getProperty("port")));
+	            // TODO?
+	            /*WORLD_SERVER_TYPES.put(
+	                i, Integer.parseInt((String) worldProps.getOrDefault("servertype", "1")));
+	            WORLD_RSA_PUB_KEYS.put(i, worldProps.getProperty("rsa_pub_key"));
+	            WORLD_RSA_EXPONENTS.put(i, worldProps.getProperty("rsa_exponent"));*/
+
+	            i++;
+	          } catch (Exception e) {
+	            Logger.Warn("Error loading World config for " + worldFile.getAbsolutePath());
+	          }
+	        }
+	      }
+	    }
+
+	    if (i > 1) {
+	      noWorldsConfigured = false;
+	      WORLDS_TO_DISPLAY = i - 1;
+	    } else {
+	      createNewWorld(1);
+	      WORLDS_TO_DISPLAY = 1;
+	    }
+	  }
 
   public static void saveWorlds() {
     // TODO: it would be nice if we only saved a new file if information is different

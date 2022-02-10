@@ -36,6 +36,16 @@ public class Client {
 
   public static MouseHandler handler_mouse;
   public static KeyboardHandler handler_keyboard;
+  
+  public static final int STATE_LOGIN = 1;
+  public static final int STATE_GAME = 2;
+  
+  public static final int SCREEN_CLICK_TO_LOGIN = 0; // also is this value while logged in
+  public static final int SCREEN_TERMS_CONDITIONS = 1;
+  public static final int SCREEN_USERNAME_PASSWORD_LOGIN = 2;
+  public static final int SCREEN_REGISTER_NEW_ACCOUNT = 3;
+  
+  public static int state = STATE_LOGIN;
 
   public static int connection_port = 43594;
 
@@ -43,6 +53,8 @@ public class Client {
   public static int[] xp;
   public static int[] current_level;
   public static String[] skill_name;
+  
+  public static int login_screen;
 
   public static boolean show_questionmenu = false; // TODO: implement
 
@@ -194,6 +206,33 @@ public class Client {
               "You're up to date: @gre@" + String.format("%8.6f", latestVersion), CHAT_QUEST);
     }
   }
+  
+  public static void init_login() {
+	    //Camera.init();
+	    state = STATE_LOGIN;
+	    //isGameLoaded = false;
+	    Renderer.replayOption = 0;
+
+	    //twitch.disconnect();
+
+	    /*if (skipToLogin()) {
+	      login_screen = SCREEN_USERNAME_PASSWORD_LOGIN;
+	    }*/
+
+	    //resetLoginMessage();
+	    //Replay.closeReplayPlayback();
+	    //Replay.closeReplayRecording();
+	    //adaptStrings();
+	    //player_name = "";
+	  }
+  
+  public static void init_game() {
+	    //Camera.init();
+	    //combat_style = Settings.COMBAT_STYLE.get(Settings.currentProfile);
+	    state = STATE_GAME;
+	    // bank_active_page = 0; // TODO: config option? don't think this is very important.
+	    // combat_timer = 0;
+	  }
 
   /**
    * Prints a client-side message in chat.
@@ -209,16 +248,15 @@ public class Client {
     }
     Logger.Info(message); // TODO: remove once this is properly reflected
     // TODO: rehook this for mud38
-    /*
     if (Client.state != Client.STATE_GAME || Reflection.displayMessage == null) return;
 
     try {
       Reflection.displayMessage.invoke(
-              Client.instance, false, null, 0, message, 0, null, null);
+              Client.instance, message, 0);
     } catch (Exception e) {
     }
-     */
   }
+  
   public static float getXPforLevel(int level) {
     if (level < 2) {
       return 0;

@@ -21,6 +21,8 @@ package Game;
 import Client.JClassLoader;
 import Client.Launcher;
 import Client.Logger;
+
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
@@ -42,6 +44,12 @@ public class Reflection {
       "public synchronized boolean jagex.client.k.keyDown(java.awt.Event,int)";
 
   private static final String GAME_FRAME = "public java.awt.Frame jagex.client.k.ij()";
+  
+  private static final String DISPLAYMESSAGE =
+	      "public void mudclient.gk(java.lang.String,int)";
+  
+  private static final String SETCAMERASIZE = "public void jagex.client.j.yh(int,int,int,int,int,int)";
+  private static final String SETGAMEBOUNDS = "public void jagex.client.i.kf(int,int,int,int)";
 
   public static Method mouseMove = null;
   public static Method mouseDrag = null;
@@ -50,6 +58,16 @@ public class Reflection {
   public static Method keyUp = null;
   public static Method keyDown = null;
   public static Method gameFrame = null;
+  
+  public static Field menuX = null;
+  public static Field menuY = null;
+  public static Field menuScroll = null;
+  public static Field menuWidth = null;
+  public static Field menuHeight = null;
+  
+  public static Method displayMessage = null;
+  public static Method setCameraSize = null;
+  public static Method setGameBounds = null;
 
   public static void Load() {
     try {
@@ -83,6 +101,45 @@ public class Reflection {
           Logger.Info("Found gameFrame");
         }
       }
+      
+      // Client
+      c = classLoader.loadClass("mudclient");
+      methods = c.getDeclaredMethods();
+      for (Method method : methods) {
+        if (method.toGenericString().equals(DISPLAYMESSAGE)) {
+          displayMessage = method;
+          Logger.Info("Found displayMessage");
+        }
+      }
+      
+      // Camera
+      c = classLoader.loadClass("jagex.client.j");
+      methods = c.getDeclaredMethods();
+      for (Method method : methods) {
+        if (method.toGenericString().equals(SETCAMERASIZE)) {
+          setCameraSize = method;
+          Logger.Info("Found setCameraSize");
+        }
+      }
+      
+      // Renderer
+      c = classLoader.loadClass("jagex.client.i");
+      methods = c.getDeclaredMethods();
+      for (Method method : methods) {
+        if (method.toGenericString().equals(SETGAMEBOUNDS)) {
+          setGameBounds = method;
+          Logger.Info("Found setGameBounds");
+        }
+      }
+      
+      // Menu
+      c = classLoader.loadClass("jagex.client.g");
+      menuX = c.getDeclaredField("ze");
+      menuY = c.getDeclaredField("af");
+      //menuScroll = c.getDeclaredField("j"); //TODO:fix
+      menuWidth = c.getDeclaredField("cf");
+      // this menu height for chats I believe
+      menuHeight = c.getDeclaredField("df");
 
       // Set all accessible
       if (mouseMove != null) mouseMove.setAccessible(true);
@@ -92,6 +149,14 @@ public class Reflection {
       if (keyUp != null) keyUp.setAccessible(true);
       if (keyDown != null) keyDown.setAccessible(true);
       if (gameFrame != null) gameFrame.setAccessible(true);
+      if (menuX != null) menuX.setAccessible(true);
+      if (menuY != null) menuY.setAccessible(true);
+      if (menuScroll != null) menuScroll.setAccessible(true);
+      if (menuWidth != null) menuWidth.setAccessible(true);
+      if (menuHeight != null) menuHeight.setAccessible(true);
+      if (displayMessage != null) displayMessage.setAccessible(true);
+      if (setCameraSize != null) setCameraSize.setAccessible(true);
+      if (setGameBounds != null) setGameBounds.setAccessible(true);
     } catch (Exception e) {
       e.printStackTrace();
     }

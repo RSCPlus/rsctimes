@@ -19,6 +19,7 @@
 package Game;
 
 import Client.KeybindSet;
+import Client.Launcher;
 import Client.Settings;
 import Client.WorldMapWindow;
 

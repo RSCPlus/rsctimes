@@ -34,6 +34,10 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -61,11 +65,11 @@ public class JClassPatcher {
     ClassNode node = new ClassNode();
     reader.accept(node, ClassReader.SKIP_DEBUG);
 
-    /*if(node.name.equals("ua"))
+    if(node.name.equals("jagex/client/i"))
     {
     	patchRenderer(node);
     }
-    else if(node.name.equals("lb"))
+    /*else if(node.name.equals("lb"))
     {
     	patchCamera(node);
     }
@@ -107,6 +111,118 @@ public class JClassPatcher {
           "I",
           true,
           true);
+      
+      hookClassVariable(
+              methodNode, "mudclient", "bz", "I", "Game/Client", "login_screen", "I", true, true);
+      
+      hookClassVariable(methodNode, "jagex/client/j", "oo", "[I", "Game/Renderer", "pixels", "[I", true, true);
+      
+      hookClassVariable(
+              methodNode,
+              "mudclient",
+              "pt",
+              "Ljagex/client/j;",
+              "Game/Camera",
+              "instance",
+              "Ljava/lang/Object;",
+              true,
+              false);
+      
+      hookClassVariable(
+              methodNode,
+              "mudclient",
+              "qt",
+              "Lm;",
+              "Game/Renderer",
+              "instance",
+              "Ljava/lang/Object;",
+              true,
+              false);
+      
+      hookClassVariable(
+              methodNode,
+              "mudclient",
+              "ot",
+              "Ljava/awt/Graphics;",
+              "Game/Renderer",
+              "graphicsInstance",
+              "Ljava/awt/Graphics;",
+              true,
+              false);
+      
+      hookClassVariable(
+              methodNode,
+              "jagex/client/i",
+              "zj",
+              "Ljava/awt/image/ImageConsumer;",
+              "Game/Renderer",
+              "image_consumer",
+              "Ljava/awt/image/ImageConsumer;",
+              true,
+              true);
+      hookClassVariable(methodNode, "jagex/client/i", "sj", "I", "Game/Renderer", "width", "I", false, true);
+      hookClassVariable(methodNode, "jagex/client/i", "tj", "I", "Game/Renderer", "height", "I", false, true);
+      hookClassVariable(methodNode, "jagex/client/i", "yj", "[I", "Game/Renderer", "pixels", "[I", true, true);
+      
+      hookClassVariable(methodNode, "m", "sj", "I", "Game/Renderer", "width", "I", false, true);
+      hookClassVariable(methodNode, "m", "tj", "I", "Game/Renderer", "height", "I", false, true);
+      hookClassVariable(methodNode, "m", "yj", "[I", "Game/Renderer", "pixels", "[I", true, true);
+      
+      hookClassVariable(
+              methodNode, "mudclient", "bu", "I", "Game/Renderer", "width", "I", false, true);
+          hookClassVariable(
+              methodNode, "mudclient", "cu", "I", "Game/Renderer", "height_client", "I", false, true);
+      
+      hookClassVariable(methodNode, "jagex/client/k", "hp", "I", "Game/Renderer", "width", "I", false, true);
+      hookClassVariable(methodNode, "jagex/client/k", "ip", "I", "Game/Renderer", "height", "I", false, true);
+      
+      // Chat menu
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "kz",
+          "Ljagex/client/g;",
+          "Game/Menu",
+          "chat_menu",
+          "Ljava/lang/Object;",
+          true,
+          false);
+      hookClassVariable(
+          methodNode, "mudclient", "lz", "I", "Game/Menu", "chat_type1", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "mz", "I", "Game/Menu", "chat_input", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "nz", "I", "Game/Menu", "chat_type2", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "oz", "I", "Game/Menu", "chat_type3", "I", true, false);
+
+      // Friends menu
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "hcb",
+          "Ljagex/client/g;",
+          "Game/Menu",
+          "friend_menu",
+          "Ljava/lang/Object;",
+          true,
+          false);
+      hookClassVariable(
+          methodNode, "mudclient", "icb", "I", "Game/Menu", "friend_handle", "I", true, false);
+
+      // Spell menu
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "ecb",
+          "Ljagex/client/g;",
+          "Game/Menu",
+          "spell_menu",
+          "Ljava/lang/Object;",
+          true,
+          false);
+      hookClassVariable(
+          methodNode, "mudclient", "fcb", "I", "Game/Menu", "spell_handle", "I", true, false);
     }
   }
 
@@ -169,6 +285,99 @@ public class JClassPatcher {
               new MethodInsnNode(Opcodes.INVOKESTATIC, "Game/Client", "init", "()V", false));
         }
       }
+      if (methodNode.name.equals("u") && methodNode.desc.equals("()V")) {
+          AbstractInsnNode lastNode = methodNode.instructions.getLast().getPrevious();
+
+          // Send combat style option
+          /*LabelNode label = new LabelNode();
+
+          methodNode.instructions.insert(lastNode, label);
+
+          // Format
+          methodNode.instructions.insert(
+              lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "da", "b", "(I)V", false));
+          methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.SIPUSH, 21294));
+          methodNode.instructions.insert(
+              lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+          methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
+
+          // Write byte
+          methodNode.instructions.insert(
+              lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "ja", "c", "(II)V", false));
+          methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.BIPUSH, -80));
+          methodNode.instructions.insert(
+              lastNode,
+              new FieldInsnNode(Opcodes.GETSTATIC, "Client/Settings", "COMBAT_STYLE_INT", "I"));
+          methodNode.instructions.insert(
+              lastNode,
+              new MethodInsnNode(
+                  Opcodes.INVOKESTATIC,
+                  "Client/Settings",
+                  "updateInjectedVariables",
+                  "()V",
+                  false)); // TODO Remove this line when COMBAT_STYLE_INT is eliminated
+          methodNode.instructions.insert(
+              lastNode, new FieldInsnNode(Opcodes.GETFIELD, "da", "f", "Lja;"));
+          methodNode.instructions.insert(
+              lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+          methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
+
+          // Create Packet
+          methodNode.instructions.insert(
+              lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "da", "b", "(II)V", false));
+          methodNode.instructions.insert(lastNode, new InsnNode(Opcodes.ICONST_0));
+          methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.BIPUSH, 29));
+          methodNode.instructions.insert(
+              lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+          methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
+
+          // Skip combat packet if style is already controlled
+          methodNode.instructions.insert(lastNode, new JumpInsnNode(Opcodes.IF_ICMPLE, label));
+          methodNode.instructions.insert(lastNode, new InsnNode(Opcodes.ICONST_0));
+          methodNode.instructions.insert(
+              lastNode,
+              new FieldInsnNode(Opcodes.GETSTATIC, "Client/Settings", "COMBAT_STYLE_INT", "I"));
+          methodNode.instructions.insert(
+              lastNode,
+              new MethodInsnNode(
+                  Opcodes.INVOKESTATIC,
+                  "Client/Settings",
+                  "updateInjectedVariables",
+                  "()V",
+                  false)); // TODO Remove this line when COMBAT_STYLE_INT is eliminated*/
+
+          // Client init_game
+          methodNode.instructions.insert(
+              lastNode,
+              new MethodInsnNode(Opcodes.INVOKESTATIC, "Game/Client", "init_game", "()V", false));
+        }
+      if (methodNode.name.equals("v") && methodNode.desc.equals("()V")) {
+          // Client.init_login patch
+          AbstractInsnNode findNode = methodNode.instructions.getLast();
+          methodNode.instructions.insertBefore(
+              findNode,
+              new MethodInsnNode(Opcodes.INVOKESTATIC, "Game/Client", "init_login", "()V", false));
+        }
+      if (methodNode.name.equals("tl") && methodNode.desc.equals("(Z)V")) {
+    	  // Patch Remove social
+    	  int timesFound = 0;
+    	  AbstractInsnNode findNode = methodNode.instructions.getFirst();
+    	  while (timesFound < 2) {
+    		  while (!(findNode.getOpcode() == Opcodes.LDC && ((LdcInsnNode) findNode).cst.equals("~439~@whi@Remove         WWWWWWWWWW"))) {
+    	          findNode = findNode.getNext();
+    	        }
+    		  methodNode.instructions.insert(
+    		            findNode,
+    		            new MethodInsnNode(
+    		                Opcodes.INVOKESTATIC,
+    		                "Game/Renderer",
+    		                "getFixedRemoveString",
+    		                "(Ljava/lang/String;)Ljava/lang/String;",
+    		                false));
+    		  findNode = findNode.getNext();
+    		  timesFound++;
+    	  }
+      }
     }
   }
 
@@ -189,6 +398,55 @@ public class JClassPatcher {
 
   private void patchRenderer(ClassNode node) {
     Logger.Info("Patching renderer (" + node.name + ".class)");
+    
+    Iterator<MethodNode> methodNodeList = node.methods.iterator();
+    while (methodNodeList.hasNext()) {
+      MethodNode methodNode = methodNodeList.next();
+
+      // Renderer present hook
+      if (methodNode.desc.equals("(Ljava/awt/Graphics;II)V")) {
+        AbstractInsnNode findNode = methodNode.instructions.getFirst();
+        FieldInsnNode imageNode = null;
+
+        LabelNode label = new LabelNode();
+        methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ICONST_0));
+        methodNode.instructions.insertBefore(
+            findNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Replay", "isSeeking", "Z"));
+        methodNode.instructions.insertBefore(findNode, new JumpInsnNode(Opcodes.IFEQ, label));
+        methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.RETURN));
+        methodNode.instructions.insertBefore(findNode, label);
+
+        while (findNode.getOpcode() != Opcodes.POP) {
+          findNode = findNode.getNext();
+          if (findNode == null) {
+            Logger.Error("Unable to find present hook");
+            break;
+          }
+        }
+
+        while (!(findNode.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) findNode).name.equals("of"))) {
+          if (findNode.getOpcode() == Opcodes.GETFIELD) imageNode = (FieldInsnNode) findNode;
+
+          AbstractInsnNode prev = findNode.getPrevious();
+          methodNode.instructions.remove(findNode);
+          findNode = prev;
+        }
+
+        methodNode.instructions.insert(
+            findNode,
+            new MethodInsnNode(
+                Opcodes.INVOKESTATIC,
+                "Game/Renderer",
+                "present",
+                "(Ljava/awt/Graphics;Ljava/awt/Image;)V",
+                false));
+        methodNode.instructions.insert(
+            findNode,
+            new FieldInsnNode(Opcodes.GETFIELD, node.name, imageNode.name, imageNode.desc));
+        methodNode.instructions.insert(findNode, new VarInsnNode(Opcodes.ALOAD, 0));
+        methodNode.instructions.insert(findNode, new VarInsnNode(Opcodes.ALOAD, 1));
+      }
+    }
   }
 
   private void patchUtility(ClassNode node) {

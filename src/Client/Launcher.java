@@ -210,12 +210,17 @@ public class Launcher extends JFrame implements Runnable {
           new AWTEventListener() {
             public void eventDispatched(AWTEvent event) {
               if (event instanceof KeyEvent) {
+            	  // list of places to not call consumption of key
+            	  if (Launcher.getConfigWindow().getJFrame().isActive()) {
+            		  return;
+            	  }
                 KeyEvent evt = (KeyEvent) event;
                 if (evt.getID() == 401) {
                   Client.handler_keyboard.keyPressed(evt);
                 } else if (evt.getID() == 402) {
                   Client.handler_keyboard.keyReleased(evt);
                 }
+                
                 evt.consume();
               }
             }

@@ -228,7 +228,7 @@ public class Game extends JFrame
       }
     }
 
-    // Renderer.resize(getContentPane().getWidth(), getContentPane().getHeight());
+    Renderer.resize(getContentPane().getWidth(), getContentPane().getHeight() - Renderer.GAME_RENDER_OFFSET);
   }
 
   @Override
@@ -262,7 +262,7 @@ public class Game extends JFrame
             + getInsets().top
             + getInsets().bottom;*/
     int windowWidth = 512;
-    int windowHeight = 396;
+    int windowHeight = 396;//357;
     setSize(windowWidth, windowHeight);
     setLocationRelativeTo(null);
   }

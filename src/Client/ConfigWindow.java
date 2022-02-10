@@ -20,6 +20,7 @@ package Client;
 
 import Client.KeybindSet.KeyModifier;
 // import Game.Camera;
+import Game.Client;
 import Game.Game;
 // import Game.Item;
 import Game.KeyboardHandler;
@@ -2462,17 +2463,17 @@ public class ConfigWindow {
         }
 
         // World List
-        /*
+        
         for (int i = 1; i <= Settings.WORLDS_TO_DISPLAY; i++) {
             Settings.WORLD_NAMES.put(
                     i, getTextWithDefault(worldNamesJTextFields, i, String.format("World %d", i)));
             Settings.WORLD_URLS.put(i, worldUrlsJTextFields.get(i).getText());
 
-            Settings.WORLD_SERVER_TYPES.put(i, (Integer) worldTypesJComboBoxes.get(i).getSelectedIndex());
+            // Settings.WORLD_SERVER_TYPES.put(i, (Integer) worldTypesJComboBoxes.get(i).getSelectedIndex());
 
             String portString = worldPortsJTextFields.get(i).getText();
             if (portString.equals("")) {
-                Settings.WORLD_PORTS.put(i, Replay.DEFAULT_PORT);
+                Settings.WORLD_PORTS.put(i, 43594 /*Replay.DEFAULT_PORT*/);
             } else {
                 Settings.WORLD_PORTS.put(i, Integer.parseInt(portString));
             }
@@ -2480,7 +2481,6 @@ public class ConfigWindow {
 
         if (Client.state == Client.STATE_LOGIN)
             Game.getInstance().getJConfig().changeWorld(Settings.WORLD.get(Settings.currentProfile));
-        */
 
         // Save Settings
         Settings.save();
@@ -2495,6 +2495,10 @@ public class ConfigWindow {
 
     public void disposeJFrame() {
         frame.dispose();
+    }
+    
+    public JFrame getJFrame() {
+    	return frame;
     }
 
     /**
@@ -2650,17 +2654,17 @@ public class ConfigWindow {
     }
 
     public void addAddWorldButton() {
-        JButton addWorldButton = new JButton("Add New World");
+    	JButton addWorldButton = new JButton("Add New World");
         addWorldButton.addActionListener(
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        worldListPanel.remove(addWorldButton);
-                        ++Settings.WORLDS_TO_DISPLAY;
-                        synchronizeWorldTab();
-                        addAddWorldButton();
-                    }
-                });
+            new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                worldListPanel.remove(addWorldButton);
+                ++Settings.WORLDS_TO_DISPLAY;
+                synchronizeWorldTab();
+                addAddWorldButton();
+              }
+            });
         worldListPanel.add(addWorldButton);
         worldListPanel.revalidate();
         worldListPanel.repaint();

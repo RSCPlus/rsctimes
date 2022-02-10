@@ -18,9 +18,13 @@
  */
 package Client;
 
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+
+import Game.Replay;
 
 /** Parses, stores, and retrieves values from a jav_config.ws file */
 public class JConfig {
@@ -62,11 +66,64 @@ public class JConfig {
    */
   public void changeWorld(int world) {
     // TODO: make compatible with rscplus world ini
-    if (world == 1) {
+    /*if (world == 1) {
       m_data.put("codebase", "http://game.openrsc.com/");
       Game.Client.connection_port = 43593;
       return;
-    }
+    }*/
+	  
+	// Clip world to world count
+	    if (world > Settings.WORLDS_TO_DISPLAY) world = Settings.WORLDS_TO_DISPLAY;
+	    else if (world < 1) world = 1;
+
+	    parameters.put("nodeid", "" + (5000 + world));
+	    // TODO: This might have meant veteran world
+	    // if (world == 1) parameters.put("servertype", "" + 3);
+	    // parameters.put("servertype", "" + 1);
+	    //int servertype = Settings.WORLD_SERVER_TYPES.getOrDefault(world, 1);
+	    parameters.put("servertype", "" + 0);
+
+	    // Set world URL & port
+	    String curWorldURL = Settings.WORLD_URLS.get(world);
+	    m_data.put("codebase", "http://" + curWorldURL + "/");
+	    Game.Client.connection_port = Settings.WORLD_PORTS.getOrDefault(world, 43594);
+	    /*Replay.connection_port = Settings.WORLD_PORTS.getOrDefault(world, Replay.DEFAULT_PORT);
+	    SERVER_RSA_EXPONENT = Settings.WORLD_RSA_EXPONENTS.get(world);
+	    SERVER_RSA_MODULUS = Settings.WORLD_RSA_PUB_KEYS.get(world);
+	    if (SERVER_RSA_EXPONENT.equals("")) {
+	      SERVER_RSA_EXPONENT = "123";
+	    }
+	    if (SERVER_RSA_MODULUS.equals("")) {
+	      SERVER_RSA_MODULUS = "123";
+	    }*/
+
+	    if (!curWorldURL.equals("")) {
+	      Settings.noWorldsConfigured = false;
+	    }
+
+	    /*Game.Client.setServertype(servertype, true);
+	    boolean isMembers = (servertype & 1) != 0;
+
+	    if (Game.Client.lastIsMembers != null && Game.Client.lastIsMembers != isMembers) {
+	      Game.Client.lastIsMembers = isMembers;
+	      Game.Client.softReloadCache(isMembers);
+	    }*/
+
+	    // Update settings
+	    Settings.WORLD.put(Settings.currentProfile, world);
+	    Settings.save();
+
+	    // Resolve hostname here to be written to metadata (not used to connect to server)
+	    try {
+	      InetAddress address = InetAddress.getByName(curWorldURL);
+	      //Replay.ipAddressMetadata = address.getAddress();
+	      Logger.Info(
+	          String.format(
+	              "World set to %s (%s)", Settings.WORLD_NAMES.get(world), address.toString()));
+	    } catch (UnknownHostException e) {
+	      Logger.Warn("Warning: Unable to resolve server url!");
+	      //Replay.ipAddressMetadata = new byte[] {0, 0, 0, 0};
+	    }
   }
 
   /**
