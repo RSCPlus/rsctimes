@@ -1,6 +1,5 @@
 package Client;
 
-import Game.Client;
 import Game.JGameData;
 import Game.Renderer;
 import java.awt.*;
@@ -92,6 +91,8 @@ public class WorldMapWindow {
     private static int playerPlane;
 
     private static int BORDER_SIZE = 8;
+    private static int SCENERY_OFFSET_X = 48;
+    private static int SCENERY_OFFSET_Y = 432;
 
     private static int keyboardModMask = 0;
 
@@ -1065,6 +1066,9 @@ public class WorldMapWindow {
                 scenery.x = in.readShort();
                 scenery.y = in.readShort();
                 scenery.id = in.readShort();
+
+                scenery.x -= SCENERY_OFFSET_X;
+                scenery.y -= SCENERY_OFFSET_Y;
 
                 // These scenery objects will show up in search
                 switch (scenery.id) {
