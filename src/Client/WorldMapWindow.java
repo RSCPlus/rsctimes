@@ -1067,9 +1067,6 @@ public class WorldMapWindow {
                 scenery.y = in.readShort();
                 scenery.id = in.readShort();
 
-                scenery.x -= SCENERY_OFFSET_X;
-                scenery.y -= SCENERY_OFFSET_Y;
-
                 // These scenery objects will show up in search
                 switch (scenery.id) {
                     // Mining
@@ -1333,6 +1330,9 @@ public class WorldMapWindow {
     }
 
     public static Rectangle convertWorldCoordsToMapRaw(int x, int y, int tileSize) {
+        x -= SCENERY_OFFSET_X;
+        y -= SCENERY_OFFSET_Y;
+
         int plane = y / 945;
         int wilderness = 0;
         if (plane == 0) {
@@ -1451,8 +1451,8 @@ public class WorldMapWindow {
                     new Point(
                             getInvZoomInt(cameraPosition.x) + scaledPoint.x,
                             getInvZoomInt(cameraPosition.y) + scaledPoint.y);
-            prevMousePointMap.x = ((planes[planeIndex].getWidth(null) - worldCoords.x - 4) / 3) + 1;
-            prevMousePointMap.y = (worldCoords.y / 3) + (planeIndex * 944);
+            prevMousePointMap.x = SCENERY_OFFSET_X + ((planes[planeIndex].getWidth(null) - worldCoords.x - 4) / 3) + 1;
+            prevMousePointMap.y = SCENERY_OFFSET_Y + (worldCoords.y / 3) + (planeIndex * 944);
 
             // Initialize
             Shape rootShape = new Rectangle2D.Float(0, 0, getWidth(), getHeight());
