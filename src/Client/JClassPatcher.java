@@ -76,6 +76,8 @@ public class JClassPatcher {
     }
     else */ if (node.name.equals("jagex/client/k")) {
       patchApplet(node);
+    } else if (node.name.equals("r")) {
+    	patchData(node);
     } else if (node.name.equals("mudclient")) {
       patchClient(node);
     } else if (node.name.equals("jagex/client/d")) {
@@ -229,7 +231,7 @@ public class JClassPatcher {
       hookStaticVariableClone(
           methodNode,
           "r",
-          "vfb",
+          "bib",
           "[[Ljava/lang/String;",
           "Game/JGameData",
           "objectNames",
@@ -237,6 +239,31 @@ public class JClassPatcher {
     }
   }
 
+  private void patchData(ClassNode node) {
+	    Logger.Info("Patching data (" + node.name + ".class)");
+
+	    Iterator<MethodNode> methodNodeList = node.methods.iterator();
+	    while (methodNodeList.hasNext()) {
+	      MethodNode methodNode = methodNodeList.next();
+
+	      if (methodNode.name.equals("oo") && methodNode.desc.equals("([B)V")) {
+	        // Data hook patches
+	    	// find node before return point
+	    	AbstractInsnNode call = methodNode.instructions.getFirst();
+	    	while (call.getOpcode() != Opcodes.RETURN) {
+		          call = call.getNext();
+		    }
+	    	while (call.getOpcode() != Opcodes.INVOKESTATIC) {
+		          call = call.getPrevious();
+		    }
+	        methodNode.instructions.insert(
+	        		call,
+	            new MethodInsnNode(
+	                Opcodes.INVOKESTATIC, "Client/WorldMapWindow", "initScenery", "()V", false));
+	      }
+	    }
+	  }
+  
   private void patchApplet(ClassNode node) {
     Logger.Info("Patching applet (" + node.name + ".class)");
 
