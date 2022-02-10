@@ -47,6 +47,7 @@ public class Client {
   
   public static int state = STATE_LOGIN;
 
+  public static boolean is_displaying_fps;
   public static int connection_port = 43594;
 
   public static int[] base_level;
@@ -233,6 +234,24 @@ public class Client {
 	    // bank_active_page = 0; // TODO: config option? don't think this is very important.
 	    // combat_timer = 0;
 	  }
+  
+  
+  public static int check_draw_string(String inputString, int position, int n, boolean isPos) {
+	  int ret = !isPos ? n : 0;
+	  if (inputString.charAt(position) == '~' && position + 5 < inputString.length() && inputString.charAt(position + 5) == '~') {
+          char c = inputString.charAt(position + 1);
+          char c1 = inputString.charAt(position + 2);
+          char c2 = inputString.charAt(position + 3);
+          char c3 = inputString.charAt(position + 4);
+          if (isPos) {
+        	  ret = 1;
+          } else if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' && c2 <= '9'
+          		&& c3 >= '0' && c3 <= '9') {
+              ret = Integer.parseInt(inputString.substring(position + 1, position + 5));
+          }
+	  }
+	  return ret;
+  }
 
   /**
    * Prints a client-side message in chat.

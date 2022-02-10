@@ -33,6 +33,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
@@ -223,6 +224,16 @@ public class JClassPatcher {
           false);
       hookClassVariable(
           methodNode, "mudclient", "fcb", "I", "Game/Menu", "spell_handle", "I", true, false);
+      
+      // Game data hooks
+      hookStaticVariableClone(
+          methodNode,
+          "r",
+          "vfb",
+          "[[Ljava/lang/String;",
+          "Game/JGameData",
+          "objectNames",
+          "[[Ljava/lang/String;");
     }
   }
 
@@ -377,6 +388,44 @@ public class JClassPatcher {
     		  findNode = findNode.getNext();
     		  timesFound++;
     	  }
+    	  
+    	  Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+          while (insnNodeList.hasNext()) {
+            AbstractInsnNode insnNode = insnNodeList.next();
+            
+            // Patch positions
+            if (insnNode.getOpcode() == Opcodes.SIPUSH) {
+                IntInsnNode call = (IntInsnNode) insnNode;
+                if (call.operand == 489 || call.operand == 429) {
+                  call.operand = 512 - call.operand;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                }
+              }
+          }
+    	  
+      }
+      if (methodNode.name.equals("cl") && methodNode.desc.equals("()V")) {
+          Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+          boolean roofHidePatched = false;
+          while (insnNodeList.hasNext()) {
+            AbstractInsnNode insnNode = insnNodeList.next();
+            
+            // Move FPS display
+            if (insnNode.getOpcode() == Opcodes.SIPUSH) {
+                IntInsnNode call = (IntInsnNode) insnNode;
+                if (call.operand == 450) {
+                  call.operand = 512 - call.operand;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(
+                      insnNode, new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Client", "is_displaying_fps", "Z"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ICONST_1));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                }
+              }
+          }
       }
     }
   }
@@ -445,6 +494,53 @@ public class JClassPatcher {
             new FieldInsnNode(Opcodes.GETFIELD, node.name, imageNode.name, imageNode.desc));
         methodNode.instructions.insert(findNode, new VarInsnNode(Opcodes.ALOAD, 0));
         methodNode.instructions.insert(findNode, new VarInsnNode(Opcodes.ALOAD, 1));
+      }
+      // Drawstring ~1000~ fix
+      if (methodNode.name.equals("ef") && methodNode.desc.equals("(Ljava/lang/String;IIII)V")) {
+        AbstractInsnNode findNode = methodNode.instructions.getFirst();
+        LabelNode elseCheckLabel, continueLabel;
+        LabelNode nextCheckLabel = new LabelNode();
+        AbstractInsnNode call;
+        while (!(findNode.getOpcode() == Opcodes.BIPUSH && ((IntInsnNode) findNode).operand == 126)) {
+	          findNode = findNode.getNext();
+	    }
+        elseCheckLabel = ((JumpInsnNode)findNode.getNext()).label;
+        while (!(findNode.getOpcode() == Opcodes.IINC && ((IincInsnNode) findNode).incr == 4)) {
+	          findNode = findNode.getNext();
+	    }
+        continueLabel = ((JumpInsnNode)findNode.getNext()).label;
+        
+        while (!(findNode.getOpcode() == Opcodes.GETSTATIC && ((FieldInsnNode) findNode).name.equals("tk"))) {
+	          findNode = findNode.getNext();
+	    }
+        call = findNode;
+        methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ALOAD, 1));
+        methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ILOAD, 7));
+        methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ILOAD, 2));
+        methodNode.instructions.insertBefore(call, new InsnNode(Opcodes.ICONST_1));
+        methodNode.instructions.insertBefore(
+                call,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "check_draw_string", "(Ljava/lang/String;IIZ)I", false));
+        
+        methodNode.instructions.insertBefore(call, new InsnNode(Opcodes.ICONST_1));
+        methodNode.instructions.insertBefore(call, new JumpInsnNode(Opcodes.IF_ICMPNE, nextCheckLabel));
+        
+        methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ALOAD, 1));
+        methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ILOAD, 7));
+        methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ILOAD, 2));
+        methodNode.instructions.insertBefore(call, new InsnNode(Opcodes.ICONST_0));
+        methodNode.instructions.insertBefore(
+                call,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "check_draw_string", "(Ljava/lang/String;IIZ)I", false));
+        
+        methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ISTORE, 2));
+        
+        methodNode.instructions.insertBefore(call, new IincInsnNode(7, 5));
+        methodNode.instructions.insertBefore(
+                call, new JumpInsnNode(Opcodes.GOTO, continueLabel));
+        methodNode.instructions.insertBefore(call, nextCheckLabel);
       }
     }
   }
@@ -537,6 +633,41 @@ public class JClassPatcher {
             field.name = newVar;
             field.desc = newDesc;
           }
+        }
+      }
+    }
+  }
+  
+  /**
+   * TODO: Complete JavaDoc
+   *
+   * @param methodNode
+   * @param owner The class of the variable to be hooked
+   * @param var The variable to be hooked
+   * @param desc
+   * @param newClass The class the hooked variable will be stored in
+   * @param newVar The variable name the hooked variable will be stored in
+   * @param newDesc
+   */
+  private void hookStaticVariableClone(
+      MethodNode methodNode,
+      String owner,
+      String var,
+      String desc,
+      String newClass,
+      String newVar,
+      String newDesc) {
+    Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+    while (insnNodeList.hasNext()) {
+      AbstractInsnNode insnNode = insnNodeList.next();
+
+      int opcode = insnNode.getOpcode();
+      if (opcode == Opcodes.PUTSTATIC) {
+        FieldInsnNode field = (FieldInsnNode) insnNode;
+        if (field.owner.equals(owner) && field.name.equals(var) && field.desc.equals(desc)) {
+          methodNode.instructions.insertBefore(field, new InsnNode(Opcodes.DUP));
+          methodNode.instructions.insert(
+              field, new FieldInsnNode(Opcodes.PUTSTATIC, newClass, newVar, newDesc));
         }
       }
     }

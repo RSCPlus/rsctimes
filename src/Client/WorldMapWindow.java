@@ -1155,7 +1155,7 @@ public class WorldMapWindow {
 
                     // Use object name for the remaining object ids
                     default:
-                        scenery.searchName = JGameData.objectNames[scenery.id];
+                        scenery.searchName = JGameData.objectNames[scenery.id][0];
                         break;
                 }
 
