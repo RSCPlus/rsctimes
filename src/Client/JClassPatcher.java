@@ -103,6 +103,23 @@ public class JClassPatcher {
 
       // General byte patch
       Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+      while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+
+          if (insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL) {
+            MethodInsnNode call = (MethodInsnNode) insnNode;
+
+            // Patch calls to System.out.println and route them to Logger.Game
+            if (call.owner.equals("java/io/PrintStream") && call.name.equals("println")) {
+              methodNode.instructions.insertBefore(
+                  insnNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC, "Client/Logger", "Game", "(Ljava/lang/String;)V"));
+              methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.POP));
+              methodNode.instructions.remove(insnNode);
+            }
+          }
+      }
 
       hookClassVariable(
           methodNode,
@@ -236,6 +253,27 @@ public class JClassPatcher {
           "Game/JGameData",
           "objectNames",
           "[[Ljava/lang/String;");
+      
+      // coordinates related
+      hookClassVariable(
+          methodNode, "mudclient", "vu", "I", "Game/Client", "regionX", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "wu", "I", "Game/Client", "regionY", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "bw", "I", "Game/Client", "coordX", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "cw", "I", "Game/Client", "coordY", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "ru", "I", "Game/Client", "planeWidth", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "su", "I", "Game/Client", "planeHeight", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "xu", "I", "Game/Client", "planeIndex", "I", true, false);
+      hookClassVariable(
+          methodNode, "mudclient", "hu", "Z", "Game/Client", "loadingArea", "Z", true, false);
+
+      hookClassVariable(
+          methodNode, "mudclient", "tt", "I", "Game/Client", "tileSize", "I", true, false);
     }
   }
 
@@ -453,6 +491,26 @@ public class JClassPatcher {
                 }
               }
           }
+      }
+      if (methodNode.name.equals("bb") && methodNode.desc.equals("(II[B)V")) {
+    	  Iterator<AbstractInsnNode> insnNodeList;
+    	  
+    	  // setLoadingArea
+    	  AbstractInsnNode findNode = methodNode.instructions.getFirst();
+    	  // find call to loadingRegion (method yk)
+    	  while (!(findNode.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) findNode).owner.equals("mudclient")
+    			  && ((MethodInsnNode) findNode).name.equals("yk"))) {
+	          findNode = findNode.getNext();
+    	  }
+    	  findNode = findNode.getNext();
+    	  // rewind back to find iload13
+          methodNode.instructions.insertBefore(findNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  findNode,
+                  new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "hu", "Z"));
+          methodNode.instructions.insertBefore(
+        		  findNode,
+                  new MethodInsnNode(Opcodes.INVOKESTATIC, "Game/Client", "isLoadingHook", "(Z)V"));
       }
     }
   }

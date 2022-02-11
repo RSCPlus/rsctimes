@@ -217,6 +217,7 @@ public class Renderer {
         g2.drawImage(image_border, startingPixel, (height + GAME_RENDER_OFFSET) - 12, width - startingPixel, 12, null);
 
         // In-game UI
+        if (Client.state == Client.STATE_GAME) {
         /*if (Client.state == Client.STATE_GAME) {
           int npcCount = 0;
           int playerCount = 0;
@@ -1056,18 +1057,16 @@ public class Renderer {
               setAlpha(g2, 1.0f);
             }
             g2.setFont(font_main);
-          }
+          }*/
 
-          if (Settings.SHOW_PLAYER_POSITION.get(Settings.currentProfile)) {
-            y = Renderer.height - 19;
+          // TODO: needs to be placed as overlay config
+          if (true /*Settings.SHOW_PLAYER_POSITION.get(Settings.currentProfile)*/) {
+            int y = Renderer.height - 11;
             int offset = 0;
-            if (Client.is_in_wild) offset += 70;
-            if (Replay.isPlaying) {
-              if ((!screenshot && Settings.SHOW_SEEK_BAR.get(Settings.currentProfile))
-                  || Settings.SHOW_RETRO_FPS.get(Settings.currentProfile)) y -= 12;
-            }
-            if ((!Replay.isPlaying || screenshot)
-                && Settings.SHOW_RETRO_FPS.get(Settings.currentProfile)) offset += 70;
+            /*if (Replay.isPlaying) {
+              if ((!screenshot && Settings.SHOW_SEEK_BAR.get(Settings.currentProfile))) y -= 12;
+            }*/
+            if ((!Replay.isPlaying || screenshot)) offset += 50;
             drawShadowText(
                 g2,
                 "Pos: " + Client.getCoords(),
@@ -1078,7 +1077,7 @@ public class Renderer {
           }
 
           // Mouseover hover handling
-          if (Settings.SHOW_MOUSE_TOOLTIP.get(Settings.currentProfile)
+          /*if (Settings.SHOW_MOUSE_TOOLTIP.get(Settings.currentProfile)
               && !Client.isInterfaceOpen()
               && !Client.show_questionmenu
               && Client.is_hover) {
@@ -1122,8 +1121,8 @@ public class Renderer {
                 drawColoredText(g2, MouseText.getMouseOverText(), x, y);
               }
             }
-          }
-        } else*/ if (Client.state == Client.STATE_LOGIN) {
+          }*/
+        } else if (Client.state == Client.STATE_LOGIN) {
           //if (Settings.DEBUG.get(Settings.currentProfile))
           //  drawShadowText(g2, "DEBUG MODE", 38, 8, color_text, true);
 

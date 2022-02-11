@@ -117,16 +117,15 @@ public class WorldMapWindow {
 
     private static String legendText[] = {
             "Dungeon Entrance",
-            "Altar",
             "Amulet Shop",
             "Anvil (for smithing)",
             "Apothecary",
             "Archery Shop",
             "Axe Shop",
+            "Bank",
             "Body-Armour Shop",
             "Clothes Shop",
             "Combat Practice",
-            "Cookery Shop",
             "Crafting Shop",
             "Food Shop",
             "Furnace (for smelting)",
@@ -145,10 +144,9 @@ public class WorldMapWindow {
             "Shield Shop",
             "Silk Trader",
             "Skirt-Armour Shop",
-            "Spinning Wheel",
+            //"Spinning Wheel",
             "Staff Shop",
-            "Sword Shop",
-            "Tannery"
+            "Sword Shop"
     };
 
     public WorldMapWindow() {
@@ -329,7 +327,7 @@ public class WorldMapWindow {
             if (plane == 0) {
                 if (showIcons) {
                     for (MapGlyph glyph : mapGlyphs) {
-                        if (glyph.id == -1) continue;
+                        if (glyph.id == -1 || glyph.hide) continue;
 
                         int glyphX = glyph.x;
                         int glyphY = glyph.y;
@@ -420,7 +418,7 @@ public class WorldMapWindow {
 
         ArrayList<SearchResult> results = new ArrayList<SearchResult>();
         for (SearchResult glyph : mapGlyphs) {
-            if (glyph.isSearchable()
+            if (glyph.isSearchable() && ((MapGlyph)glyph).id > -1
                     && glyph.getSearchName().toLowerCase().contains(searchText.toLowerCase())) {
                 results.add(glyph);
                 if (results.size() > SEARCH_RESULTS_LIMIT) {
@@ -935,42 +933,43 @@ public class WorldMapWindow {
 
                 String type = entry.getString("type");
                 if (type.equalsIgnoreCase("dungeon")) glyph.id = 0;
-                else if (type.equalsIgnoreCase("altar")) glyph.id = 1;
-                else if (type.equalsIgnoreCase("amulet-shop")) glyph.id = 2;
-                else if (type.equalsIgnoreCase("anvil")) glyph.id = 3;
-                else if (type.equalsIgnoreCase("apothecary")) glyph.id = 4;
-                else if (type.equalsIgnoreCase("archery-shop")) glyph.id = 5;
-                else if (type.equalsIgnoreCase("axe-shop")) glyph.id = 6;
+                else if (type.equalsIgnoreCase("amulet-shop")) glyph.id = 1;
+                else if (type.equalsIgnoreCase("anvil")) glyph.id = 2;
+                else if (type.equalsIgnoreCase("apothecary")) glyph.id = 3;
+                else if (type.equalsIgnoreCase("archery-shop")) glyph.id = 4;
+                else if (type.equalsIgnoreCase("axe-shop")) glyph.id = 5;
+                else if (type.equalsIgnoreCase("bank")) glyph.id = 6;
                 else if (type.equalsIgnoreCase("body-armour-shop")) glyph.id = 7;
                 else if (type.equalsIgnoreCase("clothes-shop")) glyph.id = 8;
                 else if (type.equalsIgnoreCase("combat-practice")) glyph.id = 9;
-                else if (type.equalsIgnoreCase("cookery-shop")) glyph.id = 10;
-                else if (type.equalsIgnoreCase("crafting-shop")) glyph.id = 11;
-                else if (type.equalsIgnoreCase("food-shop")) glyph.id = 12;
-                else if (type.equalsIgnoreCase("furnace")) glyph.id = 13;
-                else if (type.equalsIgnoreCase("gem-shop")) glyph.id = 14;
-                else if (type.equalsIgnoreCase("general-shop")) glyph.id = 15;
-                else if (type.equalsIgnoreCase("helmet-shop")) glyph.id = 16;
-                else if (type.equalsIgnoreCase("jewellery-shop")) glyph.id = 17;
-                else if (type.equalsIgnoreCase("kebab-shop")) glyph.id = 18;
-                else if (type.equalsIgnoreCase("leg-armour-shop")) glyph.id = 19;
-                else if (type.equalsIgnoreCase("mace-shop")) glyph.id = 20;
-                else if (type.equalsIgnoreCase("magic-shop")) glyph.id = 21;
-                else if (type.equalsIgnoreCase("mining-site")) glyph.id = 22;
-                else if (type.equalsIgnoreCase("pub")) glyph.id = 23;
-                else if (type.equalsIgnoreCase("quest")) glyph.id = 24;
-                else if (type.equalsIgnoreCase("scimitar-shop")) glyph.id = 25;
-                else if (type.equalsIgnoreCase("shield-shop")) glyph.id = 26;
-                else if (type.equalsIgnoreCase("silk-trader")) glyph.id = 27;
-                else if (type.equalsIgnoreCase("skirt-armour-shop")) glyph.id = 28;
-                else if (type.equalsIgnoreCase("spinning-wheel")) glyph.id = 29;
-                else if (type.equalsIgnoreCase("staff-shop")) glyph.id = 30;
-                else if (type.equalsIgnoreCase("sword-shop")) glyph.id = 31;
-                else if (type.equalsIgnoreCase("tannery")) glyph.id = 32;
+                else if (type.equalsIgnoreCase("crafting-shop")) glyph.id = 10;
+                else if (type.equalsIgnoreCase("food-shop")) glyph.id = 11;
+                else if (type.equalsIgnoreCase("furnace")) glyph.id = 12;
+                else if (type.equalsIgnoreCase("gem-shop")) glyph.id = 13;
+                else if (type.equalsIgnoreCase("general-shop")) glyph.id = 14;
+                else if (type.equalsIgnoreCase("helmet-shop")) glyph.id = 15;
+                else if (type.equalsIgnoreCase("jewellery-shop")) glyph.id = 16;
+                else if (type.equalsIgnoreCase("kebab-shop")) glyph.id = 17;
+                else if (type.equalsIgnoreCase("leg-armour-shop")) glyph.id = 18;
+                else if (type.equalsIgnoreCase("mace-shop")) glyph.id = 19;
+                else if (type.equalsIgnoreCase("magic-shop")) glyph.id = 20;
+                else if (type.equalsIgnoreCase("mining-site")) glyph.id = 21;
+                else if (type.equalsIgnoreCase("pub")) glyph.id = 22;
+                else if (type.equalsIgnoreCase("quest")) glyph.id = 23;
+                else if (type.equalsIgnoreCase("scimitar-shop")) glyph.id = 24;
+                else if (type.equalsIgnoreCase("shield-shop")) glyph.id = 25;
+                else if (type.equalsIgnoreCase("silk-trader")) glyph.id = 26;
+                else if (type.equalsIgnoreCase("skirt-armour-shop")) glyph.id = 27;
+                //else if (type.equalsIgnoreCase("spinning-wheel")) glyph.id = 28; //exists but was not that important
+                else if (type.equalsIgnoreCase("staff-shop")) glyph.id = 28;
+                else if (type.equalsIgnoreCase("sword-shop")) glyph.id = 29;
                 else glyph.id = -1;
 
                 glyph.x = entry.getInt("x") - 1295; // TODO: remove offset
                 glyph.y = entry.getInt("y") - 1290; // TODO: remove offset
+                
+                boolean hide = entry.has("hide") && entry.getBoolean("hide");
+                glyph.hide = hide;
 
                 mapGlyphs.add(glyph);
             }
@@ -1005,41 +1004,39 @@ public class WorldMapWindow {
             planes[3] = ImageIO.read(Launcher.getResource("/assets/map/plane-3.png"));
             pointImage = ImageIO.read(Launcher.getResource("/assets/map/point.png"));
             waypointImage = ImageIO.read(Launcher.getResource("/assets/map/waypoint.png"));
-            legends = new BufferedImage[33];
+            legends = new BufferedImage[30];
 
             legends[0] = ImageIO.read(Launcher.getResource("/assets/map/legend/dungeon.png"));
-            legends[1] = ImageIO.read(Launcher.getResource("/assets/map/legend/altar.png"));
-            legends[2] = ImageIO.read(Launcher.getResource("/assets/map/legend/amulet-shop.png"));
-            legends[3] = ImageIO.read(Launcher.getResource("/assets/map/legend/anvil.png"));
-            legends[4] = ImageIO.read(Launcher.getResource("/assets/map/legend/apothecary.png"));
-            legends[5] = ImageIO.read(Launcher.getResource("/assets/map/legend/archery-shop.png"));
-            legends[6] = ImageIO.read(Launcher.getResource("/assets/map/legend/axe-shop.png"));
+            legends[1] = ImageIO.read(Launcher.getResource("/assets/map/legend/amulet-shop.png"));
+            legends[2] = ImageIO.read(Launcher.getResource("/assets/map/legend/anvil.png"));
+            legends[3] = ImageIO.read(Launcher.getResource("/assets/map/legend/apothecary.png"));
+            legends[4] = ImageIO.read(Launcher.getResource("/assets/map/legend/archery-shop.png"));
+            legends[5] = ImageIO.read(Launcher.getResource("/assets/map/legend/axe-shop.png"));
+            legends[6] = ImageIO.read(Launcher.getResource("/assets/map/legend/bank.png"));
             legends[7] = ImageIO.read(Launcher.getResource("/assets/map/legend/body-armour-shop.png"));
             legends[8] = ImageIO.read(Launcher.getResource("/assets/map/legend/clothes-shop.png"));
             legends[9] = ImageIO.read(Launcher.getResource("/assets/map/legend/combat-practice.png"));
-            legends[10] = ImageIO.read(Launcher.getResource("/assets/map/legend/cookery-shop.png"));
-            legends[11] = ImageIO.read(Launcher.getResource("/assets/map/legend/crafting-shop.png"));
-            legends[12] = ImageIO.read(Launcher.getResource("/assets/map/legend/food-shop.png"));
-            legends[13] = ImageIO.read(Launcher.getResource("/assets/map/legend/furnace.png"));
-            legends[14] = ImageIO.read(Launcher.getResource("/assets/map/legend/gem-shop.png"));
-            legends[15] = ImageIO.read(Launcher.getResource("/assets/map/legend/general-shop.png"));
-            legends[16] = ImageIO.read(Launcher.getResource("/assets/map/legend/helmet-shop.png"));
-            legends[17] = ImageIO.read(Launcher.getResource("/assets/map/legend/jewellery-shop.png"));
-            legends[18] = ImageIO.read(Launcher.getResource("/assets/map/legend/kebab-shop.png"));
-            legends[19] = ImageIO.read(Launcher.getResource("/assets/map/legend/leg-armour-shop.png"));
-            legends[20] = ImageIO.read(Launcher.getResource("/assets/map/legend/mace-shop.png"));
-            legends[21] = ImageIO.read(Launcher.getResource("/assets/map/legend/magic-shop.png"));
-            legends[22] = ImageIO.read(Launcher.getResource("/assets/map/legend/mining-site.png"));
-            legends[23] = ImageIO.read(Launcher.getResource("/assets/map/legend/pub.png"));
-            legends[24] = ImageIO.read(Launcher.getResource("/assets/map/legend/quest.png"));
-            legends[25] = ImageIO.read(Launcher.getResource("/assets/map/legend/scimitar-shop.png"));
-            legends[26] = ImageIO.read(Launcher.getResource("/assets/map/legend/shield-shop.png"));
-            legends[27] = ImageIO.read(Launcher.getResource("/assets/map/legend/silk-trader.png"));
-            legends[28] = ImageIO.read(Launcher.getResource("/assets/map/legend/skirt-armour-shop.png"));
-            legends[29] = ImageIO.read(Launcher.getResource("/assets/map/legend/spinning-wheel.png"));
-            legends[30] = ImageIO.read(Launcher.getResource("/assets/map/legend/staff-shop.png"));
-            legends[31] = ImageIO.read(Launcher.getResource("/assets/map/legend/sword-shop.png"));
-            legends[32] = ImageIO.read(Launcher.getResource("/assets/map/legend/tannery.png"));
+            legends[10] = ImageIO.read(Launcher.getResource("/assets/map/legend/crafting-shop.png"));
+            legends[11] = ImageIO.read(Launcher.getResource("/assets/map/legend/food-shop.png"));
+            legends[12] = ImageIO.read(Launcher.getResource("/assets/map/legend/furnace.png"));
+            legends[13] = ImageIO.read(Launcher.getResource("/assets/map/legend/gem-shop.png"));
+            legends[14] = ImageIO.read(Launcher.getResource("/assets/map/legend/general-shop.png"));
+            legends[15] = ImageIO.read(Launcher.getResource("/assets/map/legend/helmet-shop.png"));
+            legends[16] = ImageIO.read(Launcher.getResource("/assets/map/legend/jewellery-shop.png"));
+            legends[17] = ImageIO.read(Launcher.getResource("/assets/map/legend/kebab-shop.png"));
+            legends[18] = ImageIO.read(Launcher.getResource("/assets/map/legend/leg-armour-shop.png"));
+            legends[19] = ImageIO.read(Launcher.getResource("/assets/map/legend/mace-shop.png"));
+            legends[20] = ImageIO.read(Launcher.getResource("/assets/map/legend/magic-shop.png"));
+            legends[21] = ImageIO.read(Launcher.getResource("/assets/map/legend/mining-site.png"));
+            legends[22] = ImageIO.read(Launcher.getResource("/assets/map/legend/pub.png"));
+            legends[23] = ImageIO.read(Launcher.getResource("/assets/map/legend/quest.png"));
+            legends[24] = ImageIO.read(Launcher.getResource("/assets/map/legend/scimitar-shop.png"));
+            legends[25] = ImageIO.read(Launcher.getResource("/assets/map/legend/shield-shop.png"));
+            legends[26] = ImageIO.read(Launcher.getResource("/assets/map/legend/silk-trader.png"));
+            legends[27] = ImageIO.read(Launcher.getResource("/assets/map/legend/skirt-armour-shop.png"));
+            //legends[28] = ImageIO.read(Launcher.getResource("/assets/map/legend/spinning-wheel.png"));
+            legends[28] = ImageIO.read(Launcher.getResource("/assets/map/legend/staff-shop.png"));
+            legends[29] = ImageIO.read(Launcher.getResource("/assets/map/legend/sword-shop.png"));
             directions = new BufferedImage[8];
             directions[0] = ImageIO.read(Launcher.getResource("/assets/map/W.png"));
             directions[1] = ImageIO.read(Launcher.getResource("/assets/map/SW.png"));
@@ -1717,6 +1714,7 @@ public class WorldMapWindow {
         int x;
         int y;
         int id;
+        boolean hide;
 
         @Override
         public String getSearchName() {
@@ -1739,7 +1737,7 @@ public class WorldMapWindow {
 
         @Override
         public boolean isSearchable() {
-            return true;
+            return !hide; //true;
         }
     }
 

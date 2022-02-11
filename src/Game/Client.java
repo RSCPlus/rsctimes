@@ -132,6 +132,20 @@ public class Client {
   public static final int COMBAT_AGGRESSIVE = 1;
   public static final int COMBAT_ACCURATE = 2;
   public static final int COMBAT_DEFENSIVE = 3;
+  
+  public static int tileSize;
+  public static int regionX = -1;
+  public static int regionY = -1;
+  public static int worldX = -1;
+  public static int worldY = -1;
+  public static int coordX = -1;
+  public static int coordY = -1;
+  public static int localRegionX = -1; // not a thing on early mud
+  public static int localRegionY = -1; // not a thing on early mud
+  public static int planeWidth = -1;
+  public static int planeHeight = -1;
+  public static int planeIndex = -1;
+  public static boolean loadingArea = false;
 
 
   public static void init() {
@@ -234,6 +248,32 @@ public class Client {
 	    // bank_active_page = 0; // TODO: config option? don't think this is very important.
 	    // combat_timer = 0;
 	  }
+  
+  
+  /**
+   * Tells the client that the adjacent region is loading, so not to do spikes in position printing
+   * 
+   * @param loaded - the flag for loaded
+   */
+  public static void isLoadingHook(boolean loaded) {
+	boolean doLoad = !loaded;
+    if (worldX == -1 && worldY == -1) {
+      worldX = coordX;
+      worldY = coordY;
+    } else {
+      if (doLoad) {
+        Camera.reset_lookat();
+      } else {
+        worldX = coordX;
+        worldY = coordY;
+      }
+    }
+  }
+  
+  /** Returns the coordinates of the player */
+  public static String getCoords() {
+    return "(" + worldX + "," + worldY + ")";
+  }
   
   
   public static int check_draw_string(String inputString, int position, int n, boolean isPos) {
