@@ -70,6 +70,7 @@ public class NotificationsHandler {
     public enum NotifType {
         PM,
         TRADE,
+        DUEL,
         UNDER_ATTACK,
         LOGOUT,
         LOWHP,
@@ -520,9 +521,9 @@ public class NotificationsHandler {
             if (!hasNotifySend) {
                 Client.displayMessage(
                         "@red@You have to install notify-send for native system notifications!",
-                        Client.CHAT_QUEST);
+                        Client.MESSAGE_QUEST);
                 Client.displayMessage(
-                        "@red@(restart rsc+ if you have installed notify-send)", Client.CHAT_QUEST);
+                        "@red@(restart rsc\u00D7 if you have installed notify-send)", Client.MESSAGE_QUEST);
             } else {
                 try {
                     String output =

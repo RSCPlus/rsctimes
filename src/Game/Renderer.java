@@ -121,7 +121,7 @@ public class Renderer {
     public static void init() {
         // Resize game window
         new_size.width = 512;
-        new_size.height = 346;
+        new_size.height = 357 - GAME_RENDER_OFFSET; // actual usable height for game content rendering
         handle_resize();
 
         // Load fonts
@@ -157,7 +157,7 @@ public class Renderer {
     
     public static void resize(int w, int h) {
         new_size.width = Math.max(w, 512);
-        new_size.height = Math.max(h, 346);
+        new_size.height = Math.max(h, 357 - GAME_RENDER_OFFSET); // actual height that could be used for game rendering
       }
     
     public static void handle_resize() {

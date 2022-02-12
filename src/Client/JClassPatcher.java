@@ -511,7 +511,291 @@ public class JClassPatcher {
           methodNode.instructions.insertBefore(
         		  findNode,
                   new MethodInsnNode(Opcodes.INVOKESTATIC, "Game/Client", "isLoadingHook", "(Z)V"));
+          
+          
+          // hook onto received menu options
+          insnNodeList = methodNode.instructions.iterator();
+          LabelNode lblNode = null;
+          while (insnNodeList.hasNext()) {
+            AbstractInsnNode insnNode = insnNodeList.next();
+            AbstractInsnNode nextNode = insnNode.getNext();
+            AbstractInsnNode twoNextNode = nextNode.getNext();
+
+            if (nextNode == null || twoNextNode == null) break;
+
+            if (insnNode.getOpcode() == Opcodes.ALOAD
+                && ((VarInsnNode) insnNode).var == 0
+                && nextNode.getOpcode() == Opcodes.GETFIELD
+                && ((FieldInsnNode) nextNode).owner.equals("mudclient")
+                && ((FieldInsnNode) nextNode).name.equals("yy")
+                && twoNextNode.getOpcode() == Opcodes.ILOAD
+                && ((VarInsnNode) twoNextNode).var == 4) {
+              // in here is part where menu options are received, is a loop
+            	// find previous jump node
+            	findNode = insnNode;
+            	while (findNode.getOpcode() != Opcodes.GOTO) {
+      	          findNode = findNode.getPrevious();
+            	}
+              lblNode = ((JumpInsnNode) findNode).label;
+              continue;
+            }
+
+            if (lblNode != null
+                && insnNode instanceof LabelNode
+                && ((LabelNode) insnNode).equals(lblNode)) {
+            	findNode = insnNode.getNext();
+            	while (findNode.getOpcode() != Opcodes.RETURN) {
+            		findNode = findNode.getNext();
+            	}
+              InsnNode call = (InsnNode) findNode;
+              methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ALOAD, 0));
+              methodNode.instructions.insertBefore(
+                  call, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "yy", "[Ljava/lang/String;"));
+              methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ILOAD, 5));
+              methodNode.instructions.insertBefore(
+                  call,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Game/Client",
+                      "receivedOptionsHook",
+                      "([Ljava/lang/String;I)V"));
+            }
+          }
       }
+      // hook onto selected menu option
+      if (methodNode.name.equals("nl") && methodNode.desc.equals("()V")) {
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode nextNode = insnNode.getNext();
+          AbstractInsnNode twoNextNode = nextNode.getNext();
+
+          if (nextNode == null || twoNextNode == null) break;
+
+          if (insnNode.getOpcode() == Opcodes.ALOAD
+              && ((VarInsnNode) insnNode).var == 0
+              && nextNode.getOpcode() == Opcodes.GETFIELD
+              && ((FieldInsnNode) nextNode).owner.equals("jagex/client/e")
+              && ((FieldInsnNode) nextNode).name.equals("dd")
+              && twoNextNode.getOpcode() == Opcodes.SIPUSH
+              && ((IntInsnNode) twoNextNode).operand == 237) {
+            VarInsnNode call = (VarInsnNode) insnNode;
+            methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                call, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "yy", "[Ljava/lang/String;"));
+            methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ILOAD, 1));
+            methodNode.instructions.insertBefore(
+                call,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "Game/Client",
+                    "selectedOptionHook",
+                    "([Ljava/lang/String;I)V"));
+          }
+        }
+      }
+      if (methodNode.name.equals("gk")
+              && methodNode.desc.equals(
+                  "(Ljava/lang/String;I)V")) {
+            AbstractInsnNode first = methodNode.instructions.getFirst();
+
+            methodNode.instructions.insertBefore(first, new VarInsnNode(Opcodes.ALOAD, 1));
+            methodNode.instructions.insertBefore(first, new VarInsnNode(Opcodes.ILOAD, 2));
+            methodNode.instructions.insertBefore(
+                first,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "Game/Client",
+                    "messageHook",
+                    "(Ljava/lang/String;I)V"));
+      }
+      if (methodNode.name.equals("fm") && methodNode.desc.equals("()V")) {
+    	      	  
+    	  Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+          while (insnNodeList.hasNext()) {
+            AbstractInsnNode insnNode = insnNodeList.next();
+            
+            // Patch max positions right click menu
+            if (insnNode.getOpcode() == Opcodes.SIPUSH) {
+                IntInsnNode call = (IntInsnNode) insnNode;
+                if (call.operand == 510) {
+                  call.operand = 512 - call.operand;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                } else if (call.operand == 315) {
+                    call.operand = 334 - call.operand;
+                    methodNode.instructions.insertBefore(
+                        insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "height_client", "I"));
+                    methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                  }
+              }
+          }
+    	  
+      }
+      if (methodNode.name.equals("yk") && methodNode.desc.equals("(II)V")) {
+          Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+          while (insnNodeList.hasNext()) {
+            AbstractInsnNode insnNode = insnNodeList.next();
+
+            // Move the load screen text dialogue
+            if (insnNode.getOpcode() == Opcodes.SIPUSH) {
+              IntInsnNode call = (IntInsnNode) insnNode;
+              if (call.operand == 256) {
+                call.operand = 2;
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 192) {
+                call.operand = 2;
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "height", "I"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IADD));
+                methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 19));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              }
+            }
+          }
+        }
+      if (methodNode.name.equals("kk") && methodNode.desc.equals("()V")) {
+          Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+          while (insnNodeList.hasNext()) {
+            AbstractInsnNode insnNode = insnNodeList.next();
+
+            // Center password change
+            if (insnNode.getOpcode() == Opcodes.SIPUSH || insnNode.getOpcode() == Opcodes.BIPUSH) {
+              IntInsnNode call = (IntInsnNode) insnNode;
+              if (call.operand == 256) {
+                call.operand = 2;
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 106) {
+                call.operand = 2;
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 150));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 150) {
+                call.operand = 2;
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "height", "I"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 23));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 406) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IADD));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 150));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 210) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "height", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IADD));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 37));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+                }
+            }
+          }
+        }
+      if (methodNode.name.equals("gm") && methodNode.desc.equals("()V")) {
+          Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+          while (insnNodeList.hasNext()) {
+            AbstractInsnNode insnNode = insnNodeList.next();
+
+            // Center change pk warn
+            if (insnNode.getOpcode() == Opcodes.SIPUSH || insnNode.getOpcode() == Opcodes.BIPUSH) {
+              IntInsnNode call = (IntInsnNode) insnNode;
+              if (call.operand == 256) {
+                call.operand = 2;
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 90) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "height", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 83));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 200) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 56));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 300) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IADD));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 44));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 56) {
+                call.operand = 2;
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 200));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 70) {
+                call.operand = 2;
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "height", "I"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 103));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 456) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IADD));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 200));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 260) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "height", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IADD));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 87));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 250 && insnNode.getNext().getOpcode()== Opcodes.ISTORE) {
+            	  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "height", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IADD));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 77));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 250) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 6));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 350) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IADD));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 94));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              } else if (call.operand == 150) {
+                  call.operand = 2;
+                  methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Renderer", "width", "I"));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
+                  methodNode.instructions.insert(insnNode, new IntInsnNode(Opcodes.SIPUSH, 106));
+                  methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.IDIV));
+              }  
+            }
+          }
+        }
     }
   }
 

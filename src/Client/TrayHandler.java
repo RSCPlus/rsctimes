@@ -96,7 +96,7 @@ public class TrayHandler implements MouseListener {
 		popup.add(exit);
 
 		// Add tooltip and menu to trayIcon
-		trayIcon.setToolTip("RSC× Client");
+		trayIcon.setToolTip("RSC\u00D7 Client");
 		trayIcon.setPopupMenu(popup);
 
 		// Add the trayIcon to system tray/notification area
