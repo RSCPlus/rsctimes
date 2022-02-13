@@ -59,6 +59,9 @@ public class Reflection {
   public static Method keyDown = null;
   public static Method gameFrame = null;
   
+  public static Field characterWaypointX = null;
+  public static Field characterWaypointY = null;
+  
   public static Field menuX = null;
   public static Field menuY = null;
   public static Field menuScroll = null;
@@ -131,6 +134,13 @@ public class Reflection {
           Logger.Info("Found setGameBounds");
         }
       }
+      
+      // Character
+      c = classLoader.loadClass("l");
+      characterWaypointX = c.getDeclaredField("cr");
+      characterWaypointY = c.getDeclaredField("dr");
+      if (characterWaypointX != null) characterWaypointX.setAccessible(true);
+      if (characterWaypointY != null) characterWaypointY.setAccessible(true);
       
       // Menu
       c = classLoader.loadClass("jagex.client.g");

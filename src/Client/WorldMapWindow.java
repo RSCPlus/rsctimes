@@ -1,5 +1,6 @@
 package Client;
 
+import Game.Client;
 import Game.JGameData;
 import Game.Renderer;
 import java.awt.*;
@@ -674,8 +675,8 @@ public class WorldMapWindow {
                                 new Point(
                                         getInvZoomInt(cameraPosition.x) + scaledPoint.x,
                                         getInvZoomInt(cameraPosition.y) + scaledPoint.y);
-                        worldCoords.x = ((planes[planeIndex].getWidth(null) - worldCoords.x - 4) / 3) + 1;
-                        worldCoords.y = (worldCoords.y / 3) + (planeIndex * 944);
+                        worldCoords.x = SCENERY_OFFSET_X + ((planes[planeIndex].getWidth(null) - worldCoords.x - 4) / 3) + 1;
+                        worldCoords.y = SCENERY_OFFSET_Y + (worldCoords.y / 3) + (planeIndex * 944);
 
                         if (developmentMode) {
                             if (e.getButton() == MouseEvent.BUTTON2) {
@@ -1268,9 +1269,8 @@ public class WorldMapWindow {
         boolean dirty = false;
 
 
-        // TODO: Client.worldX, Client.worldY, Client.planeIndex
-        playerPosition = new Point(100, 100); // new Point(Client.worldX, Client.worldY);
-        playerPlane = 0; // Client.planeIndex;
+        playerPosition = new Point(Client.worldX, Client.worldY);
+        playerPlane = Client.planeIndex;
 
         // Handle waypoint removal when destination is reached
         if (waypointPosition != null) {

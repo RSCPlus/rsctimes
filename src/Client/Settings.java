@@ -96,6 +96,17 @@ public class Settings {
   public static HashMap<String, Integer> WORLD = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> FIRST_TIME = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> UPDATE_CONFIRMATION = new HashMap<String, Boolean>();
+  
+ //these are variables that are injected with JClassPatcher
+ public static int COMBAT_STYLE_INT = Client.COMBAT_AGGRESSIVE;
+ public static boolean HIDE_ROOFS_BOOL = false;
+ public static boolean COMBAT_MENU_SHOWN_BOOL = false;
+ public static boolean COMBAT_MENU_HIDDEN_BOOL = false;
+ public static boolean CAMERA_ZOOMABLE_BOOL = false;
+ public static boolean CAMERA_ROTATABLE_BOOL = false;
+ public static boolean CAMERA_MOVABLE_BOOL = false;
+ public static boolean VIEW_DISTANCE_BOOL = false;
+ public static boolean FOV_BOOL = false;
 
   // determines which preset to load, or your custom settings :-)
   public static String currentProfile = "custom";
@@ -1172,7 +1183,6 @@ public class Settings {
   }
 
 
-
   /** Contains variables which store folder paths. */
   public static class Dir {
 
@@ -1182,4 +1192,16 @@ public class Settings {
     public static String REPLAY;
     public static String WORLDS;
   }
+  
+  public static void updateInjectedVariables() {
+	    // TODO: get rid of these variables and this function if possible
+	  	// TODO: place like rsc+?
+	    /*COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
+	    HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
+	    COMBAT_MENU_SHOWN_BOOL = COMBAT_MENU_SHOWN.get(currentProfile);
+	    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);
+	    CAMERA_ZOOMABLE_BOOL = CAMERA_ZOOMABLE.get(currentProfile);
+	    CAMERA_ROTATABLE_BOOL = CAMERA_ROTATABLE.get(currentProfile);
+	    CAMERA_MOVABLE_BOOL = CAMERA_MOVABLE.get(currentProfile);*/
+	  }
 }

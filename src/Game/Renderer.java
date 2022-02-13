@@ -672,7 +672,7 @@ public class Renderer {
             }
           }
           // Handles drawing bank value, bank sort panel, & bank filter panel
-          Bank.drawBankAugmentations(g2);
+          Bank.drawBankAugmentations(g2);*/
 
           // World Map
           // Arrow marker for destination
@@ -684,8 +684,8 @@ public class Renderer {
                     + WorldMapWindow.getWaypointAngle();
             if (WorldMapWindow.getWaypointFloor() != Client.planeIndex) setAlpha(g2, 0.5f);
             Image arrowSprite = WorldMapWindow.directions[Util.getAngleIndex(absCameraRotation)];
-            x = (width / 2);
-            y = 54;
+            int x = (width / 2);
+            int y = 54;
             g2.drawImage(arrowSprite, x - 12, y - 12, 24, 24, null);
             y += -20;
             drawShadowText(
@@ -699,7 +699,7 @@ public class Renderer {
           }
 
           // RSC Wiki integration
-          if (WikiURL.nextClickIsLookup && MouseHandler.mouseClicked) {
+          /*if (WikiURL.nextClickIsLookup && MouseHandler.mouseClicked) {
             if (MouseHandler.rightClick) {
               WikiURL.nextClickIsLookup = false;
               Client.displayMessage("Cancelled lookup.", Client.CHAT_NONE);

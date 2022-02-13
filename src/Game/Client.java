@@ -21,23 +21,40 @@ package Game;
 import java.applet.Applet;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
 
+import javax.swing.JOptionPane;
+
 import Client.Settings;
+import Client.JConfig;
+import Client.Launcher;
 import Client.Logger;
 import Client.NotificationsHandler;
 import Client.Util;
+import Client.WorldMapWindow;
 import Client.NotificationsHandler.NotifType;
 
 public class Client {
 
   // Game's client instance
   public static Object instance;
+  
+  public static Object player_object;
 
   public static MouseHandler handler_mouse;
   public static KeyboardHandler handler_keyboard;
+  
+  private static long updateTimer = 0;
+  private static long last_time = 0;
+
+  public static boolean showRecordAlwaysDialogue = false;
+
+  public static long update_timer;
+  public static long updates;
+  public static long updatesPerSecond;
   
   public static final int STATE_LOGIN = 1;
   public static final int STATE_GAME = 2;
@@ -64,7 +81,13 @@ public class Client {
   
   public static int login_screen;
 
-  public static boolean show_questionmenu = false; // TODO: implement
+  public static int show_friends;
+  public static int show_menu;
+  public static boolean show_questionmenu;
+  public static boolean show_shop;
+  public static boolean show_trade;
+  public static int show_changepk;
+  public static boolean show_visitad;
 
   public static XPDropHandler xpdrop_handler = new XPDropHandler();
   public static XPBar xpbar = new XPBar();
@@ -174,6 +197,114 @@ public class Client {
     applet.addKeyListener(handler_keyboard);
     applet.setFocusTraversalKeysEnabled(false);
   }
+  
+  /**
+   * An updater that runs frequently to update calculations for XP/fatigue drops, the XP bar, etc.
+   *
+   * <p>This updater does not handle any rendering, for rendering see {@link Renderer#present}
+   */
+  public static void update() {
+    long time = System.currentTimeMillis();
+    long nanoTime = System.nanoTime();
+
+    float delta_time = (float) (nanoTime - last_time) / 1000000000.0f;
+    last_time = nanoTime;
+
+    Camera.setLookatTile(getPlayerWaypointX(), getPlayerWaypointY());
+    Camera.update(delta_time);
+
+    //Replay.update();
+
+    /*if (Settings.RECORD_AUTOMATICALLY_FIRST_TIME.get(Settings.currentProfile)
+        && showRecordAlwaysDialogue) {
+      int response =
+          JOptionPane.showConfirmDialog(
+              Game.getInstance().getApplet(),
+              "If you'd like, you can record your session every time you play by default.\n"
+                  + "\n"
+                  + "These recordings do not leave your computer unless you manually do it on purpose.\n"
+                  + "They also take up negligible space. You could fit about a 6 hour session on a floppy disk, depending on what you do.\n"
+                  + "\n"
+                  + "Recordings can be played back later, even offline, and capture the data the server sends and that you send the server.\n"
+                  + "Your password is not in the capture.\n"
+                  + "\n"
+                  + "Would you like to record all your play sessions by default?\n"
+                  + "\n"
+                  + "NOTE: This option can be toggled in the Settings interface (ctrl-o by default) under the Replay tab.",
+              "rscplus",
+              JOptionPane.YES_NO_OPTION,
+              JOptionPane.INFORMATION_MESSAGE,
+              Launcher.icon);
+      if (response == JOptionPane.YES_OPTION || response == JOptionPane.CLOSED_OPTION) {
+        Settings.RECORD_AUTOMATICALLY.put(Settings.currentProfile, true);
+      } else if (response == JOptionPane.NO_OPTION) {
+        Settings.RECORD_AUTOMATICALLY.put(Settings.currentProfile, false);
+      }
+      Settings.RECORD_AUTOMATICALLY_FIRST_TIME.put(Settings.currentProfile, false);
+      Settings.save();
+    }*/
+
+    /*if (state == STATE_GAME) {
+      Client.getPlayerName();
+      Client.adaptLoginInfo();
+    }*/
+
+    Game.getInstance().updateTitle();
+
+    /*if (forceDisconnect) {
+      Client.closeConnection(false);
+      forceDisconnect = false;
+    }
+
+    if (forceReconnect) {
+      Client.loseConnection(false);
+      forceReconnect = false;
+    }
+
+    // Handle skipping to next replay
+    if (!Replay.isPlaying && Replay.replayServer != null && Replay.replayServer.isDone) {
+      if (ReplayQueue.currentIndex < ReplayQueue.queue.size()) {
+        if (!ReplayQueue.skipped) {
+          ReplayQueue.nextReplay();
+        }
+      }
+      ReplayQueue.skipped = false;
+    }
+
+    // Process playback actions for replays
+    Replay.processPlaybackAction();
+
+    // Process playback queue for replays
+    ReplayQueue.processPlaybackQueue();
+
+    // Close replay, order matters on these two!
+    if (runReplayCloseHook) {
+      Replay.handleReplayClosing();
+      runReplayCloseHook = false;
+    }
+
+    // Login hook on this thread
+    if (runReplayHook && state == STATE_LOGIN) {
+      Renderer.replayOption = 2;
+      runReplayHook = false;
+      login_hook();
+    }*/
+
+    WorldMapWindow.UpdateView();
+    if (Client.state == Client.STATE_GAME) {
+      WorldMapWindow.Update();
+    } else {
+      WorldMapWindow.Reset();
+    }
+
+    updates++;
+    time = System.currentTimeMillis();
+    if (time >= update_timer) {
+      updatesPerSecond = updates;
+      update_timer = time + 1000;
+      updates = 0;
+    }
+  }
 
   public static Double fetchLatestVersionNumber() {
     try {
@@ -282,6 +413,24 @@ public class Client {
         worldY = coordY;
       }
     }
+  }
+  
+  public static int getPlayerWaypointX() {
+	    int x = 0;
+	    try {
+	      x = (int) Reflection.characterWaypointX.get(player_object);
+	    } catch (Exception e) {
+	    }
+	    return x;
+  }
+
+  public static int getPlayerWaypointY() {
+	    int y = 0;
+	    try {
+	      y = (int) Reflection.characterWaypointY.get(player_object);
+	    } catch (Exception e) {
+	    }
+	    return y;
   }
   
   /** Returns the coordinates of the player */
@@ -873,6 +1022,19 @@ public class Client {
         showXpPerHour.get(xpUsername)[skill] = false;
       }
     }
+  }
+  
+  /**
+   * Returns if an in-game interface, window, menu, etc. is currently displayed.
+   *
+   * @return if an interface is showing
+   */
+  public static boolean isInterfaceOpen() {
+    return show_shop
+        || show_trade
+        || show_friends != 0
+        || show_changepk == 1
+        || show_visitad;
   }
 
 
