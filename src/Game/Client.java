@@ -24,7 +24,9 @@ import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 
@@ -42,10 +44,40 @@ public class Client {
   // Game's client instance
   public static Object instance;
   
+  public static List<NPC> npc_list = new ArrayList<>();
+  public static List<Item> item_list = new ArrayList<>();
+  
+  public static final int SKILL_ATTACK = 0;
+  public static final int SKILL_DEFENSE = 1;
+  public static final int SKILL_STRENGTH = 2;
+  public static final int SKILL_HP = 3;
+  public static final int SKILL_RANGED = 4;
+  public static final int SKILL_THIEVING = 5;
+  public static final int SKILL_INFLUENCE = 6;
+  public static final int SKILL_PRAYGOOD = 7;
+  public static final int SKILL_PRAYEVIL = 8;
+  public static final int SKILL_GOODMAGIC = 9;
+  public static final int SKILL_EVILMAGIC = 10;
+  public static final int SKILL_COOKING = 11;
+  public static final int SKILL_TAILORING = 12;
+  public static final int SKILL_WOODCUTTING = 13;
+  public static final int SKILL_FIREMAKING = 14;
+  public static final int SKILL_CRAFTING = 15;
+  public static final int SKILL_SMITHING = 16;
+  public static final int SKILL_MINING = 17;
+  public static final int SKILL_HERBLAW = 18;
+  
   public static Object player_object;
+  public static String player_name = "";
+  public static int player_posX = -1;
+  public static int player_posY = -1;
+  public static int player_height = -1;
+  public static int player_width = -1;
 
   public static MouseHandler handler_mouse;
   public static KeyboardHandler handler_keyboard;
+  
+  public static boolean is_hover;
   
   private static long updateTimer = 0;
   private static long last_time = 0;
@@ -66,6 +98,9 @@ public class Client {
   
   public static int state = STATE_LOGIN;
 
+  public static int max_inventory = 30;
+  public static int inventory_count;
+  public static int[] inventory_items;
   public static long magic_timer = 0L;
   public static long poison_timer = 0L; // compat in case player was in newer rsc world
   public static boolean is_poisoned = false; // compat in case player was in newer rsc world
@@ -74,12 +109,16 @@ public class Client {
   
   public static String[] menuOptions;
 
-  public static int[] base_level;
-  public static int[] xp;
+  public static int[] current_equipment_stats;
   public static int[] current_level;
+  public static int[] base_level;
+  public static int[] xp; // cannot be known from client
   public static String[] skill_name;
   
   public static int login_screen;
+  
+  public static int combat_timer;
+  public static boolean isGameLoaded;
 
   public static int show_friends;
   public static int show_menu;
@@ -170,7 +209,16 @@ public class Client {
   public static final int COMBAT_ACCURATE = 2;
   public static final int COMBAT_DEFENSIVE = 3;
   
+  public static int friends_count;
+  public static long[] friends_hash;
+  public static int[] friends_online;
+
+  public static int ignores_count;
+  public static long[] ignores_hash;
+  
   public static int tileSize;
+  public static long menu_timer;
+  public static String lastAction;
   public static int regionX = -1;
   public static int regionY = -1;
   public static int worldX = -1;
@@ -244,10 +292,10 @@ public class Client {
       Settings.save();
     }*/
 
-    /*if (state == STATE_GAME) {
+    if (state == STATE_GAME) {
       Client.getPlayerName();
-      Client.adaptLoginInfo();
-    }*/
+      //Client.adaptLoginInfo();
+    }
 
     Game.getInstance().updateTitle();
 
@@ -368,9 +416,9 @@ public class Client {
   }
   
   public static void init_login() {
-	    //Camera.init();
+	    Camera.init();
 	    state = STATE_LOGIN;
-	    //isGameLoaded = false;
+	    isGameLoaded = false;
 	    Renderer.replayOption = 0;
 
 	    //twitch.disconnect();
@@ -383,7 +431,7 @@ public class Client {
 	    //Replay.closeReplayPlayback();
 	    //Replay.closeReplayRecording();
 	    //adaptStrings();
-	    //player_name = "";
+	    player_name = "";
 	  }
   
   public static void init_game() {
@@ -414,6 +462,40 @@ public class Client {
       }
     }
   }
+  
+  public static boolean shouldHideFPS() {
+	  return Settings.HIDE_FPS.get(Settings.currentProfile);
+  }
+  
+  /**
+   * Hooks the message that hovering over X thing gives in the client
+   *
+   * @param tooltipMessage - the message in raw color format
+   */
+  public static String mouse_action_hook(String tooltipMessage) {
+	  MouseText.mouseText = tooltipMessage;
+    MouseText.regenerateCleanedMouseTexts();
+
+    // Remove top-left action text in extended mode
+    if (Settings.SHOW_MOUSE_TOOLTIP.get(Settings.currentProfile)
+        && Settings.SHOW_EXTENDED_TOOLTIP.get(Settings.currentProfile)) return "";
+
+    return tooltipMessage;
+  }
+  
+  public static void getPlayerName() {
+	    try {
+	      String name = (String) Reflection.characterName.get(player_object);
+	      if (name != null) {
+	        if (!name.equals(player_name)) {
+	          player_name = name;
+	          Camera.reset_lookat();
+	        }
+	      }
+	    } catch (IllegalArgumentException | IllegalAccessException e1) {
+	      e1.printStackTrace();
+	    }
+	  }
   
   public static int getPlayerWaypointX() {
 	    int x = 0;
@@ -842,6 +924,25 @@ public class Client {
     }
   }
   
+  public static void setInterlace(boolean value) {
+	  //TODO
+	    /*if (Reflection.interlace == null) return;
+
+	    try {
+	      Reflection.interlace.set(Renderer.instance, value);
+	    } catch (Exception e) {
+	    }*/
+  }
+
+  public static boolean getInterlace() {
+	  //TODO
+	    /*try {
+	      return (boolean) Reflection.interlace.get(Renderer.instance);
+	    } catch (Exception e) {
+	    }*/
+	    return false;
+  }
+  
   /**
    * This method hooks all options received and adds them to console
    *
@@ -897,6 +998,37 @@ public class Client {
         "@|white (" + formatChatType(type) + ")|@ " + colorizeMessage(option, type);
     Logger.Chat(colorizedLog, originalLog);
   }
+  
+  public static void printAndShowActionString(String actionString) {
+	    if (Settings.SHOW_LAST_MENU_ACTION.get(Settings.currentProfile)) {
+	      menu_timer = System.currentTimeMillis() + 3500L;
+	      lastAction = actionString;
+	      Logger.Info(actionString);
+	    }
+  }
+  
+  public static void drawNPC(
+	      int x,
+	      int y,
+	      int width,
+	      int height,
+	      String name,
+	      int currentHits,
+	      int maxHits,
+	      int id,
+	      int id2) {
+	    // ILOAD 5 is index
+	    npc_list.add(new NPC(x, y + Renderer.GAME_RENDER_OFFSET, width, height, name, NPC.TYPE_MOB, currentHits, maxHits, id, id2));
+	  }
+
+	  public static void drawPlayer(
+	      int x, int y, int width, int height, String name, int currentHits, int maxHits, int id2) {
+	    npc_list.add(new NPC(x, y + Renderer.GAME_RENDER_OFFSET, width, height, name, NPC.TYPE_PLAYER, currentHits, maxHits, 0, id2));
+	  }
+
+	  public static void drawItem(int x, int y, int width, int height, String name, int id) {
+	    item_list.add(new Item(x, y + Renderer.GAME_RENDER_OFFSET, width, height, name, id));
+	  }
   
   public static float getXPforLevel(int level) {
     if (level < 2) {
@@ -961,6 +1093,18 @@ public class Client {
   public static float getXP(int skill) {
     return (float) xp[skill] / 4.0f;
   }
+  
+  /**
+   * Returns the user's current level in a specified skill. This number is affected by skills boosts
+   * and debuffs.
+   *
+   * @param skill an integer corresponding to a skill
+   * @return the user's current level in the specified skill
+   * @see #getBaseLevel(int)
+   */
+  public static int getCurrentLevel(int skill) {
+    return current_level[skill];
+  }
 
   /**
    * Returns the user's base level in a specified skill. This number is <b>not</b> affected by
@@ -1023,6 +1167,66 @@ public class Client {
       }
     }
   }
+  
+  /**
+   * Checks if a specified player is on the user's friend list.
+   *
+   * @param name the player's display name
+   * @return if the player is the user's friend
+   */
+  public static boolean isFriend(String name) {
+    for (int i = 0; i < friends_count; i++) {
+      if (friends_hash[i] != 0 && Util.hash2username(friends_hash[i]).equals(name)) return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns if the user is currently in combat. Recently being in combat does not count as in
+   * combat.
+   *
+   * @return if the user is in combat
+   */
+  public static boolean isInCombat() {
+    return combat_timer == 499;
+  }
+  
+  public static boolean isInCombatWithNPC(NPC npc) {
+	    if (npc == null) {
+	      return false;
+	    }
+
+	    int bottom_posY_npc = npc.y + npc.height;
+	    int bottom_posY_player = player_posY + player_height;
+
+	    // NPC's in combat with the player are always on the same bottom y coord, however
+	    // when moving the screen around they can be slightly off for a moment. To prevent
+	    // flickering, just give them a very small buffer of difference.
+	    boolean inCombatCandidate = (Math.abs(bottom_posY_npc - bottom_posY_player) < 5);
+
+	    // Hitboxes will intersect on the X axis from what I've tested, giving this a small
+	    // buffer as well just in case there are edge cases with very small monsters that
+	    // don't follow this pattern exactly.
+	    boolean hitboxesIntersectOnXAxis = (player_posX - 10) < (npc.x + npc.width);
+
+	    // The NPC you're fighting is always on the left side of the player.
+	    boolean isOnLeftOfPlayer = (player_posX + player_width) > npc.x;
+	    
+	    //TODO: verify why other conditions return false
+	    return isInCombat()
+		        && npc.currentHits != 0
+		        && npc.maxHits != 0
+		        && !player_name.equalsIgnoreCase(npc.name);
+
+	    /*return isInCombat()
+	        && npc.currentHits != 0
+	        && npc.maxHits != 0
+	        && !player_name.equals(npc.name)
+	        && inCombatCandidate
+	        && isOnLeftOfPlayer
+	        && hitboxesIntersectOnXAxis;*/
+	  }
   
   /**
    * Returns if an in-game interface, window, menu, etc. is currently displayed.

@@ -59,6 +59,7 @@ public class Reflection {
   public static Method keyDown = null;
   public static Method gameFrame = null;
   
+  public static Field characterName = null;
   public static Field characterWaypointX = null;
   public static Field characterWaypointY = null;
   
@@ -137,8 +138,10 @@ public class Reflection {
       
       // Character
       c = classLoader.loadClass("l");
+      characterName = c.getDeclaredField("zq");
       characterWaypointX = c.getDeclaredField("cr");
       characterWaypointY = c.getDeclaredField("dr");
+      if (characterName != null) characterName.setAccessible(true);
       if (characterWaypointX != null) characterWaypointX.setAccessible(true);
       if (characterWaypointY != null) characterWaypointY.setAccessible(true);
       

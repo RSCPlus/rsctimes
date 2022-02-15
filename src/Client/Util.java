@@ -517,5 +517,17 @@ public class Util {
     p.destroyForcibly();
     return ret;
   }
+  
+  public static boolean notMacWindows() {
+	    if (System.getProperty("os.name").contains("Windows")) {
+	      return false;
+	    }
+	    return !isMacOS();
+  }
+  
+  public static void openLinkInBrowser(String url) {
+	    Thread t = new Thread(new LinkOpener(url));
+	    t.start();
+  }
 
 }

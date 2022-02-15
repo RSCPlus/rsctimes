@@ -48,6 +48,8 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import javax.imageio.ImageIO;
@@ -181,9 +183,8 @@ public class ConfigWindow {
     private JCheckBox overlayPanelRscTimesButtonsFunctionalCheckbox;
     private JCheckBox overlayPanelWikiLookupOnMagicBookCheckbox;
     private JCheckBox overlayPanelWikiLookupOnHbarCheckbox;
-    private JCheckBox overlayPanelRemoveReportAbuseButtonHbarCheckbox;
     private JCheckBox overlayPanelPositionCheckbox;
-    private JCheckBox overlayPanelRetroFpsCheckbox;
+    private JCheckBox overlayPanelHideFpsCheckbox;
     private JCheckBox overlayPanelItemNamesCheckbox;
     private JCheckBox overlayPanelPlayerNamesCheckbox;
     private JCheckBox overlayPanelFriendNamesCheckbox;
@@ -191,10 +192,6 @@ public class ConfigWindow {
     private JCheckBox overlayPanelIDsCheckbox;
     private JCheckBox overlayPanelObjectInfoCheckbox;
     private JCheckBox overlayPanelHitboxCheckbox;
-    private JCheckBox overlayPanelXPBarCheckbox;
-    private JCheckBox overlayPanelXPDropsCheckbox;
-    private JRadioButton overlayPanelXPCenterAlignFocusButton;
-    private JRadioButton overlayPanelXPRightAlignFocusButton;
     private JCheckBox overlayPanelShowCombatInfoCheckbox;
     private JCheckBox overlayPanelUsePercentageCheckbox;
     private JCheckBox overlayPanelFoodHealingCheckbox;
@@ -350,7 +347,7 @@ public class ConfigWindow {
 
         // tabbedPane.addTab("Presets", null, presetsScrollPane, null);
         tabbedPane.addTab("General", null, generalScrollPane, null);
-        // tabbedPane.addTab("Overlays", null, overlayScrollPane, null);
+        tabbedPane.addTab("Overlays", null, overlayScrollPane, null);
         // tabbedPane.addTab("Notifications", null, notificationScrollPane, null);
         // tabbedPane.addTab("Streaming & Privacy", null, streamingScrollPane, null);
         tabbedPane.addTab("Keybinds", null, keybindScrollPane, null);
@@ -495,7 +492,6 @@ public class ConfigWindow {
         generalPanelClientSizeCheckbox =
                 addCheckbox("Default client size:", generalPanelClientSizePanel);
         generalPanelClientSizeCheckbox.setToolTipText("Start the client with the supplied window size");
-        generalPanelClientSizeCheckbox.setEnabled(false);
 
         generalPanelClientSizeXSpinner = new JSpinner();
         generalPanelClientSizePanel.add(generalPanelClientSizeXSpinner);
@@ -515,11 +511,8 @@ public class ConfigWindow {
         generalPanelClientSizeYSpinner.setMaximumSize(new Dimension(58, 22));
         generalPanelClientSizeYSpinner.setMinimumSize(new Dimension(58, 22));
         generalPanelClientSizeYSpinner.setAlignmentY((float) 0.75);
-        generalPanelClientSizeYSpinner.setToolTipText("Default client height (334 minimum)");
+        generalPanelClientSizeYSpinner.setToolTipText("Default client height (357 minimum)");
         generalPanelClientSizeYSpinner.putClientProperty("JComponent.sizeVariant", "mini");
-
-        generalPanelClientSizeXSpinner.setEnabled(false);
-        generalPanelClientSizeYSpinner.setEnabled(false);
 
 
         // Sanitize JSpinner values
@@ -529,8 +522,8 @@ public class ConfigWindow {
         spinnerWinXModel.setStepSize(10);
         generalPanelClientSizeXSpinner.setModel(spinnerWinXModel);
         SpinnerNumberModel spinnerWinYModel = new SpinnerNumberModel();
-        spinnerWinYModel.setMinimum(334);
-        spinnerWinYModel.setValue(334);
+        spinnerWinYModel.setMinimum(357);
+        spinnerWinYModel.setValue(357);
         spinnerWinYModel.setStepSize(10);
         generalPanelClientSizeYSpinner.setModel(spinnerWinYModel);
 
@@ -862,6 +855,7 @@ public class ConfigWindow {
 
         overlayPanelLastMenuActionCheckbox = addCheckbox("Show last menu action display", overlayPanel);
         overlayPanelLastMenuActionCheckbox.setToolTipText("Toggle last menu action used display");
+        overlayPanelLastMenuActionCheckbox.setEnabled(false);
 
         overlayPanelMouseTooltipCheckbox =
                 addCheckbox("Show mouse hover action at mouse cursor", overlayPanel);
@@ -903,22 +897,17 @@ public class ConfigWindow {
 
         overlayPanelWikiLookupOnHbarCheckbox =
                 addCheckbox(
-                        "Search the RSC Wiki with a button in the bottom blue bar (replaces Report Abuse button at low width)",
+                        "Search the RSC Wiki with a button in the bottom blue bar",
                         overlayPanel);
         overlayPanelWikiLookupOnHbarCheckbox.setToolTipText(
                 "Click the button on the bottom bar, then click on anything else, and it will look it up on the RSC wiki.");
 
-        overlayPanelRemoveReportAbuseButtonHbarCheckbox =
-                addCheckbox("Remove Report Abuse Button (Similar to prior to 2002-09-11)", overlayPanel);
-        overlayPanelRemoveReportAbuseButtonHbarCheckbox.setToolTipText(
-                "mudclient149 added the Report Abuse button. You will still be able to report players with right click menu if this option is enabled.");
-
         overlayPanelPositionCheckbox = addCheckbox("Display position", overlayPanel);
         overlayPanelPositionCheckbox.setToolTipText("Shows the player's global position");
 
-        overlayPanelRetroFpsCheckbox = addCheckbox("Display FPS like early RSC", overlayPanel);
-        overlayPanelRetroFpsCheckbox.setToolTipText(
-                "Shows the FPS like it used to be displayed in RSC");
+        overlayPanelHideFpsCheckbox = addCheckbox("Hides FPS like newer RSC", overlayPanel);
+        overlayPanelHideFpsCheckbox.setToolTipText(
+                "Hides the FPS like it would occur in newer RSC versions");
 
         overlayPanelShowCombatInfoCheckbox = addCheckbox("Show NPC HP info", overlayPanel);
         overlayPanelShowCombatInfoCheckbox.setToolTipText(
@@ -945,27 +934,6 @@ public class ConfigWindow {
                 "Shows the seconds until your HP will naturally regenerate");
         // TODO: Remove this line when the HP regen timer is implemented
         overlayPanelHPRegenTimerCheckbox.setEnabled(false);
-
-        /// XP Bar
-        addSettingsHeader(overlayPanel, "XP Bar");
-        overlayPanelXPBarCheckbox = addCheckbox("Show an XP bar", overlayPanel);
-        overlayPanelXPBarCheckbox.setToolTipText("Show an XP bar to the left of the wrench");
-        overlayPanelXPBarCheckbox.setBorder(new EmptyBorder(0, 0, 10, 0));
-
-        overlayPanelXPDropsCheckbox = addCheckbox("Show XP drops", overlayPanel);
-        overlayPanelXPDropsCheckbox.setToolTipText(
-                "Show the XP gained as an overlay each time XP is received");
-
-        ButtonGroup XPAlignButtonGroup = new ButtonGroup();
-        overlayPanelXPRightAlignFocusButton = addRadioButton("Display on the right", overlayPanel, 20);
-        overlayPanelXPRightAlignFocusButton.setToolTipText(
-                "The XP bar and XP drops will be shown just left of the Settings menu.");
-        overlayPanelXPCenterAlignFocusButton =
-                addRadioButton("Display in the center", overlayPanel, 20);
-        overlayPanelXPCenterAlignFocusButton.setToolTipText(
-                "The XP bar and XP drops will be shown at the top-middle of the screen.");
-        XPAlignButtonGroup.add(overlayPanelXPRightAlignFocusButton);
-        XPAlignButtonGroup.add(overlayPanelXPCenterAlignFocusButton);
 
         /// "In World" Overlays move with the camera, and modify objects that the are rendered in the
         // world
@@ -997,6 +965,7 @@ public class ConfigWindow {
         overlayPanelObjectInfoCheckbox = addCheckbox("Trace object info", overlayPanel);
         overlayPanelObjectInfoCheckbox.setToolTipText(
                 "Displays object information after their name on the right click examine");
+        overlayPanelObjectInfoCheckbox.setEnabled(false);
 
         overlayPanelItemNamesCheckbox =
                 addCheckbox("Display the names of items on the ground", overlayPanel);
@@ -2120,7 +2089,8 @@ public class ConfigWindow {
         }
 
         // Overlays tab
-        /*
+        overlayPanelStatusDisplayCheckbox.setSelected(
+                Settings.SHOW_HP_OVERLAY.get(Settings.currentProfile));
         overlayPanelBuffsCheckbox.setSelected(Settings.SHOW_BUFFS.get(Settings.currentProfile));
         overlayPanelLastMenuActionCheckbox.setSelected(
                 Settings.SHOW_LAST_MENU_ACTION.get(Settings.currentProfile));
@@ -2129,20 +2099,18 @@ public class ConfigWindow {
         overlayPanelExtendedTooltipCheckbox.setSelected(
                 Settings.SHOW_EXTENDED_TOOLTIP.get(Settings.currentProfile));
         overlayPanelInvCountCheckbox.setSelected(Settings.SHOW_INVCOUNT.get(Settings.currentProfile));
-        overlayPanelRscPlusButtonsCheckbox.setSelected(
-                Settings.SHOW_RSCPLUS_BUTTONS.get(Settings.currentProfile));
-        overlayPanelRscPlusButtonsFunctionalCheckbox.setSelected(
-                Settings.RSCPLUS_BUTTONS_FUNCTIONAL.get(Settings.currentProfile)
-                        || Settings.SHOW_RSCPLUS_BUTTONS.get(Settings.currentProfile));
+        overlayPanelRscTimesButtonsCheckbox.setSelected(
+                Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile));
+        overlayPanelRscTimesButtonsFunctionalCheckbox.setSelected(
+                Settings.RSCTIMES_BUTTONS_FUNCTIONAL.get(Settings.currentProfile)
+                        || Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile));
         overlayPanelWikiLookupOnMagicBookCheckbox.setSelected(
                 Settings.WIKI_LOOKUP_ON_MAGIC_BOOK.get(Settings.currentProfile));
         overlayPanelWikiLookupOnHbarCheckbox.setSelected(
                 Settings.WIKI_LOOKUP_ON_HBAR.get(Settings.currentProfile));
-        overlayPanelRemoveReportAbuseButtonHbarCheckbox.setSelected(
-                Settings.REMOVE_REPORT_ABUSE_BUTTON_HBAR.get(Settings.currentProfile));
         overlayPanelPositionCheckbox.setSelected(
                 Settings.SHOW_PLAYER_POSITION.get(Settings.currentProfile));
-        overlayPanelRetroFpsCheckbox.setSelected(Settings.SHOW_RETRO_FPS.get(Settings.currentProfile));
+        overlayPanelHideFpsCheckbox.setSelected(Settings.HIDE_FPS.get(Settings.currentProfile));
         overlayPanelItemNamesCheckbox.setSelected(
                 Settings.SHOW_ITEM_GROUND_OVERLAY.get(Settings.currentProfile));
         overlayPanelPlayerNamesCheckbox.setSelected(
@@ -2159,12 +2127,6 @@ public class ConfigWindow {
                 Settings.SHOW_COMBAT_INFO.get(Settings.currentProfile));
         overlayPanelUsePercentageCheckbox.setSelected(
                 Settings.NPC_HEALTH_SHOW_PERCENTAGE.get(Settings.currentProfile));
-        overlayPanelXPBarCheckbox.setSelected(Settings.SHOW_XP_BAR.get(Settings.currentProfile));
-        overlayPanelXPDropsCheckbox.setSelected(Settings.SHOW_XPDROPS.get(Settings.currentProfile));
-        overlayPanelXPCenterAlignFocusButton.setSelected(
-                Settings.CENTER_XPDROPS.get(Settings.currentProfile));
-        overlayPanelXPRightAlignFocusButton.setSelected(
-                !Settings.CENTER_XPDROPS.get(Settings.currentProfile));
         overlayPanelLagIndicatorCheckbox.setSelected(
                 Settings.LAG_INDICATOR.get(Settings.currentProfile));
         overlayPanelFoodHealingCheckbox.setSelected(
@@ -2179,7 +2141,6 @@ public class ConfigWindow {
         highlightedItemsTextField.setText(
                 Util.joinAsString(",", Settings.HIGHLIGHTED_ITEMS.get("custom")));
         blockedItemsTextField.setText(Util.joinAsString(",", Settings.BLOCKED_ITEMS.get("custom")));
-        */
 
         // Notifications tab
         notificationPanelPMNotifsCheckbox.setSelected(
@@ -2247,7 +2208,6 @@ public class ConfigWindow {
     /** Saves the settings from the GUI values to the settings class variables */
     public void saveSettings() {
         // General options
-        /*
         Settings.CUSTOM_CLIENT_SIZE.put(
                 Settings.currentProfile, generalPanelClientSizeCheckbox.isSelected());
         Settings.CUSTOM_CLIENT_SIZE_X.put(
@@ -2256,7 +2216,6 @@ public class ConfigWindow {
         Settings.CUSTOM_CLIENT_SIZE_Y.put(
                 Settings.currentProfile,
                 ((SpinnerNumberModel) (generalPanelClientSizeYSpinner.getModel())).getNumber().intValue());
-         */
         Settings.CHECK_UPDATES.put(Settings.currentProfile, generalPanelCheckUpdates.isSelected());
         /*
         Settings.SHOW_SECURITY_TIP_DAY.put(
@@ -2323,7 +2282,8 @@ public class ConfigWindow {
          */
 
         // Overlays options
-        /*
+        Settings.SHOW_HP_OVERLAY.put(
+                Settings.currentProfile, overlayPanelStatusDisplayCheckbox.isSelected());
         Settings.SHOW_BUFFS.put(Settings.currentProfile, overlayPanelBuffsCheckbox.isSelected());
         Settings.SHOW_LAST_MENU_ACTION.put(
                 Settings.currentProfile, overlayPanelLastMenuActionCheckbox.isSelected());
@@ -2332,21 +2292,19 @@ public class ConfigWindow {
         Settings.SHOW_EXTENDED_TOOLTIP.put(
                 Settings.currentProfile, overlayPanelExtendedTooltipCheckbox.isSelected());
         Settings.SHOW_INVCOUNT.put(Settings.currentProfile, overlayPanelInvCountCheckbox.isSelected());
-        Settings.SHOW_RSCPLUS_BUTTONS.put(
-                Settings.currentProfile, overlayPanelRscPlusButtonsCheckbox.isSelected());
-        Settings.RSCPLUS_BUTTONS_FUNCTIONAL.put(
+        Settings.SHOW_RSCTIMES_BUTTONS.put(
+                Settings.currentProfile, overlayPanelRscTimesButtonsCheckbox.isSelected());
+        Settings.RSCTIMES_BUTTONS_FUNCTIONAL.put(
                 Settings.currentProfile,
-                overlayPanelRscPlusButtonsFunctionalCheckbox.isSelected()
-                        || overlayPanelRscPlusButtonsCheckbox.isSelected());
+                overlayPanelRscTimesButtonsFunctionalCheckbox.isSelected()
+                        || overlayPanelRscTimesButtonsCheckbox.isSelected());
         Settings.WIKI_LOOKUP_ON_MAGIC_BOOK.put(
                 Settings.currentProfile, overlayPanelWikiLookupOnMagicBookCheckbox.isSelected());
         Settings.WIKI_LOOKUP_ON_HBAR.put(
                 Settings.currentProfile, overlayPanelWikiLookupOnHbarCheckbox.isSelected());
-        Settings.REMOVE_REPORT_ABUSE_BUTTON_HBAR.put(
-                Settings.currentProfile, overlayPanelRemoveReportAbuseButtonHbarCheckbox.isSelected());
         Settings.SHOW_PLAYER_POSITION.put(
                 Settings.currentProfile, overlayPanelPositionCheckbox.isSelected());
-        Settings.SHOW_RETRO_FPS.put(Settings.currentProfile, overlayPanelRetroFpsCheckbox.isSelected());
+        Settings.HIDE_FPS.put(Settings.currentProfile, overlayPanelHideFpsCheckbox.isSelected());
         Settings.SHOW_ITEM_GROUND_OVERLAY.put(
                 Settings.currentProfile, overlayPanelItemNamesCheckbox.isSelected());
         Settings.SHOW_PLAYER_NAME_OVERLAY.put(
@@ -2363,7 +2321,6 @@ public class ConfigWindow {
                 Settings.currentProfile, overlayPanelShowCombatInfoCheckbox.isSelected());
         Settings.NPC_HEALTH_SHOW_PERCENTAGE.put(
                 Settings.currentProfile, overlayPanelUsePercentageCheckbox.isSelected());
-        Settings.SHOW_XP_BAR.put(Settings.currentProfile, overlayPanelXPBarCheckbox.isSelected());
         Settings.SHOW_FOOD_HEAL_OVERLAY.put(
                 Settings.currentProfile, overlayPanelFoodHealingCheckbox.isSelected());
         Settings.SHOW_TIME_UNTIL_HP_REGEN.put(
@@ -2377,7 +2334,6 @@ public class ConfigWindow {
                 "custom", new ArrayList<>(Arrays.asList(highlightedItemsTextField.getText().split(","))));
         Settings.BLOCKED_ITEMS.put(
                 "custom", new ArrayList<>(Arrays.asList(blockedItemsTextField.getText().split(","))));
-        */
 
 
         // Notifications options

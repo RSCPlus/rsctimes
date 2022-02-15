@@ -24,6 +24,9 @@ import Game.Game;
 import Game.KeyboardHandler;
 import Game.XPBar;
 
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -34,6 +37,8 @@ import java.util.HashMap;
 import java.util.Properties;
 
 public class Settings {
+	// Internally used variables
+  public static boolean fovUpdateRequired;
   public static boolean versionCheckRequired = true;
   public static int javaVersion = 0;
   public static final double VERSION_NUMBER = 20210811.150444;
@@ -55,12 +60,17 @@ public class Settings {
   public static HashMap<String, Integer> CUSTOM_CLIENT_SIZE_Y = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> CHECK_UPDATES = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> COLORIZE_CONSOLE_TEXT = new HashMap<String, Boolean>();
+  public static HashMap<String, Integer> FOV = new HashMap<String, Integer>();
+  public static HashMap<String, Boolean> SOFTWARE_CURSOR = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> FPS_LIMIT_ENABLED = new HashMap<String, Boolean>();
+  public static HashMap<String, Integer> FPS_LIMIT = new HashMap<String, Integer>();
   public static HashMap<String, Integer> LOG_VERBOSITY = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> LOG_SHOW_TIMESTAMPS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> LOG_SHOW_LEVEL = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> LOG_FORCE_TIMESTAMPS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> LOG_FORCE_LEVEL = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> PREFERS_XDG_OPEN = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> INVENTORY_FULL_ALERT = new HashMap<String, Boolean>();
 
   //// Notifications
   public static HashMap<String, Boolean> TRAY_NOTIFS = new HashMap<String, Boolean>();
@@ -79,10 +89,48 @@ public class Settings {
           new HashMap<String, Boolean>();
   public static HashMap<String, Integer> HIGHLIGHTED_ITEM_NOTIF_VALUE =
           new HashMap<String, Integer>();
-
-  //// OVERLAYS
+  
   public static HashMap<String, Boolean> SHOW_XP_BAR = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CENTER_XPDROPS = new HashMap<String, Boolean>();
+
+  ////overlays
+  public static HashMap<String, Boolean> SHOW_HP_OVERLAY =
+   new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_MOUSE_TOOLTIP = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_EXTENDED_TOOLTIP = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_BUFFS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_LAST_MENU_ACTION = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_INVCOUNT = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_RSCTIMES_BUTTONS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> RSCTIMES_BUTTONS_FUNCTIONAL =
+   new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> WIKI_LOOKUP_ON_MAGIC_BOOK = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> WIKI_LOOKUP_ON_HBAR = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_ITEM_GROUND_OVERLAY = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_PLAYER_NAME_OVERLAY = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_FRIEND_NAME_OVERLAY = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_NPC_NAME_OVERLAY = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> EXTEND_IDS_OVERLAY = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> TRACE_OBJECT_INFO = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_COMBAT_INFO = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_PLAYER_POSITION = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> HIDE_FPS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> NPC_HEALTH_SHOW_PERCENTAGE =
+   new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_HITBOX = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> LAG_INDICATOR = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_FOOD_HEAL_OVERLAY = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHOW_TIME_UNTIL_HP_REGEN = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> DEBUG = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> EXCEPTION_HANDLER = new HashMap<String, Boolean>();
+  public static HashMap<String, ArrayList<String>> HIGHLIGHTED_ITEMS =
+   new HashMap<String, ArrayList<String>>();
+  public static HashMap<String, ArrayList<String>> BLOCKED_ITEMS =
+   new HashMap<String, ArrayList<String>>();
+  
+  public static HashMap<String, Boolean> SAVE_LOGININFO = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> START_LOGINSCREEN = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SPEEDRUNNER_MODE_ACTIVE = new HashMap<String, Boolean>();
 
   //// world list
   public static HashMap<Integer, String> WORLD_URLS = new HashMap<Integer, String>();
@@ -216,12 +264,12 @@ public class Settings {
     CUSTOM_CLIENT_SIZE_X.put(
             "custom", getPropInt(props, "custom_client_size_x", CUSTOM_CLIENT_SIZE_X.get("default")));
 
-    CUSTOM_CLIENT_SIZE_Y.put("vanilla", 334);
-    CUSTOM_CLIENT_SIZE_Y.put("vanilla_resizable", 334);
-    CUSTOM_CLIENT_SIZE_Y.put("lite", 334);
-    CUSTOM_CLIENT_SIZE_Y.put("default", 334);
-    CUSTOM_CLIENT_SIZE_Y.put("heavy", 334);
-    CUSTOM_CLIENT_SIZE_Y.put("all", 334);
+    CUSTOM_CLIENT_SIZE_Y.put("vanilla", 357);
+    CUSTOM_CLIENT_SIZE_Y.put("vanilla_resizable", 357);
+    CUSTOM_CLIENT_SIZE_Y.put("lite", 357);
+    CUSTOM_CLIENT_SIZE_Y.put("default", 357);
+    CUSTOM_CLIENT_SIZE_Y.put("heavy", 357);
+    CUSTOM_CLIENT_SIZE_Y.put("all", 357);
     CUSTOM_CLIENT_SIZE_Y.put(
             "custom", getPropInt(props, "custom_client_size_y", CUSTOM_CLIENT_SIZE_Y.get("default")));
 
@@ -242,6 +290,40 @@ public class Settings {
     COLORIZE_CONSOLE_TEXT.put("all", true);
     COLORIZE_CONSOLE_TEXT.put(
             "custom", getPropBoolean(props, "colorize", COLORIZE_CONSOLE_TEXT.get("default")));
+    
+    FOV.put("vanilla", 9);
+    FOV.put("vanilla_resizable", 9);
+    FOV.put("lite", 9);
+    FOV.put("default", 9);
+    FOV.put("heavy", 9);
+    FOV.put("all", 9);
+    FOV.put("custom", getPropInt(props, "fov", FOV.get("default")));
+    
+    FPS_LIMIT_ENABLED.put("vanilla", false);
+    FPS_LIMIT_ENABLED.put("vanilla_resizable", false);
+    FPS_LIMIT_ENABLED.put("lite", false);
+    FPS_LIMIT_ENABLED.put("default", false);
+    FPS_LIMIT_ENABLED.put("heavy", false);
+    FPS_LIMIT_ENABLED.put("all", true);
+    FPS_LIMIT_ENABLED.put(
+        "custom", getPropBoolean(props, "fps_limit_enabled", FPS_LIMIT_ENABLED.get("default")));
+
+    FPS_LIMIT.put("vanilla", 10);
+    FPS_LIMIT.put("vanilla_resizable", 10);
+    FPS_LIMIT.put("lite", 10);
+    FPS_LIMIT.put("default", 10);
+    FPS_LIMIT.put("heavy", 10);
+    FPS_LIMIT.put("all", 10);
+    FPS_LIMIT.put("custom", getPropInt(props, "fps_limit", FPS_LIMIT.get("default")));
+    
+    SOFTWARE_CURSOR.put("vanilla", false);
+    SOFTWARE_CURSOR.put("vanilla_resizable", false);
+    SOFTWARE_CURSOR.put("lite", false);
+    SOFTWARE_CURSOR.put("default", false);
+    SOFTWARE_CURSOR.put("heavy", false);
+    SOFTWARE_CURSOR.put("all", true);
+    SOFTWARE_CURSOR.put(
+        "custom", getPropBoolean(props, "software_cursor", SOFTWARE_CURSOR.get("default")));
 
 
     LOG_VERBOSITY.put("vanilla", Logger.Type.GAME.id);
@@ -298,6 +380,16 @@ public class Settings {
     PREFERS_XDG_OPEN.put("all", true);
     PREFERS_XDG_OPEN.put(
             "custom", getPropBoolean(props, "prefers_xdg_open", PREFERS_XDG_OPEN.get("default")));
+    
+    INVENTORY_FULL_ALERT.put("vanilla", false);
+    INVENTORY_FULL_ALERT.put("vanilla_resizable", false);
+    INVENTORY_FULL_ALERT.put("lite", false);
+    INVENTORY_FULL_ALERT.put("default", false);
+    INVENTORY_FULL_ALERT.put("heavy", false);
+    INVENTORY_FULL_ALERT.put("all", true);
+    INVENTORY_FULL_ALERT.put(
+        "custom",
+        getPropBoolean(props, "inventory_full_alert", INVENTORY_FULL_ALERT.get("default")));
 
 
     //// notifications
@@ -437,22 +529,295 @@ public class Settings {
                     props, "highlighted_item_notif_value", HIGHLIGHTED_ITEM_NOTIF_VALUE.get("default")));
 
     // OVERLAYS
-    SHOW_XP_BAR.put("vanilla", false);
-    SHOW_XP_BAR.put("vanilla_resizable", false);
-    SHOW_XP_BAR.put("lite", false);
-    SHOW_XP_BAR.put("default", true);
-    SHOW_XP_BAR.put("heavy", true);
-    SHOW_XP_BAR.put("all", true);
-    SHOW_XP_BAR.put("custom", getPropBoolean(props, "show_xp_bar", SHOW_XP_BAR.get("default")));
+    SHOW_HP_OVERLAY.put("vanilla", false);
+    SHOW_HP_OVERLAY.put("vanilla_resizable", false);
+    SHOW_HP_OVERLAY.put("lite", true);
+    SHOW_HP_OVERLAY.put("default", true);
+    SHOW_HP_OVERLAY.put("heavy", true);
+    SHOW_HP_OVERLAY.put("all", true);
+    SHOW_HP_OVERLAY.put(
+        "custom",
+        getPropBoolean(props, "show_statusdisplay", SHOW_HP_OVERLAY.get("default")));
 
-    CENTER_XPDROPS.put("vanilla", false);
-    CENTER_XPDROPS.put("vanilla_resizable", false);
-    CENTER_XPDROPS.put("lite", false);
-    CENTER_XPDROPS.put("default", false);
-    CENTER_XPDROPS.put("heavy", true);
-    CENTER_XPDROPS.put("all", true);
-    CENTER_XPDROPS.put(
-            "custom", getPropBoolean(props, "center_xpdrops", CENTER_XPDROPS.get("default")));
+    SHOW_BUFFS.put("vanilla", false);
+    SHOW_BUFFS.put("vanilla_resizable", false);
+    SHOW_BUFFS.put("lite", true);
+    SHOW_BUFFS.put("default", true);
+    SHOW_BUFFS.put("heavy", true);
+    SHOW_BUFFS.put("all", true);
+    SHOW_BUFFS.put("custom", getPropBoolean(props, "show_buffs", SHOW_BUFFS.get("default")));
+
+    SHOW_LAST_MENU_ACTION.put("vanilla", false);
+    SHOW_LAST_MENU_ACTION.put("vanilla_resizable", false);
+    SHOW_LAST_MENU_ACTION.put("lite", false);
+    SHOW_LAST_MENU_ACTION.put("default", false);
+    SHOW_LAST_MENU_ACTION.put("heavy", true);
+    SHOW_LAST_MENU_ACTION.put("all", true);
+    SHOW_LAST_MENU_ACTION.put(
+        "custom",
+        getPropBoolean(props, "show_last_menu_action", SHOW_LAST_MENU_ACTION.get("default")));
+
+    SHOW_MOUSE_TOOLTIP.put("vanilla", false);
+    SHOW_MOUSE_TOOLTIP.put("vanilla_resizable", false);
+    SHOW_MOUSE_TOOLTIP.put("lite", false);
+    SHOW_MOUSE_TOOLTIP.put("default", false);
+    SHOW_MOUSE_TOOLTIP.put("heavy", true);
+    SHOW_MOUSE_TOOLTIP.put("all", true);
+    SHOW_MOUSE_TOOLTIP.put(
+        "custom", getPropBoolean(props, "show_mouse_tooltip", SHOW_MOUSE_TOOLTIP.get("default")));
+
+    SHOW_EXTENDED_TOOLTIP.put("vanilla", false);
+    SHOW_EXTENDED_TOOLTIP.put("vanilla_resizable", false);
+    SHOW_EXTENDED_TOOLTIP.put("lite", false);
+    SHOW_EXTENDED_TOOLTIP.put("default", true);
+    SHOW_EXTENDED_TOOLTIP.put("heavy", true);
+    SHOW_EXTENDED_TOOLTIP.put("all", true);
+    SHOW_EXTENDED_TOOLTIP.put(
+        "custom",
+        getPropBoolean(props, "show_extended_tooltip", SHOW_EXTENDED_TOOLTIP.get("default")));
+
+    SHOW_INVCOUNT.put("vanilla", false);
+    SHOW_INVCOUNT.put("vanilla_resizable", false);
+    SHOW_INVCOUNT.put("lite", true);
+    SHOW_INVCOUNT.put("default", true);
+    SHOW_INVCOUNT.put("heavy", true);
+    SHOW_INVCOUNT.put("all", true);
+    SHOW_INVCOUNT.put(
+        "custom", getPropBoolean(props, "show_invcount", SHOW_INVCOUNT.get("default")));
+
+    SHOW_RSCTIMES_BUTTONS.put("vanilla", false);
+    SHOW_RSCTIMES_BUTTONS.put("vanilla_resizable", false);
+    SHOW_RSCTIMES_BUTTONS.put("lite", true);
+    SHOW_RSCTIMES_BUTTONS.put("default", true);
+    SHOW_RSCTIMES_BUTTONS.put("heavy", true);
+    SHOW_RSCTIMES_BUTTONS.put("all", true);
+    SHOW_RSCTIMES_BUTTONS.put(
+        "custom",
+        getPropBoolean(props, "show_rsctimes_buttons", SHOW_RSCTIMES_BUTTONS.get("default")));
+
+    RSCTIMES_BUTTONS_FUNCTIONAL.put("vanilla", false);
+    RSCTIMES_BUTTONS_FUNCTIONAL.put("vanilla_resizable", false);
+    RSCTIMES_BUTTONS_FUNCTIONAL.put("lite", true);
+    RSCTIMES_BUTTONS_FUNCTIONAL.put("default", true);
+    RSCTIMES_BUTTONS_FUNCTIONAL.put("heavy", true);
+    RSCTIMES_BUTTONS_FUNCTIONAL.put("all", true);
+    RSCTIMES_BUTTONS_FUNCTIONAL.put(
+        "custom",
+        getPropBoolean(
+            props, "rsctimes_buttons_functional", RSCTIMES_BUTTONS_FUNCTIONAL.get("default")));
+
+    WIKI_LOOKUP_ON_MAGIC_BOOK.put("vanilla", false);
+    WIKI_LOOKUP_ON_MAGIC_BOOK.put("vanilla_resizable", false);
+    WIKI_LOOKUP_ON_MAGIC_BOOK.put("lite", false);
+    WIKI_LOOKUP_ON_MAGIC_BOOK.put("default", false);
+    WIKI_LOOKUP_ON_MAGIC_BOOK.put("heavy", true);
+    WIKI_LOOKUP_ON_MAGIC_BOOK.put("all", true);
+    WIKI_LOOKUP_ON_MAGIC_BOOK.put(
+        "custom",
+        getPropBoolean(
+            props, "wiki_lookup_on_magic_book", WIKI_LOOKUP_ON_MAGIC_BOOK.get("default")));
+
+    WIKI_LOOKUP_ON_HBAR.put("vanilla", false);
+    WIKI_LOOKUP_ON_HBAR.put("vanilla_resizable", false);
+    WIKI_LOOKUP_ON_HBAR.put("lite", false);
+    WIKI_LOOKUP_ON_HBAR.put("default", true);
+    WIKI_LOOKUP_ON_HBAR.put("heavy", true);
+    WIKI_LOOKUP_ON_HBAR.put("all", true);
+    WIKI_LOOKUP_ON_HBAR.put(
+        "custom", getPropBoolean(props, "wiki_lookup_on_hbar", WIKI_LOOKUP_ON_HBAR.get("default")));
+
+    SHOW_ITEM_GROUND_OVERLAY.put("vanilla", false);
+    SHOW_ITEM_GROUND_OVERLAY.put("vanilla_resizable", false);
+    SHOW_ITEM_GROUND_OVERLAY.put("lite", false);
+    SHOW_ITEM_GROUND_OVERLAY.put("default", true);
+    SHOW_ITEM_GROUND_OVERLAY.put("heavy", true);
+    SHOW_ITEM_GROUND_OVERLAY.put("all", true);
+    SHOW_ITEM_GROUND_OVERLAY.put(
+        "custom", getPropBoolean(props, "show_iteminfo", SHOW_ITEM_GROUND_OVERLAY.get("default")));
+
+    SHOW_PLAYER_NAME_OVERLAY.put("vanilla", false);
+    SHOW_PLAYER_NAME_OVERLAY.put("vanilla_resizable", false);
+    SHOW_PLAYER_NAME_OVERLAY.put("lite", false);
+    SHOW_PLAYER_NAME_OVERLAY.put("default", false);
+    SHOW_PLAYER_NAME_OVERLAY.put("heavy", false);
+    SHOW_PLAYER_NAME_OVERLAY.put("all", true);
+    SHOW_PLAYER_NAME_OVERLAY.put(
+        "custom",
+        getPropBoolean(props, "show_playerinfo", SHOW_PLAYER_NAME_OVERLAY.get("default")));
+
+    SHOW_FRIEND_NAME_OVERLAY.put("vanilla", false);
+    SHOW_FRIEND_NAME_OVERLAY.put("vanilla_resizable", false);
+    SHOW_FRIEND_NAME_OVERLAY.put("lite", false);
+    SHOW_FRIEND_NAME_OVERLAY.put("default", false);
+    SHOW_FRIEND_NAME_OVERLAY.put("heavy", true);
+    SHOW_FRIEND_NAME_OVERLAY.put("all", true);
+    SHOW_FRIEND_NAME_OVERLAY.put(
+        "custom",
+        getPropBoolean(props, "show_friendinfo", SHOW_FRIEND_NAME_OVERLAY.get("default")));
+
+    SHOW_NPC_NAME_OVERLAY.put("vanilla", false);
+    SHOW_NPC_NAME_OVERLAY.put("vanilla_resizable", false);
+    SHOW_NPC_NAME_OVERLAY.put("lite", false);
+    SHOW_NPC_NAME_OVERLAY.put("default", false);
+    SHOW_NPC_NAME_OVERLAY.put("heavy", false);
+    SHOW_NPC_NAME_OVERLAY.put("all", true);
+    SHOW_NPC_NAME_OVERLAY.put(
+        "custom", getPropBoolean(props, "show_npcinfo", SHOW_NPC_NAME_OVERLAY.get("default")));
+
+    EXTEND_IDS_OVERLAY.put("vanilla", false);
+    EXTEND_IDS_OVERLAY.put("vanilla_resizable", false);
+    EXTEND_IDS_OVERLAY.put("lite", false);
+    EXTEND_IDS_OVERLAY.put("default", false);
+    EXTEND_IDS_OVERLAY.put("heavy", false);
+    EXTEND_IDS_OVERLAY.put("all", true);
+    EXTEND_IDS_OVERLAY.put(
+        "custom", getPropBoolean(props, "extend_idsinfo", EXTEND_IDS_OVERLAY.get("default")));
+
+    TRACE_OBJECT_INFO.put("vanilla", false);
+    TRACE_OBJECT_INFO.put("vanilla_resizable", false);
+    TRACE_OBJECT_INFO.put("lite", false);
+    TRACE_OBJECT_INFO.put("default", false);
+    TRACE_OBJECT_INFO.put("heavy", false);
+    TRACE_OBJECT_INFO.put("all", true);
+    TRACE_OBJECT_INFO.put(
+        "custom", getPropBoolean(props, "trace_objectinfo", TRACE_OBJECT_INFO.get("default")));
+
+    SHOW_COMBAT_INFO.put("vanilla", false);
+    SHOW_COMBAT_INFO.put("vanilla_resizable", false);
+    SHOW_COMBAT_INFO.put("lite", false);
+    SHOW_COMBAT_INFO.put("default", false);
+    SHOW_COMBAT_INFO.put("heavy", true);
+    SHOW_COMBAT_INFO.put("all", true);
+    SHOW_COMBAT_INFO.put(
+        "custom", getPropBoolean(props, "show_combat_info", SHOW_COMBAT_INFO.get("default")));
+
+    LAG_INDICATOR.put("vanilla", false);
+    LAG_INDICATOR.put("vanilla_resizable", false);
+    LAG_INDICATOR.put("lite", false);
+    LAG_INDICATOR.put("default", true);
+    LAG_INDICATOR.put("heavy", true);
+    LAG_INDICATOR.put("all", true);
+    LAG_INDICATOR.put("custom", getPropBoolean(props, "indicators", LAG_INDICATOR.get("default")));
+
+    SHOW_PLAYER_POSITION.put("vanilla", false);
+    SHOW_PLAYER_POSITION.put("vanilla_resizable", false);
+    SHOW_PLAYER_POSITION.put("lite", false);
+    SHOW_PLAYER_POSITION.put("default", false);
+    SHOW_PLAYER_POSITION.put("heavy", true);
+    SHOW_PLAYER_POSITION.put("all", true);
+    SHOW_PLAYER_POSITION.put(
+        "custom",
+        getPropBoolean(props, "show_player_position", SHOW_PLAYER_POSITION.get("default")));
+
+    HIDE_FPS.put("vanilla", false);
+    HIDE_FPS.put("vanilla_resizable", false);
+    HIDE_FPS.put("lite", false);
+    HIDE_FPS.put("default", false);
+    HIDE_FPS.put("heavy", true);
+    HIDE_FPS.put("all", true);
+    HIDE_FPS.put(
+        "custom", getPropBoolean(props, "hide_fps", HIDE_FPS.get("default")));
+
+    NPC_HEALTH_SHOW_PERCENTAGE.put("vanilla", false);
+    NPC_HEALTH_SHOW_PERCENTAGE.put("vanilla_resizable", false);
+    NPC_HEALTH_SHOW_PERCENTAGE.put("lite", false);
+    NPC_HEALTH_SHOW_PERCENTAGE.put("default", false);
+    NPC_HEALTH_SHOW_PERCENTAGE.put("heavy", false);
+    NPC_HEALTH_SHOW_PERCENTAGE.put("all", true);
+    NPC_HEALTH_SHOW_PERCENTAGE.put(
+        "custom",
+        getPropBoolean(props, "use_percentage", NPC_HEALTH_SHOW_PERCENTAGE.get("default")));
+
+    SHOW_HITBOX.put("vanilla", false);
+    SHOW_HITBOX.put("vanilla_resizable", false);
+    SHOW_HITBOX.put("lite", false);
+    SHOW_HITBOX.put("default", false);
+    SHOW_HITBOX.put("heavy", false);
+    SHOW_HITBOX.put("all", true);
+    SHOW_HITBOX.put("custom", getPropBoolean(props, "show_hitbox", SHOW_HITBOX.get("default")));
+
+    SHOW_FOOD_HEAL_OVERLAY.put("vanilla", false);
+    SHOW_FOOD_HEAL_OVERLAY.put("vanilla_resizable", false);
+    SHOW_FOOD_HEAL_OVERLAY.put("lite", false);
+    SHOW_FOOD_HEAL_OVERLAY.put("default", false);
+    SHOW_FOOD_HEAL_OVERLAY.put("heavy", true);
+    SHOW_FOOD_HEAL_OVERLAY.put("all", true);
+    SHOW_FOOD_HEAL_OVERLAY.put(
+        "custom",
+        getPropBoolean(props, "show_food_heal_overlay", SHOW_FOOD_HEAL_OVERLAY.get("default")));
+
+    SHOW_TIME_UNTIL_HP_REGEN.put("vanilla", false);
+    SHOW_TIME_UNTIL_HP_REGEN.put("vanilla_resizable", false);
+    SHOW_TIME_UNTIL_HP_REGEN.put("lite", false);
+    SHOW_TIME_UNTIL_HP_REGEN.put("default", false);
+    SHOW_TIME_UNTIL_HP_REGEN.put("heavy", true);
+    SHOW_TIME_UNTIL_HP_REGEN.put("all", true);
+    SHOW_TIME_UNTIL_HP_REGEN.put(
+        "custom",
+        getPropBoolean(props, "show_time_until_hp_regen", SHOW_TIME_UNTIL_HP_REGEN.get("default")));
+
+    DEBUG.put("vanilla", false);
+    DEBUG.put("vanilla_resizable", false);
+    DEBUG.put("lite", false);
+    DEBUG.put("default", false);
+    DEBUG.put("heavy", false);
+    DEBUG.put("all", false);
+    DEBUG.put("custom", getPropBoolean(props, "debug", DEBUG.get("default")));
+
+    EXCEPTION_HANDLER.put("vanilla", false);
+    EXCEPTION_HANDLER.put("vanilla_resizable", false);
+    EXCEPTION_HANDLER.put("lite", false);
+    EXCEPTION_HANDLER.put("default", false);
+    EXCEPTION_HANDLER.put("heavy", false);
+    EXCEPTION_HANDLER.put("all", false);
+    EXCEPTION_HANDLER.put(
+        "custom", getPropBoolean(props, "exception_handler", EXCEPTION_HANDLER.get("default")));
+
+    HIGHLIGHTED_ITEMS.put("vanilla", new ArrayList<String>());
+    HIGHLIGHTED_ITEMS.put("vanilla_resizable", new ArrayList<String>());
+    HIGHLIGHTED_ITEMS.put("lite", new ArrayList<String>());
+    HIGHLIGHTED_ITEMS.put("default", new ArrayList<String>());
+    HIGHLIGHTED_ITEMS.put("heavy", new ArrayList<String>());
+    HIGHLIGHTED_ITEMS.put("all", new ArrayList<String>());
+    HIGHLIGHTED_ITEMS.put(
+        "custom",
+        getPropArrayListString(props, "highlighted_items", HIGHLIGHTED_ITEMS.get("default")));
+
+    BLOCKED_ITEMS.put("vanilla", new ArrayList<String>());
+    BLOCKED_ITEMS.put("vanilla_resizable", new ArrayList<String>());
+    BLOCKED_ITEMS.put("lite", new ArrayList<String>());
+    BLOCKED_ITEMS.put("default", new ArrayList<String>());
+    BLOCKED_ITEMS.put("heavy", new ArrayList<String>());
+    BLOCKED_ITEMS.put("all", new ArrayList<String>());
+    BLOCKED_ITEMS.put(
+        "custom", getPropArrayListString(props, "blocked_items", BLOCKED_ITEMS.get("default")));
+    
+    SAVE_LOGININFO.put("vanilla", false);
+    SAVE_LOGININFO.put("vanilla_resizable", false);
+    SAVE_LOGININFO.put("lite", true);
+    SAVE_LOGININFO.put("default", true);
+    SAVE_LOGININFO.put("heavy", true);
+    SAVE_LOGININFO.put("all", true);
+    SAVE_LOGININFO.put(
+        "custom", getPropBoolean(props, "save_logininfo", SAVE_LOGININFO.get("default")));
+
+    START_LOGINSCREEN.put("vanilla", false);
+    START_LOGINSCREEN.put("vanilla_resizable", false);
+    START_LOGINSCREEN.put("lite", true);
+    START_LOGINSCREEN.put("default", true);
+    START_LOGINSCREEN.put("heavy", true);
+    START_LOGINSCREEN.put("all", true);
+    START_LOGINSCREEN.put(
+        "custom", getPropBoolean(props, "start_loginscreen", START_LOGINSCREEN.get("default")));
+
+    SPEEDRUNNER_MODE_ACTIVE.put("vanilla", false);
+    SPEEDRUNNER_MODE_ACTIVE.put("vanilla_resizable", false);
+    SPEEDRUNNER_MODE_ACTIVE.put("lite", false);
+    SPEEDRUNNER_MODE_ACTIVE.put("default", false);
+    SPEEDRUNNER_MODE_ACTIVE.put("heavy", false);
+    SPEEDRUNNER_MODE_ACTIVE.put("all", true);
+    SPEEDRUNNER_MODE_ACTIVE.put(
+        "custom", getPropBoolean(props, "speedrun_active", SPEEDRUNNER_MODE_ACTIVE.get("default")));
 
     UPDATE_CONFIRMATION.put("vanilla", false);
     UPDATE_CONFIRMATION.put("vanilla_resizable", false);
@@ -669,6 +1034,21 @@ public class Settings {
     }
     return false;
   }
+  
+  public static void checkSoftwareCursor() {
+	    if (SOFTWARE_CURSOR.get(currentProfile)) {
+	      Game.getInstance()
+	          .setCursor(
+	              Game.getInstance()
+	                  .getToolkit()
+	                  .createCustomCursor(
+	                      new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB),
+	                      new Point(0, 0),
+	                      "null"));
+	    } else {
+	      Game.getInstance().setCursor(Cursor.getDefaultCursor());
+	    }
+	  }
 
   /**
    * Gets the String value of a Properties object for the specified key. If no value is defined for
@@ -686,6 +1066,25 @@ public class Settings {
     }
 
     return value;
+  }
+  
+  /**
+   * Gets the ArrayList<String> value of a Properties object for the specified key. If no value is
+   * defined for that key, it returns the specified default value.
+   *
+   * @param props the Properties object to read
+   * @param key the name of the property to lookup
+   * @param defaultProp the default ArrayList<String> value of the specified property
+   * @return an ArrayList<String> value corresponding to the specified property
+   */
+  private static ArrayList<String> getPropArrayListString(
+      Properties props, String key, ArrayList<String> defaultProp) {
+    String valueString = props.getProperty(key);
+    if (valueString == null) {
+      return defaultProp;
+    }
+
+    return new ArrayList<>(Arrays.asList(valueString.split(",")));
   }
 
   /**
@@ -855,12 +1254,12 @@ public class Settings {
       props.setProperty("camera_movable", Boolean.toString(CAMERA_MOVABLE.get(preset)));
       props.setProperty(
               "camera_movable_relative", Boolean.toString(CAMERA_MOVABLE_RELATIVE.get(preset)));
-      props.setProperty("colorize", Boolean.toString(COLORIZE_CONSOLE_TEXT.get(preset)));
+      props.setProperty("colorize", Boolean.toString(COLORIZE_CONSOLE_TEXT.get(preset)));*/
       props.setProperty("fov", Integer.toString(FOV.get(preset)));
       props.setProperty("fps_limit_enabled", Boolean.toString(FPS_LIMIT_ENABLED.get(preset)));
       props.setProperty("fps_limit", Integer.toString(FPS_LIMIT.get(preset)));
       props.setProperty("software_cursor", Boolean.toString(SOFTWARE_CURSOR.get(preset)));
-      props.setProperty("auto_screenshot", Boolean.toString(AUTO_SCREENSHOT.get(preset)));
+      /*props.setProperty("auto_screenshot", Boolean.toString(AUTO_SCREENSHOT.get(preset)));
       props.setProperty("view_distance", Integer.toString(VIEW_DISTANCE.get(preset)));
       props.setProperty("patch_gender", Boolean.toString(PATCH_GENDER.get(preset)));
       props.setProperty(
@@ -876,9 +1275,8 @@ public class Settings {
       props.setProperty("prefers_xdg_open", Boolean.toString(PREFERS_XDG_OPEN.get(preset)));
 
       //// overlays
-      /*
       props.setProperty(
-              "show_statusdisplay", Boolean.toString(SHOW_HP_PRAYER_FATIGUE_OVERLAY.get(preset)));
+              "show_statusdisplay", Boolean.toString(SHOW_HP_OVERLAY.get(preset)));
       props.setProperty("show_buffs", Boolean.toString(SHOW_BUFFS.get(preset)));
       props.setProperty(
               "show_last_menu_action", Boolean.toString(SHOW_LAST_MENU_ACTION.get(preset)));
@@ -886,15 +1284,12 @@ public class Settings {
       props.setProperty(
               "show_extended_tooltip", Boolean.toString(SHOW_EXTENDED_TOOLTIP.get(preset)));
       props.setProperty("show_invcount", Boolean.toString(SHOW_INVCOUNT.get(preset)));
-      props.setProperty("show_rsctimes_buttons", Boolean.toString(SHOW_RSCPLUS_BUTTONS.get(preset)));
+      props.setProperty("show_rsctimes_buttons", Boolean.toString(SHOW_RSCTIMES_BUTTONS.get(preset)));
       props.setProperty(
-              "rsctimes_buttons_functional", Boolean.toString(RSCPLUS_BUTTONS_FUNCTIONAL.get(preset)));
+              "rsctimes_buttons_functional", Boolean.toString(RSCTIMES_BUTTONS_FUNCTIONAL.get(preset)));
       props.setProperty(
               "wiki_lookup_on_magic_book", Boolean.toString(WIKI_LOOKUP_ON_MAGIC_BOOK.get(preset)));
       props.setProperty("wiki_lookup_on_hbar", Boolean.toString(WIKI_LOOKUP_ON_HBAR.get(preset)));
-      props.setProperty(
-              "remove_report_abuse_button_hbar",
-              Boolean.toString(REMOVE_REPORT_ABUSE_BUTTON_HBAR.get(preset)));
       props.setProperty("show_iteminfo", Boolean.toString(SHOW_ITEM_GROUND_OVERLAY.get(preset)));
       props.setProperty("show_playerinfo", Boolean.toString(SHOW_PLAYER_NAME_OVERLAY.get(preset)));
       props.setProperty("show_friendinfo", Boolean.toString(SHOW_FRIEND_NAME_OVERLAY.get(preset)));
@@ -903,7 +1298,7 @@ public class Settings {
       props.setProperty("trace_objectinfo", Boolean.toString(TRACE_OBJECT_INFO.get(preset)));
       props.setProperty("show_combat_info", Boolean.toString(SHOW_COMBAT_INFO.get(preset)));
       props.setProperty("show_player_position", Boolean.toString(SHOW_PLAYER_POSITION.get(preset)));
-      props.setProperty("show_retro_fps", Boolean.toString(SHOW_RETRO_FPS.get(preset)));
+      props.setProperty("hide_fps", Boolean.toString(HIDE_FPS.get(preset)));
       props.setProperty("use_percentage", Boolean.toString(NPC_HEALTH_SHOW_PERCENTAGE.get(preset)));
       props.setProperty("show_hitbox", Boolean.toString(SHOW_HITBOX.get(preset)));
       props.setProperty(
@@ -911,12 +1306,10 @@ public class Settings {
       props.setProperty(
               "show_time_until_hp_regen", Boolean.toString(SHOW_TIME_UNTIL_HP_REGEN.get(preset)));
       props.setProperty("indicators", Boolean.toString(LAG_INDICATOR.get(preset)));
-      props.setProperty("show_xp_bar", Boolean.toString(SHOW_XP_BAR.get(preset)));
       props.setProperty("debug", Boolean.toString(DEBUG.get(preset)));
       props.setProperty("exception_handler", Boolean.toString(EXCEPTION_HANDLER.get(preset)));
       props.setProperty("highlighted_items", Util.joinAsString(",", HIGHLIGHTED_ITEMS.get(preset)));
       props.setProperty("blocked_items", Util.joinAsString(",", BLOCKED_ITEMS.get(preset)));
-      */
 
       //// notifications
       props.setProperty("tray_notifs", Boolean.toString(TRAY_NOTIFS.get(preset)));
@@ -946,10 +1339,10 @@ public class Settings {
       props.setProperty("twitch_oauth", TWITCH_OAUTH.get(preset));
       props.setProperty("twitch_username", TWITCH_USERNAME.get(preset));
       props.setProperty("show_logindetails", Boolean.toString(SHOW_LOGIN_IP_ADDRESS.get(preset)));
+      */
       props.setProperty("save_logininfo", Boolean.toString(SAVE_LOGININFO.get(preset)));
       props.setProperty("start_loginscreen", Boolean.toString(START_LOGINSCREEN.get(preset)));
       props.setProperty("speedrun_active", Boolean.toString(SPEEDRUNNER_MODE_ACTIVE.get(preset)));
-      */
 
       //// replay
       /*

@@ -274,7 +274,7 @@
     { "type": "quest", "x": 1043, "y": 1305 },
     { "type": "quest", "x": 1130, "y": 2247 },
     { "type": "quest", "x": 1155, "y": 1367 },
-    { "type": "quest", "x": 1292, "y": 2550 },
+    { "type": "quest", "x": 1292, "y": 2550, "hide": true },
     { "type": "quest", "x": 1302, "y": 1323, "hide": true },
     { "type": "quest", "x": 1369, "y": 1460, "hide": true },
     { "type": "quest", "x": 1382, "y": 1368, "hide": true },

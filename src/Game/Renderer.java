@@ -24,6 +24,7 @@ import Client.NotificationsHandler;
 import Client.NotificationsHandler.NotifType;
 import Client.Settings;
 import Client.Util;
+import Client.WikiURL;
 import Client.WorldMapWindow;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -99,6 +100,8 @@ public class Renderer {
     private static BufferedImage game_image;
     
     private static Dimension new_size = new Dimension(0, 0);
+    
+    private static Item last_item;
 
     public static Font font_main;
     public static Font font_big;
@@ -116,6 +119,22 @@ public class Renderer {
     private static boolean macOS_resize_workaround = Util.isMacOS();
 
     public static boolean quietScreenshot = false;
+    
+    public static Rectangle barBounds;
+    public static Rectangle previousBounds;
+    public static Rectangle slowForwardBounds;
+    public static Rectangle playPauseBounds;
+    public static Rectangle fastForwardBounds;
+    public static Rectangle nextBounds;
+    public static Rectangle stopBounds;
+    public static Rectangle queueBounds;
+    private static int shapeHeight;
+    private static int shapeX;
+    
+    private static int lastPercentHP = 100;
+    
+    private static int sleepTimer = 0;
+    private static boolean lastInterlace = false;
 
 
     public static void init() {
@@ -218,7 +237,6 @@ public class Renderer {
 
         // In-game UI
         if (Client.state == Client.STATE_GAME) {
-        /*if (Client.state == Client.STATE_GAME) {
           int npcCount = 0;
           int playerCount = 0;
 
@@ -406,46 +424,27 @@ public class Renderer {
           Client.item_list.clear();
           last_item = null;
 
-          if (!Client.show_sleeping && Settings.SHOW_INVCOUNT.get(Settings.currentProfile))
+          if (Settings.SHOW_INVCOUNT.get(Settings.currentProfile))
             drawShadowText(
                 g2,
                 Client.inventory_count + "/" + Client.max_inventory,
                 width - 19,
-                17,
+                17 + GAME_RENDER_OFFSET,
                 color_text,
                 true);
 
           int percentHP = 0;
-          int percentPrayer = 0;
           float alphaHP = 1.0f;
-          float alphaPrayer = 1.0f;
-          float alphaFatigue = 1.0f;
           Color colorHP = color_hp;
-          Color colorPrayer = color_prayer;
-          Color colorFatigue = color_fatigue;
 
           if (Client.getBaseLevel(Client.SKILL_HP) > 0) {
             percentHP =
                 Client.getCurrentLevel(Client.SKILL_HP) * 100 / Client.getBaseLevel(Client.SKILL_HP);
-            percentPrayer =
-                Client.getCurrentLevel(Client.SKILL_PRAYER)
-                    * 100
-                    / Client.getBaseLevel(Client.SKILL_PRAYER);
           }
 
           if (percentHP < 30) {
             colorHP = color_low;
             alphaHP = alpha_time;
-          }
-
-          if (percentPrayer < 30) {
-            colorPrayer = color_low;
-            alphaPrayer = alpha_time;
-          }
-
-          if (Client.getFatigue() >= 80) {
-            colorFatigue = color_low;
-            alphaFatigue = alpha_time;
           }
 
           // Low HP notification
@@ -456,19 +455,9 @@ public class Renderer {
                 NotifType.LOWHP, "Low HP Notification", "Your HP is at " + percentHP + "%");
           lastPercentHP = percentHP;
 
-          // High fatigue notification
-          if (Client.getFatigue() >= Settings.FATIGUE_NOTIF_VALUE.get(Settings.currentProfile)
-              && lastFatigue < Client.getFatigue()
-              && lastFatigue < Settings.FATIGUE_NOTIF_VALUE.get(Settings.currentProfile))
-            NotificationsHandler.notify(
-                NotifType.FATIGUE,
-                "High Fatigue Notification",
-                "Your fatigue is at " + Client.getFatigue() + "%");
-          lastFatigue = Client.getFatigue();
-
-          // Draw HP, Prayer, Fatigue overlay
+          // Draw HP overlay
           int x = 24;
-          int y = 28;
+          int y = 28 + GAME_RENDER_OFFSET;
 
           // combat menu is showing, so move everything down
           if (combat_menu_shown) y = 132;
@@ -479,7 +468,7 @@ public class Renderer {
             for (Iterator<NPC> iterator = Client.npc_list.iterator(); iterator.hasNext(); ) {
               NPC npc = iterator.next();
               if (npc != null && Client.isInCombatWithNPC(npc)) {
-                drawNPCBar(g2, 7, y, npc);
+                drawNPCBar(g2, 7 + GAME_RENDER_OFFSET, y, npc);
                 // Increment y by npc bar height, so we can have multiple bars
                 // NOTE: We should never (?) have more than one npc health bar, so multiple bars
                 // indicates that our combat detection isn't accurate
@@ -492,8 +481,8 @@ public class Renderer {
             }
           }
 
-          if (Settings.SHOW_HP_PRAYER_FATIGUE_OVERLAY.get(Settings.currentProfile)) {
-            if (roomInHbarForHPPrayerFatigueOverlay()) {
+          if (Settings.SHOW_HP_OVERLAY.get(Settings.currentProfile)) {
+            if (roomInHbarForHPOverlay()) {
               if (!Client.isInterfaceOpen() && !Client.show_questionmenu) {
                 setAlpha(g2, alphaHP);
                 drawShadowText(
@@ -507,43 +496,11 @@ public class Renderer {
                     colorHP,
                     false);
                 y += 16;
-                setAlpha(g2, alphaPrayer);
-                drawShadowText(
-                    g2,
-                    "Prayer: "
-                        + Client.current_level[Client.SKILL_PRAYER]
-                        + "/"
-                        + Client.base_level[Client.SKILL_PRAYER],
-                    x,
-                    y,
-                    colorPrayer,
-                    false);
-                y += 16;
-                setAlpha(g2, alphaFatigue);
-                drawShadowText(
-                    g2, "Fatigue: " + Client.getFatigue() + "/100", x, y, colorFatigue, false);
-                setAlpha(g2, 1.0f);
-                y += 16;
               }
             } else {
               int barSize = 4 + image_bar_frame.getWidth(null);
               int x2 = width - (4 + barSize);
-              int y2 = height - image_bar_frame.getHeight(null);
-
-              drawBar(
-                  g2, image_bar_frame, x2, y2, colorFatigue, alphaFatigue, Client.getFatigue(), 100);
-              x2 -= barSize;
-
-              drawBar(
-                  g2,
-                  image_bar_frame,
-                  x2,
-                  y2,
-                  colorPrayer,
-                  alphaPrayer,
-                  Client.current_level[Client.SKILL_PRAYER],
-                  Client.base_level[Client.SKILL_PRAYER]);
-              x2 -= barSize;
+              int y2 = height + GAME_RENDER_OFFSET - image_bar_frame.getHeight(null);
 
               drawBar(
                   g2,
@@ -579,7 +536,7 @@ public class Renderer {
 
             for (int i = 0; i < 18; i++) {
               if (Client.current_level[i] != Client.base_level[i]
-                  && (i != Client.SKILL_HP && i != Client.SKILL_PRAYER)) {
+                  && (i != Client.SKILL_HP)) {
                 int diff = Client.current_level[i] - Client.base_level[i];
                 Color color = color_low;
 
@@ -599,37 +556,6 @@ public class Renderer {
                 y += 14;
               }
             }
-
-            int base_drain_rate = 0;
-            float adjusted_drain_rate = 0;
-            // 14 selectable prayers
-            for (int i = 0; i < 14; i++) {
-              if (Client.prayers_on[i] == true) base_drain_rate += Client.DRAIN_RATES[i];
-            }
-            lastBaseDrainRate = base_drain_rate;
-            if (base_drain_rate != 0) {
-              // with prayer equipment, combat rounds get increased about 3.1% per +1
-              float factor = 1.0f;
-              if (Client.current_equipment_stats[4] > 1) {
-                int boost = Client.current_equipment_stats[4] - 1;
-                float increase_rounds = boost * 0.031f;
-                // percentage of increase per round
-                factor = 1 + increase_rounds;
-              }
-              adjusted_drain_rate = base_drain_rate / factor;
-              lastAdjustedDrainRate = adjusted_drain_rate;
-              // a drain_rate of 60 drains 1 point in 3.33 secs
-              // 75 drains 1.25 points in 3.33 secs -> 3.33/(adjusted/60)
-              float points_psec = (3.33f * 60.0f) / adjusted_drain_rate;
-
-              drawShadowText(g2, "-1", x, y, color_low, false);
-              drawShadowText(
-                  g2, "Prayer/" + Client.trimNumber(points_psec, 1) + "s", x + 32, y, color_low, false);
-              y += 14;
-            } else {
-              // no prayer armour adjusting drain rate
-              lastAdjustedDrainRate = lastBaseDrainRate;
-            }
             if (time > Client.poison_timer && Client.is_poisoned) {
               // more than 20 seconds passed and last status was poison, user probably is no longer
               // poisoned
@@ -645,35 +571,6 @@ public class Renderer {
           // Clear npc list for the next frame
           Client.npc_list.clear();
 
-          // render XP bar/drop
-          Client.processFatigueXPDrops();
-          Client.xpdrop_handler.draw(g2);
-          Client.xpbar.draw(g2);
-
-          if (!Client.isSleeping()) {
-            Client.updateCurrentFatigue();
-          }
-
-          // Make the reset buttons for filter & sort flash red a few frames when clicked
-          if (Bank.buttonActive[5]
-              || Bank.buttonActive[11]
-              || (Bank.buttonActive[10] || Bank.disableUserButton)) {
-            if (bankResetTimer > 3) {
-              if (Bank.disableUserButton) {
-                Bank.buttonActive[10] = false;
-                Bank.disableUserButton = false;
-              } else {
-                Bank.buttonActive[5] = false;
-                Bank.buttonActive[11] = false;
-              }
-              bankResetTimer = 0;
-            } else {
-              ++bankResetTimer;
-            }
-          }
-          // Handles drawing bank value, bank sort panel, & bank filter panel
-          Bank.drawBankAugmentations(g2);*/
-
           // World Map
           // Arrow marker for destination
           if (WorldMapWindow.getWaypointPosition() != null
@@ -684,8 +581,8 @@ public class Renderer {
                     + WorldMapWindow.getWaypointAngle();
             if (WorldMapWindow.getWaypointFloor() != Client.planeIndex) setAlpha(g2, 0.5f);
             Image arrowSprite = WorldMapWindow.directions[Util.getAngleIndex(absCameraRotation)];
-            int x = (width / 2);
-            int y = 54;
+            x = (width / 2);
+            y = 54;
             g2.drawImage(arrowSprite, x - 12, y - 12, 24, 24, null);
             y += -20;
             drawShadowText(
@@ -699,7 +596,7 @@ public class Renderer {
           }
 
           // RSC Wiki integration
-          /*if (WikiURL.nextClickIsLookup && MouseHandler.mouseClicked) {
+          if (WikiURL.nextClickIsLookup && MouseHandler.mouseClicked) {
             if (MouseHandler.rightClick) {
               WikiURL.nextClickIsLookup = false;
               Client.displayMessage("Cancelled lookup.", Client.CHAT_NONE);
@@ -730,13 +627,13 @@ public class Renderer {
           }
 
           if (Settings.WIKI_LOOKUP_ON_HBAR.get(Settings.currentProfile)) {
-            int xCoord = Client.wikiLookupReplacesReportAbuse() ? 410 : 410 + 90 + 12;
-            int yCoord = height - 16;
+            int xCoord = 410;
+            int yCoord = height + GAME_RENDER_OFFSET - 16;
             // Handle replay play selection click
             if (MouseHandler.x >= xCoord + 3 // + 3 for hbar shadow included in image
                 && MouseHandler.x <= xCoord + 3 + 90
-                && MouseHandler.y >= height - 16
-                && MouseHandler.y <= height
+                && MouseHandler.y >= height + GAME_RENDER_OFFSET - 16
+                && MouseHandler.y <= height + GAME_RENDER_OFFSET
                 && MouseHandler.mouseClicked) {
               Client.displayMessage(
                   "Click on something to look it up on the wiki...", Client.CHAT_NONE);
@@ -749,13 +646,13 @@ public class Renderer {
             }
           }
 
-          // Interface rsc+ buttons
+          // Interface rscx buttons
           // Map Button
-          if (Settings.RSCPLUS_BUTTONS_FUNCTIONAL.get(Settings.currentProfile)
-              || Settings.SHOW_RSCPLUS_BUTTONS.get(Settings.currentProfile)) {
-            Rectangle mapButtonBounds = new Rectangle(width - 68, 3, 32, 32);
-            if ((!Client.show_bank || mapButtonBounds.x >= 460) && !Client.show_sleeping) {
-              if (Settings.SHOW_RSCPLUS_BUTTONS.get(Settings.currentProfile)) {
+          if (Settings.RSCTIMES_BUTTONS_FUNCTIONAL.get(Settings.currentProfile)
+              || Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
+            Rectangle mapButtonBounds = new Rectangle(width - 68, 3 + GAME_RENDER_OFFSET, 32, 32);
+            if (mapButtonBounds.x >= 460) {
+              if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
                 g2.setColor(Renderer.color_text);
                 g2.drawLine(
                     mapButtonBounds.x + 4,
@@ -781,9 +678,9 @@ public class Renderer {
             }
 
             // Settings
-            mapButtonBounds = new Rectangle(width - 200, 3, 32, 32);
-            if ((!Client.show_bank || mapButtonBounds.x >= 460) && !Client.show_sleeping) {
-              if (Settings.SHOW_RSCPLUS_BUTTONS.get(Settings.currentProfile)) {
+            mapButtonBounds = new Rectangle(width - 200, 3 + GAME_RENDER_OFFSET, 32, 32);
+            if (mapButtonBounds.x >= 460) {
+              if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
                 g2.setColor(Renderer.color_text);
                 g2.drawLine(
                     mapButtonBounds.x + 4,
@@ -810,9 +707,9 @@ public class Renderer {
 
             // wiki button on magic book (Probably a bad idea due to misclicks)
             if (Settings.WIKI_LOOKUP_ON_MAGIC_BOOK.get(Settings.currentProfile)) {
-              mapButtonBounds = new Rectangle(width - 68 - 66, 3, 32, 32);
-              if ((!Client.show_bank || mapButtonBounds.x >= 460) && !Client.show_sleeping) {
-                if (Settings.SHOW_RSCPLUS_BUTTONS.get(Settings.currentProfile)) {
+              mapButtonBounds = new Rectangle(width - 68 - 66, 3 + GAME_RENDER_OFFSET, 32, 32);
+              if (mapButtonBounds.x >= 460) {
+                if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
                   g2.setColor(Renderer.color_text);
                   g2.drawLine(
                       mapButtonBounds.x + 4,
@@ -864,25 +761,6 @@ public class Renderer {
                   false);
               y += 16;
             }
-
-            // Draw Fatigue
-            y += 16;
-            drawShadowText(
-                g2, "Fatigue: " + ((float) Client.fatigue * 100.0f / 750.0f), x, y, color_text, false);
-            y += 16;
-
-            // Draw Drain rates
-            y += 16;
-            drawShadowText(g2, "Base Drain Rate: " + lastBaseDrainRate, x, y, color_text, false);
-            y += 16;
-            drawShadowText(
-                g2,
-                "Adjusted Drain Rate: " + Client.trimNumber(lastAdjustedDrainRate, 1),
-                x,
-                y,
-                color_text,
-                false);
-            y += 16;
 
             // Draw Mouse Info
             y += 16;
@@ -981,7 +859,7 @@ public class Renderer {
                 false);
             y += 16;
             drawShadowText(g2, "combat_timer: " + Client.combat_timer, x, y, color_text, false);
-            y += 32;
+            /*y += 32;
             drawShadowText(g2, "frame_time_slice: " + Replay.frame_time_slice, x, y, color_text, false);
             y += 16;
             drawShadowText(g2, "lag: " + Replay.timestamp_lag + " updates", x, y, color_text, false);
@@ -1003,9 +881,7 @@ public class Renderer {
                 g2, "replay_client_read: " + Replay.getClientRead(), x, y, color_text, false);
             y += 16;
             drawShadowText(
-                g2, "replay_client_write: " + Replay.getClientWrite(), x, y, color_text, false);
-            y += 16;
-            drawShadowText(g2, "Last sound effect: " + Client.lastSoundEffect, x, y, color_text, false);
+                g2, "replay_client_write: " + Replay.getClientWrite(), x, y, color_text, false);*/
             y += 16;
             drawShadowText(g2, "Mouse Text: " + MouseText.mouseText, x, y, color_text, false);
             y += 16;
@@ -1017,7 +893,7 @@ public class Renderer {
           // A little over a full tick
           int threshold = 35;
 
-          if (Replay.isPlaying && Replay.fpsPlayMultiplier > 1.0)
+          /*if (Replay.isPlaying && Replay.fpsPlayMultiplier > 1.0)
             threshold = 35 * 3; // this is to prevent blinking during fastforward
 
           if (Settings.LAG_INDICATOR.get(Settings.currentProfile)
@@ -1039,16 +915,9 @@ public class Renderer {
                 color_low,
                 true);
             setAlpha(g2, 1.0f);
-          }
-          if (!(Replay.isPlaying && !Settings.TRIGGER_ALERTS_REPLAY.get(Settings.currentProfile))) {
+          }*/
+          if (!(Replay.isPlaying /*&& !Settings.TRIGGER_ALERTS_REPLAY.get(Settings.currentProfile)*/)) {
             g2.setFont(font_big);
-            if (Settings.FATIGUE_ALERT.get(Settings.currentProfile)
-                && Client.getFatigue() >= 98
-                && !Client.isInterfaceOpen()) {
-              setAlpha(g2, alpha_time);
-              drawShadowText(g2, "FATIGUED", width / 2, height / 2, color_low, true);
-              setAlpha(g2, 1.0f);
-            }
             if (Settings.INVENTORY_FULL_ALERT.get(Settings.currentProfile)
                 && Client.inventory_count >= 30
                 && !Client.isInterfaceOpen()) {
@@ -1057,16 +926,16 @@ public class Renderer {
               setAlpha(g2, 1.0f);
             }
             g2.setFont(font_main);
-          }*/
+          }
 
-          // TODO: needs to be placed as overlay config
-          if (true /*Settings.SHOW_PLAYER_POSITION.get(Settings.currentProfile)*/) {
-            int y = Renderer.height - 11;
+          if (Settings.SHOW_PLAYER_POSITION.get(Settings.currentProfile)) {
+            y = Renderer.height - 11;
             int offset = 0;
-            /*if (Replay.isPlaying) {
-              if ((!screenshot && Settings.SHOW_SEEK_BAR.get(Settings.currentProfile))) y -= 12;
-            }*/
+            if (Replay.isPlaying) {
+              if ((!screenshot /*&& Settings.SHOW_SEEK_BAR.get(Settings.currentProfile)*/)) y -= 12;
+            }
             if ((!Replay.isPlaying || screenshot)) offset += 50;
+            if (Client.shouldHideFPS()) offset -= 50;
             drawShadowText(
                 g2,
                 "Pos: " + Client.getCoords(),
@@ -1077,7 +946,7 @@ public class Renderer {
           }
 
           // Mouseover hover handling
-          /*if (Settings.SHOW_MOUSE_TOOLTIP.get(Settings.currentProfile)
+          if (Settings.SHOW_MOUSE_TOOLTIP.get(Settings.currentProfile)
               && !Client.isInterfaceOpen()
               && !Client.show_questionmenu
               && Client.is_hover) {
@@ -1121,15 +990,15 @@ public class Renderer {
                 drawColoredText(g2, MouseText.getMouseOverText(), x, y);
               }
             }
-          }*/
+          }
         } else if (Client.state == Client.STATE_LOGIN) {
-          //if (Settings.DEBUG.get(Settings.currentProfile))
-          //  drawShadowText(g2, "DEBUG MODE", 38, 8, color_text, true);
+          if (Settings.DEBUG.get(Settings.currentProfile))
+            drawShadowText(g2, "DEBUG MODE", 38, 8, color_text, true);
 
           // Draw world list
-          drawShadowText(g2, "World (Click to change): ", 80, height - 8, color_text, true);
+          drawShadowText(g2, "World (Click to change): ", 80, height + GAME_RENDER_OFFSET - 8, color_text, true);
           for (int i = 1; i <= Settings.WORLDS_TO_DISPLAY; i++) {
-            Rectangle bounds = new Rectangle(134 + (i * 18), height - 12, 16, 12);
+            Rectangle bounds = new Rectangle(134 + (i * 18), height + GAME_RENDER_OFFSET - 12, 16, 12);
             Color color = color_text;
 
             if (i == Settings.WORLD.get(Settings.currentProfile)) color = color_low;
@@ -1166,13 +1035,13 @@ public class Renderer {
             if (Client.login_screen == Client.SCREEN_CLICK_TO_LOGIN) {
               longForm = true;
             } else if (Client.login_screen == Client.SCREEN_USERNAME_PASSWORD_LOGIN) {
-              longForm = true; //Client.loginLostPasswordButton == 0;
+              longForm = true;
             }
             if (longForm) {
               if (Client.login_screen == Client.SCREEN_USERNAME_PASSWORD_LOGIN) {
                 recordButtonBounds = new Rectangle(512 - 148, 346 - 36, 48, 16);
               } else if (Client.login_screen == Client.SCREEN_CLICK_TO_LOGIN) {
-                recordButtonBounds = new Rectangle(512 - 140, 288, 48, 16);
+                recordButtonBounds = new Rectangle(512 - 148, 346 - 26, 48, 16);
               } else {
                 Logger.Error("Specify -server replay- bounds for this screen!");
                 // original bounds, underneath the Cancel button
@@ -1197,15 +1066,15 @@ public class Renderer {
             }
 
             setAlpha(g2, 0.5f);
-            /*if (Settings.SPEEDRUNNER_MODE_ACTIVE.get(Settings.currentProfile)) {
+            if (Settings.SPEEDRUNNER_MODE_ACTIVE.get(Settings.currentProfile)) {
               g2.setColor(color_hp);
             } else {
-              if (replayOption == 1 || Settings.RECORD_AUTOMATICALLY.get(Settings.currentProfile)) {
+              if (replayOption == 1 /*|| Settings.RECORD_AUTOMATICALLY.get(Settings.currentProfile)*/) {
                 g2.setColor(color_low);
               } else {
                 g2.setColor(color_text);
               }
-            }*/
+            }
             if (longForm) {
               g2.fillRect(
                   recordButtonBounds.x,
@@ -1220,7 +1089,7 @@ public class Renderer {
                   recordButtonBounds.height);
             }
 
-            /*if (Settings.RECORD_AUTOMATICALLY.get(Settings.currentProfile)) {
+            if (false /*Settings.RECORD_AUTOMATICALLY.get(Settings.currentProfile)*/) {
               g2.setColor(color_text);
               if (longForm) {
                 g2.drawRect(
@@ -1235,10 +1104,10 @@ public class Renderer {
                     recordButtonBounds.width,
                     recordButtonBounds.height);
               }
-            }*/
+            }
             setAlpha(g2, 1.0f);
             String recordButtonText = "";
-            /*if (longForm) {
+            if (longForm) {
               if (Settings.SPEEDRUNNER_MODE_ACTIVE.get(Settings.currentProfile)) {
                 recordButtonText = "speedy";
               } else {
@@ -1251,7 +1120,7 @@ public class Renderer {
               } else {
                 recordButtonText = "rec";
               }
-            }*/
+            }
             drawShadowText(
                 g2,
                 recordButtonText,
@@ -1266,7 +1135,7 @@ public class Renderer {
                 && MouseHandler.y >= recordButtonBounds.y
                 && MouseHandler.y <= recordButtonBounds.y + recordButtonBounds.height
                 && MouseHandler.mouseClicked) {
-              //Client.showRecordAlwaysDialogue = true;
+              Client.showRecordAlwaysDialogue = true;
 
               if (replayOption == 1) {
                 replayOption = 0;
@@ -1319,15 +1188,15 @@ public class Renderer {
                   Renderer.replayOption = 0;
                 }
               }
-            }
-          }*/
+            }*/
+          }
 
           // Draw version information
           drawShadowText(
               g2,
-              "rscplus v" + String.format("%8.6f", Settings.VERSION_NUMBER),
+              "rsctimes v" + String.format("%8.6f", Settings.VERSION_NUMBER),
               width - 164,
-              height - 2,
+              height + GAME_RENDER_OFFSET - 2,
               color_text,
               false);
         }
@@ -1675,20 +1544,20 @@ public class Renderer {
               if (MouseHandler.inBounds(stopBounds) && MouseHandler.mouseClicked) {
                 Replay.controlPlayback("stop");
               }
-            }*/
-          }
+            }
+          }*/
         }
 
         // Draw software cursor
-        /*if (screenshot || Settings.SOFTWARE_CURSOR.get(Settings.currentProfile)) {
+        if (screenshot || Settings.SOFTWARE_CURSOR.get(Settings.currentProfile)) {
           setAlpha(g2, 1.0f);
           g2.drawImage(image_cursor, MouseHandler.x, MouseHandler.y, null);
-        }*/
+        }
 
         g2.dispose();
 
         // Right now is a good time to take a screenshot if one is requested
-        /*if (screenshot) {
+        if (screenshot) {
           try {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
             String fname =
@@ -1701,13 +1570,13 @@ public class Renderer {
           } catch (Exception e) {
           }
           screenshot = false;
-        }*/
+        }
 
         g.drawImage(game_image, 0, 0, null);
 
         frames++;
 
-        /*if (Settings.FPS_LIMIT_ENABLED.get(Settings.currentProfile)) {
+        if (Settings.FPS_LIMIT_ENABLED.get(Settings.currentProfile)) {
           int targetFPS = Settings.FPS_LIMIT.get(Settings.currentProfile);
 
           // pretend that interlacing helps fps while frame limiting
@@ -1783,12 +1652,10 @@ public class Renderer {
         if (Settings.fovUpdateRequired) {
           Camera.setFoV(Settings.FOV.get(Settings.currentProfile));
           Settings.fovUpdateRequired = false;
-        }*/
+        }
 
         // Reset the mouse click handler
         MouseHandler.mouseClicked = false;
-        
-        if (width != new_size.width || height != new_size.height) handle_resize();
       }
 
     public static void drawShadowText(
@@ -1901,9 +1768,64 @@ public class Renderer {
         g.drawString(text, textX, textY);
     }
 
+    private static boolean roomInHbarForHPOverlay() {
+    	return width < 800 - 112;
+      }
+    
+    public static void drawBar(
+    	      Graphics2D g, Image image, int x, int y, Color color, float alpha, int value, int total) {
+    	    // Prevent divide by zero
+    	    if (total == 0) return;
+
+    	    int width = image.getWidth(null) - 2;
+    	    int percent = value * width / total;
+
+    	    g.setColor(color_shadow);
+    	    g.fillRect(x + 1, y, width, image.getHeight(null));
+
+    	    g.setColor(color);
+    	    setAlpha(g, alpha);
+    	    g.fillRect(x + 1, y, percent, image.getHeight(null));
+    	    setAlpha(g, 1.0f);
+
+    	    g.drawImage(image_bar_frame, x, y, null);
+    	    drawShadowText(
+    	        g,
+    	        value + "/" + total,
+    	        x + (image.getWidth(null) / 2),
+    	        y + (image.getHeight(null) / 2) - 2,
+    	        color_text,
+    	        true);
+    	  }
+    
     public static void setAlpha(Graphics2D g, float alpha) {
         g.setComposite(AlphaComposite.SrcOver.derive(alpha));
     }
+    
+    public static boolean stringIsWithinList(String input, ArrayList<String> items) {
+        if (items.size() <= 0) {
+          return false;
+        }
+        Iterator it = items.iterator();
+        while (it.hasNext()) {
+          String item = String.valueOf(it.next());
+          if (item.trim().length() > 0
+              && input.trim().toLowerCase().contains(item.trim().toLowerCase())) {
+            return true;
+          }
+        }
+        return false;
+      }
+    
+    public static void drawHighlighImage(Graphics2D g, String text, int x, int y) {
+        int correctedX = x;
+        int correctedY = y;
+        // Adjust for centering
+        Dimension bounds = getStringBounds(g, text);
+        correctedX -= (bounds.width / 2);
+        correctedY += (bounds.height / 2);
+        g.drawImage(image_highlighted_item, correctedX - 15, correctedY - 10, null);
+      }
     
     public static String getFixedRemoveString(String origString) {
     	// TODO: surfaces' drawstring need to be patched to accommodate >= 1000 offsets
@@ -1986,5 +1908,75 @@ public class Renderer {
         }
          */
     }
+    
+    
+    private static void drawNPCBar(Graphics2D g, int x, int y, NPC npc) {
+        Dimension bounds = new Dimension(173, 40);
+        float hp_ratio = (float) (npc.currentHits) / (float) (npc.maxHits);
+
+        // Container
+        setAlpha(g, 0.5f);
+        g.setColor(color_gray);
+        g.fillRect(x - 1, y - 1, bounds.width + 2, bounds.height + 2);
+        g.setColor(color_shadow);
+        g.fillRect(x, y, bounds.width, bounds.height);
+
+        // HP bar
+        setAlpha(g, 1.0f);
+        g.setColor(new Color(99, 20, 19));
+        g.fillRect(x, y + 20, bounds.width, bounds.height / 2);
+        g.setColor(new Color(10, 134, 51));
+        g.fillRect(x, y + 20, (int) (bounds.width * hp_ratio), bounds.height / 2);
+
+        // HP text
+        if (Settings.NPC_HEALTH_SHOW_PERCENTAGE.get(Settings.currentProfile))
+          drawShadowText(
+              g,
+              (int) Math.ceil(hp_ratio * 100) + "%",
+              x + (bounds.width / 2),
+              y + (bounds.height / 2) + 8,
+              color_text,
+              true);
+        else
+          drawShadowText(
+              g,
+              npc.currentHits + "/" + npc.maxHits,
+              x + (bounds.width / 2),
+              y + (bounds.height / 2) + 8,
+              color_text,
+              true);
+
+        // NPC name
+        drawShadowText(
+            g, npc.name, x + (bounds.width / 2), y + (bounds.height / 2) - 12, color_text, true);
+      }
 
 }
+
+class ItemComparator implements Comparator<Item> {
+
+	  @Override
+	  public int compare(Item a, Item b) {
+	    // this is reverse alphabetical order b/c we display them/in reverse order (y-=12 ea item)
+	    int offset = a.getName().compareToIgnoreCase(b.getName()) * -1;
+	    if (offset > 0) { // item a is alphabetically before item b
+	      offset = 10;
+	    } else if (offset < 0) { // item b is alphabetically before item a
+	      offset = -10;
+	      // items have the same name we would like to group items that are on the same tile as well,
+	      // not just having
+	      // the same name, so that we can use "last_item" in a useful way
+	    } else {
+	      if (a.x == b.x && a.y == b.y) {
+	        offset = 0; // name is the same and so is location, items are considered equal
+	      } else {
+	        if (a.x < b.x) {
+	          offset = -5;
+	        } else {
+	          offset = 5;
+	        }
+	      }
+	    }
+	    return offset;
+	  }
+	}

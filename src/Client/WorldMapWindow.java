@@ -1305,8 +1305,8 @@ public class WorldMapWindow {
                 y -= 2829;
             }
             int tileSize = getZoomInt(3);
-            cameraCurrentPosition.x = (planes[planeIndex].getWidth(null) - (playerPosition.x * 3)) - 1;
-            cameraCurrentPosition.y = ((y - planeIndex) * 3) + 1;
+            cameraCurrentPosition.x = 3 * SCENERY_OFFSET_X + (planes[planeIndex].getWidth(null) - (playerPosition.x * 3)) - 1;
+            cameraCurrentPosition.y = -3 * SCENERY_OFFSET_Y + ((y - planeIndex) * 3) + 1;
         }
 
         if (!frame.isVisible()) return;
@@ -1611,7 +1611,7 @@ public class WorldMapWindow {
                 int x = startX;
                 int y = legendBounds.y + BORDER_SIZE;
                 int offsetY = 0;
-                int maxY = 16 * 21;
+                int maxY = 16 * 15;
                 for (int i = 0; i < legends.length; i++) {
                     offsetY += 16;
                     if (offsetY >= maxY) {

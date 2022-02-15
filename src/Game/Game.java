@@ -22,6 +22,7 @@ import Client.JConfig;
 import Client.Launcher;
 import Client.Logger;
 import Client.NotificationsHandler;
+import Client.Settings;
 import Client.TrayHandler;
 import Client.Util;
 import Client.WorldMapWindow;
@@ -74,7 +75,7 @@ public class Game extends JFrame
     // Add applet to window
     setContentPane(m_applet);
     getContentPane().setBackground(Color.BLACK);
-    getContentPane().setPreferredSize(new Dimension(512, 334));
+    getContentPane().setPreferredSize(new Dimension(512, 357));
     addComponentListener(this);
     pack();
 
@@ -253,16 +254,16 @@ public class Game extends JFrame
    * be recalculated on the next rendering tick.
    */
   public void resizeFrameWithContents() {
-    /*int windowWidth =
+    int windowWidth =
         Settings.CUSTOM_CLIENT_SIZE_X.get(Settings.currentProfile)
             + getInsets().left
             + getInsets().right;
     int windowHeight =
         Settings.CUSTOM_CLIENT_SIZE_Y.get(Settings.currentProfile)
             + getInsets().top
-            + getInsets().bottom;*/
-    int windowWidth = 512;
-    int windowHeight = 396;//357;
+            + getInsets().bottom;
+    //int windowWidth = 512;
+    //int windowHeight = 396;//357;
     setSize(windowWidth, windowHeight);
     setLocationRelativeTo(null);
   }

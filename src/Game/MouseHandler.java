@@ -29,6 +29,8 @@ import java.awt.event.MouseWheelListener;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
 
+import Client.WikiURL;
+
 /** Listens to mouse events and stores relevant information about them */
 public class MouseHandler implements MouseListener, MouseMotionListener, MouseWheelListener {
 
@@ -47,7 +49,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
   }
 
   public boolean inConsumableButton() {
-    return false;
+    return WikiURL.shouldConsume();
   }
 
   @Override

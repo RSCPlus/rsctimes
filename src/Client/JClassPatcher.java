@@ -140,6 +140,59 @@ public class JClassPatcher {
       hookClassVariable(
               methodNode,
               "mudclient",
+              "ty",
+              "[I",
+              "Game/Client",
+              "current_equipment_stats",
+              "[I",
+              true,
+              false);
+          hookClassVariable(
+              methodNode, "mudclient", "oy", "[I", "Game/Client", "current_level", "[I", true, false);
+          hookClassVariable(
+              methodNode, "mudclient", "py", "[I", "Game/Client", "base_level", "[I", true, false);
+          hookClassVariable(
+              methodNode,
+              "mudclient",
+              "sy",
+              "[Ljava/lang/String;",
+              "Game/Client",
+              "skill_name",
+              "[Ljava/lang/String;",
+              true,
+              false);
+      
+      hookStaticVariable(methodNode, "jagex/client/e", "jd", "I", "Game/Client", "friends_count", "I");
+      hookStaticVariable(
+          methodNode,
+          "jagex/client/e",
+          "kd",
+          "[J",
+          "Game/Client",
+          "friends_hash",
+          "[J");
+      hookStaticVariable(
+          methodNode,
+          "jagex/client/e",
+          "ld",
+          "[I",
+          "Game/Client",
+          "friends_online",
+          "[I");
+      
+      hookStaticVariable(methodNode, "jagex/client/e", "md", "I", "Game/Client", "ignores_count", "I");
+      hookStaticVariable(
+          methodNode,
+          "jagex/client/e",
+          "nd",
+          "[J",
+          "Game/Client",
+          "ignores_hash",
+          "[J");
+      
+      hookClassVariable(
+              methodNode,
+              "mudclient",
               "pt",
               "Ljagex/client/j;",
               "Game/Camera",
@@ -197,6 +250,9 @@ public class JClassPatcher {
       hookClassVariable(methodNode, "jagex/client/k", "ip", "I", "Game/Renderer", "height", "I", false, true);
       
       hookClassVariable(
+              methodNode, "mudclient", "lt", "I", "Game/Client", "combat_timer", "I", true, true);
+      
+      hookClassVariable(
               methodNode, "mudclient", "ht", "I", "Game/Client", "show_friends", "I", true, true);
       hookClassVariable(
               methodNode, "mudclient", "nx", "I", "Game/Client", "show_menu", "I", true, false);
@@ -208,6 +264,11 @@ public class JClassPatcher {
               methodNode, "mudclient", "ux", "Z", "Game/Client", "show_trade", "Z", true, false);
       hookClassVariable(
               methodNode, "mudclient", "ft", "I", "Game/Client", "show_changepk", "I", true, false);
+      
+      hookClassVariable(
+              methodNode, "mudclient", "ox", "I", "Game/Client", "inventory_count", "I", true, false);
+          hookClassVariable(
+              methodNode, "mudclient", "px", "[I", "Game/Client", "inventory_items", "[I", true, false);
       
       hookClassVariable(methodNode, "mudclient", "ct", "Z", "Game/Camera", "auto", "Z", true, true);
       hookClassVariable(methodNode, "mudclient", "pu", "I", "Game/Camera", "angle", "I", true, true);
@@ -553,6 +614,32 @@ public class JClassPatcher {
                 }
               }
           }
+
+          LabelNode lblNode = new LabelNode();
+          
+          AbstractInsnNode startNode, endNode;
+          AbstractInsnNode findNode = methodNode.instructions.getFirst();
+    	  // find call to fps:
+    	  while (!(findNode.getOpcode() == Opcodes.LDC && ((LdcInsnNode) findNode).cst.equals("Fps: "))) {
+	          findNode = findNode.getNext();
+    	  }
+    	  // rewind to find aload0
+    	  while (!(findNode.getOpcode() == Opcodes.ALOAD && ((VarInsnNode) findNode).var == 0)) {
+	          findNode = findNode.getPrevious();
+    	  }
+    	  startNode = findNode;
+    	  while (!(findNode.getOpcode() == Opcodes.INVOKEVIRTUAL && ((MethodInsnNode) findNode).name.equals("ef"))) {
+	          findNode = findNode.getNext();
+    	  }
+    	  endNode = findNode;
+    	  methodNode.instructions.insert(endNode, lblNode);
+    	  
+    	  methodNode.instructions.insertBefore(
+    			  startNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC, "Game/Client", "shouldHideFPS", "()Z"));
+          methodNode.instructions.insertBefore(
+        		  startNode, new JumpInsnNode(Opcodes.IFNE, lblNode));
       }
       if (methodNode.name.equals("bb") && methodNode.desc.equals("(II[B)V")) {
     	  Iterator<AbstractInsnNode> insnNodeList;
@@ -692,6 +779,58 @@ public class JClassPatcher {
                     methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
                   }
               }
+            
+            // Hook that gives out the message on X action such as npcs, items and prints them top left
+            // corner
+            // TODO: use the hook
+            insnNodeList = methodNode.instructions.iterator();
+
+            LabelNode lblNode = null;
+            while (insnNodeList.hasNext()) {
+              insnNode = insnNodeList.next();
+              AbstractInsnNode nextNode = insnNode.getNext();
+
+              // this part checks to see if there's a string to render for the two cases below
+              if (insnNode.getOpcode() == Opcodes.ALOAD
+                  && ((VarInsnNode) insnNode).var == 4
+                  && nextNode.getOpcode() == Opcodes.IFNULL
+                  && nextNode.getNext().getOpcode() != Opcodes.ALOAD) {
+                lblNode = ((JumpInsnNode) nextNode).label;
+              }
+
+              // is_hover = 1, also getfield mudclient.qt
+              if (insnNode.getOpcode() == Opcodes.GETFIELD) {
+                FieldInsnNode fieldNode = ((FieldInsnNode) insnNode);
+                if (fieldNode.owner.equals("mudclient")
+                    && fieldNode.name.equals("qt")
+                    && nextNode.getOpcode() == Opcodes.ALOAD
+                    && ((VarInsnNode) nextNode).var == 4) {
+                  methodNode.instructions.insert(fieldNode, new VarInsnNode(Opcodes.ASTORE, 4));
+                  methodNode.instructions.insert(
+                      fieldNode,
+                      new MethodInsnNode(
+                          Opcodes.INVOKESTATIC,
+                          "Game/Client",
+                          "mouse_action_hook",
+                          "(Ljava/lang/String;)Ljava/lang/String;",
+                          false));
+                  methodNode.instructions.insert(fieldNode, new VarInsnNode(Opcodes.ALOAD, 4));
+                  methodNode.instructions.insert(
+                      fieldNode, new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Client", "is_hover", "Z"));
+                  methodNode.instructions.insert(fieldNode, new InsnNode(Opcodes.ICONST_1));
+                  continue;
+                }
+              }
+
+              // is_hover = 0
+              if (insnNode instanceof LabelNode
+                  && lblNode != null
+                  && ((LabelNode) insnNode).equals(lblNode)) {
+                methodNode.instructions.insert(
+                    insnNode, new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Client", "is_hover", "Z"));
+                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ICONST_0));
+              }
+            }
           }
     	  
       }
@@ -941,6 +1080,128 @@ public class JClassPatcher {
             }
           }
         }
+      if (methodNode.name.equals("uk") && methodNode.desc.equals("(IIIIIII)V")) {
+          // Draw NPC hook
+          AbstractInsnNode insnNode = methodNode.instructions.getLast();
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 1));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 2));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 3));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 4));
+
+          methodNode.instructions.insertBefore(
+              insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "r", "pgb", "[[Ljava/lang/String;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+              insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "hw", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "er", "I"));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.ICONST_0));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "hw", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "sr", "I"));
+          
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "hw", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "tr", "I"));
+          
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "hw", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "er", "I"));
+          
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "hw", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "ar", "I"));
+          methodNode.instructions.insertBefore(
+              insnNode,
+              new MethodInsnNode(
+                  Opcodes.INVOKESTATIC, "Game/Client", "drawNPC", "(IIIILjava/lang/String;IIII)V"));
+        }
+       if (methodNode.name.equals("il") && methodNode.desc.equals("(IIIIIII)V")) {
+          // Draw Player hook
+          AbstractInsnNode insnNode = methodNode.instructions.getLast();
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 1));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 2));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 3));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 4));
+          
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "zv", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "zq", "Ljava/lang/String;"));
+          
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "zv", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "sr", "I"));
+          
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "zv", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "tr", "I"));
+          
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+          methodNode.instructions.insertBefore(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "zv", "[Ll;"));
+          methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+          methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+          methodNode.instructions.insertBefore(
+                      insnNode, new FieldInsnNode(Opcodes.GETFIELD, "l", "ar", "I"));
+          methodNode.instructions.insertBefore(
+              insnNode,
+              new MethodInsnNode(
+                  Opcodes.INVOKESTATIC, "Game/Client", "drawPlayer", "(IIIILjava/lang/String;III)V"));
+        }
+       if (methodNode.name.equals("hk") && methodNode.desc.equals("(IIIIIII)V")) {
+           // Draw Item hook
+           // ILOAD 5 is item id
+           AbstractInsnNode insnNode = methodNode.instructions.getLast();
+           methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 1));
+           methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 2));
+           methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 3));
+           methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 4));
+           
+           methodNode.instructions.insertBefore(
+                   insnNode, new FieldInsnNode(Opcodes.GETSTATIC, "r", "vfb", "[[Ljava/lang/String;"));
+           methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+           methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+           methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.ICONST_0));
+           methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.AALOAD));
+           
+           methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 5));
+           methodNode.instructions.insertBefore(
+               insnNode,
+               new MethodInsnNode(Opcodes.INVOKESTATIC, "Game/Client", "drawItem", "(IIIILjava/lang/String;I)V"));
+         }
       if (methodNode.name.equals("nl") && methodNode.desc.equals("()V")) {
           // TODO: This can be shortened, I'll fix it another time
 
@@ -1265,6 +1526,41 @@ public class JClassPatcher {
             field.name = newVar;
             field.desc = newDesc;
           }
+        }
+      }
+    }
+  }
+  
+  /**
+   * TODO: Complete JavaDoc
+   *
+   * @param methodNode
+   * @param owner The class of the variable to be hooked
+   * @param var The variable to be hooked
+   * @param desc
+   * @param newClass The class the hooked variable will be stored in
+   * @param newVar The variable name the hooked variable will be stored in
+   * @param newDesc
+   */
+  private void hookStaticVariable(
+      MethodNode methodNode,
+      String owner,
+      String var,
+      String desc,
+      String newClass,
+      String newVar,
+      String newDesc) {
+    Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+    while (insnNodeList.hasNext()) {
+      AbstractInsnNode insnNode = insnNodeList.next();
+
+      int opcode = insnNode.getOpcode();
+      if (opcode == Opcodes.GETSTATIC || opcode == Opcodes.PUTSTATIC) {
+        FieldInsnNode field = (FieldInsnNode) insnNode;
+        if (field.owner.equals(owner) && field.name.equals(var) && field.desc.equals(desc)) {
+          field.owner = newClass;
+          field.name = newVar;
+          field.desc = newDesc;
         }
       }
     }
