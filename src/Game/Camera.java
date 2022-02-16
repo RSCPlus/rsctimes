@@ -59,16 +59,16 @@ public class Camera {
     /*if (Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile)) {
       zoom = 750;
       delta_zoom = (float) zoom;
-    }
+    }*/
     // rotation = 126;
     // delta_rotation = (float) rotation;
     setDistance(Settings.VIEW_DISTANCE.get(Settings.currentProfile));
-    setFoV(Settings.FOV.get(Settings.currentProfile));*/
+    setFoV(Settings.FOV.get(Settings.currentProfile));
   }
 
   public static void reset_lookat() {
-    //lookat_x = Client.getPlayerWaypointX();
-    //lookat_y = Client.getPlayerWaypointY();
+    lookat_x = Client.getPlayerWaypointX();
+    lookat_y = Client.getPlayerWaypointY();
     new_lookat_x = lookat_x;
     new_lookat_y = lookat_y;
     delta_lookat_x = new_lookat_x;
@@ -203,7 +203,7 @@ public class Camera {
    * @param distance the view distance
    */
   public static synchronized void setDistance(int distance) {
-    //Settings.VIEW_DISTANCE_BOOL = (distance != 2300);
+    Settings.VIEW_DISTANCE_BOOL = (distance != 2300);
     distance1 = distance + 100;
     distance2 = distance + 100;
     distance3 = 1;

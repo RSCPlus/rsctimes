@@ -135,6 +135,51 @@ public class JClassPatcher {
       hookClassVariable(
               methodNode, "mudclient", "bz", "I", "Game/Client", "login_screen", "I", true, true);
       
+      hookConditionalClassVariable(
+              methodNode,
+              "jagex/client/j",
+              "dm", //4100
+              "I",
+              "Game/Camera",
+              "distance1",
+              "I",
+              false,
+              true,
+              "VIEW_DISTANCE_BOOL");
+          hookConditionalClassVariable(
+              methodNode,
+              "jagex/client/j",
+              "em", //4100
+              "I",
+              "Game/Camera",
+              "distance2",
+              "I",
+              false,
+              true,
+              "VIEW_DISTANCE_BOOL");
+          hookConditionalClassVariable(
+              methodNode,
+              "jagex/client/j",
+              "fm",
+              "I",
+              "Game/Camera",
+              "distance3",
+              "I",
+              false,
+              true,
+              "VIEW_DISTANCE_BOOL");
+          hookConditionalClassVariable(
+              methodNode,
+              "jagex/client/j",
+              "gm",
+              "I",
+              "Game/Camera",
+              "distance4",
+              "I",
+              false,
+              true,
+              "VIEW_DISTANCE_BOOL");
+      
       hookClassVariable(methodNode, "jagex/client/j", "oo", "[I", "Game/Renderer", "pixels", "[I", true, true);
       
       hookClassVariable(
@@ -249,6 +294,9 @@ public class JClassPatcher {
       hookClassVariable(methodNode, "jagex/client/k", "hp", "I", "Game/Renderer", "width", "I", false, true);
       hookClassVariable(methodNode, "jagex/client/k", "ip", "I", "Game/Renderer", "height", "I", false, true);
       
+      hookConditionalClassVariable(
+              methodNode, "mudclient", "du", "I", "Game/Camera", "fov", "I", false, true, "FOV_BOOL");
+      
       hookClassVariable(
               methodNode, "mudclient", "lt", "I", "Game/Client", "combat_timer", "I", true, true);
       
@@ -269,14 +317,37 @@ public class JClassPatcher {
               methodNode, "mudclient", "ox", "I", "Game/Client", "inventory_count", "I", true, false);
           hookClassVariable(
               methodNode, "mudclient", "px", "[I", "Game/Client", "inventory_items", "[I", true, false);
+          
+          hookConditionalClassVariable(
+                  methodNode,
+                  "mudclient",
+                  "nu",
+                  "I",
+                  "Game/Camera",
+                  "lookat_x",
+                  "I",
+                  false,
+                  true,
+                  "CAMERA_MOVABLE_BOOL");
+              hookConditionalClassVariable(
+                  methodNode,
+                  "mudclient",
+                  "ou",
+                  "I",
+                  "Game/Camera",
+                  "lookat_y",
+                  "I",
+                  false,
+                  true,
+                  "CAMERA_MOVABLE_BOOL");
       
+              hookClassVariable(
+                      methodNode, "mudclient", "qu", "I", "Game/Camera", "auto_speed", "I", true, true);
+              
       hookClassVariable(methodNode, "mudclient", "ct", "Z", "Game/Camera", "auto", "Z", true, true);
       hookClassVariable(methodNode, "mudclient", "pu", "I", "Game/Camera", "angle", "I", true, true);
-      
-      hookClassVariable(methodNode, "mudclient", "zt", "I", "Game/Camera", "rotation", "I", true, true);
 
-      //TODO: place similar to how is for rsc+
-      /*hookConditionalClassVariable(
+      hookConditionalClassVariable(
           methodNode,
           "mudclient",
           "zt",
@@ -286,7 +357,7 @@ public class JClassPatcher {
           "I",
           false,
           true,
-          "CAMERA_ROTATABLE_BOOL");*/
+          "CAMERA_ROTATABLE_BOOL");
       hookConditionalClassVariable(
           methodNode,
           "mudclient",
@@ -759,8 +830,58 @@ public class JClassPatcher {
                     "(Ljava/lang/String;I)V"));
       }
       if (methodNode.name.equals("fm") && methodNode.desc.equals("()V")) {
-    	      	  
+    	  
     	  Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+
+          LabelNode lblNode = null;
+          while (insnNodeList.hasNext()) {
+        	  AbstractInsnNode insnNode = insnNodeList.next();
+            AbstractInsnNode nextNode = insnNode.getNext();
+            
+            // this part checks to see if there's a string to render for the two cases below
+            if (insnNode.getOpcode() == Opcodes.ICONST_0
+                    && nextNode.getOpcode() == Opcodes.ISTORE && ((VarInsnNode)nextNode).var == 1) {
+                if (lblNode == null) {
+              	  lblNode = ((JumpInsnNode) nextNode.getNext()).label;  
+                }
+            }
+
+            // is_hover = 1, also getfield mudclient.qt
+            AbstractInsnNode nodeIns;
+            if (insnNode.getOpcode() == Opcodes.GETFIELD) {
+              FieldInsnNode fieldNode = ((FieldInsnNode) insnNode);
+              if (fieldNode.owner.equals("mudclient")
+                  && fieldNode.name.equals("qt")
+                  && nextNode.getOpcode() == Opcodes.ALOAD
+                  && ((VarInsnNode) nextNode).var == 4) {
+            	  methodNode.instructions.insert(fieldNode, new VarInsnNode(Opcodes.ASTORE, 4));
+                  methodNode.instructions.insert(
+                      fieldNode,
+                      new MethodInsnNode(
+                          Opcodes.INVOKESTATIC,
+                          "Game/Client",
+                          "mouse_action_hook",
+                          "(Ljava/lang/String;)Ljava/lang/String;",
+                          false));
+                  methodNode.instructions.insert(fieldNode, new VarInsnNode(Opcodes.ALOAD, 4));
+                  methodNode.instructions.insert(
+                      fieldNode, new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Client", "is_hover", "Z"));
+                  methodNode.instructions.insert(fieldNode, new InsnNode(Opcodes.ICONST_1));
+                continue;
+              }
+            }
+            
+            // is_hover = 0
+            if (insnNode instanceof LabelNode
+                && lblNode != null
+                && ((LabelNode) insnNode).equals(lblNode)) {
+              methodNode.instructions.insert(
+                  insnNode, new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Client", "is_hover", "Z"));
+              methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ICONST_0));
+            }
+          }
+    	      	  
+    	  insnNodeList = methodNode.instructions.iterator();
           while (insnNodeList.hasNext()) {
             AbstractInsnNode insnNode = insnNodeList.next();
             
@@ -779,58 +900,6 @@ public class JClassPatcher {
                     methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ISUB));
                   }
               }
-            
-            // Hook that gives out the message on X action such as npcs, items and prints them top left
-            // corner
-            // TODO: use the hook
-            insnNodeList = methodNode.instructions.iterator();
-
-            LabelNode lblNode = null;
-            while (insnNodeList.hasNext()) {
-              insnNode = insnNodeList.next();
-              AbstractInsnNode nextNode = insnNode.getNext();
-
-              // this part checks to see if there's a string to render for the two cases below
-              if (insnNode.getOpcode() == Opcodes.ALOAD
-                  && ((VarInsnNode) insnNode).var == 4
-                  && nextNode.getOpcode() == Opcodes.IFNULL
-                  && nextNode.getNext().getOpcode() != Opcodes.ALOAD) {
-                lblNode = ((JumpInsnNode) nextNode).label;
-              }
-
-              // is_hover = 1, also getfield mudclient.qt
-              if (insnNode.getOpcode() == Opcodes.GETFIELD) {
-                FieldInsnNode fieldNode = ((FieldInsnNode) insnNode);
-                if (fieldNode.owner.equals("mudclient")
-                    && fieldNode.name.equals("qt")
-                    && nextNode.getOpcode() == Opcodes.ALOAD
-                    && ((VarInsnNode) nextNode).var == 4) {
-                  methodNode.instructions.insert(fieldNode, new VarInsnNode(Opcodes.ASTORE, 4));
-                  methodNode.instructions.insert(
-                      fieldNode,
-                      new MethodInsnNode(
-                          Opcodes.INVOKESTATIC,
-                          "Game/Client",
-                          "mouse_action_hook",
-                          "(Ljava/lang/String;)Ljava/lang/String;",
-                          false));
-                  methodNode.instructions.insert(fieldNode, new VarInsnNode(Opcodes.ALOAD, 4));
-                  methodNode.instructions.insert(
-                      fieldNode, new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Client", "is_hover", "Z"));
-                  methodNode.instructions.insert(fieldNode, new InsnNode(Opcodes.ICONST_1));
-                  continue;
-                }
-              }
-
-              // is_hover = 0
-              if (insnNode instanceof LabelNode
-                  && lblNode != null
-                  && ((LabelNode) insnNode).equals(lblNode)) {
-                methodNode.instructions.insert(
-                    insnNode, new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Client", "is_hover", "Z"));
-                methodNode.instructions.insert(insnNode, new InsnNode(Opcodes.ICONST_0));
-              }
-            }
           }
     	  
       }

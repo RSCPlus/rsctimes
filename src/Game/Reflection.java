@@ -63,6 +63,8 @@ public class Reflection {
   public static Field characterWaypointX = null;
   public static Field characterWaypointY = null;
   
+  public static Field interlace = null;
+  
   public static Field menuX = null;
   public static Field menuY = null;
   public static Field menuScroll = null;
@@ -128,6 +130,7 @@ public class Reflection {
       
       // Renderer
       c = classLoader.loadClass("jagex.client.i");
+      interlace = c.getDeclaredField("rk");
       methods = c.getDeclaredMethods();
       for (Method method : methods) {
         if (method.toGenericString().equals(SETGAMEBOUNDS)) {
@@ -161,6 +164,7 @@ public class Reflection {
       if (mouseDown != null) mouseDown.setAccessible(true);
       if (keyUp != null) keyUp.setAccessible(true);
       if (keyDown != null) keyDown.setAccessible(true);
+      if (interlace != null) interlace.setAccessible(true);
       if (gameFrame != null) gameFrame.setAccessible(true);
       if (menuX != null) menuX.setAccessible(true);
       if (menuY != null) menuY.setAccessible(true);

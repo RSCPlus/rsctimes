@@ -64,6 +64,10 @@ public class Settings {
   public static HashMap<String, Boolean> SOFTWARE_CURSOR = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> FPS_LIMIT_ENABLED = new HashMap<String, Boolean>();
   public static HashMap<String, Integer> FPS_LIMIT = new HashMap<String, Integer>();
+  public static HashMap<String, Boolean> AUTO_SCREENSHOT = new HashMap<String, Boolean>();
+  public static HashMap<String, Integer> VIEW_DISTANCE = new HashMap<String, Integer>();
+  public static HashMap<String, Boolean> PATCH_GENDER = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> PATCH_HBAR_512_LAST_PIXEL = new HashMap<String, Boolean>();
   public static HashMap<String, Integer> LOG_VERBOSITY = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> LOG_SHOW_TIMESTAMPS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> LOG_SHOW_LEVEL = new HashMap<String, Boolean>();
@@ -324,6 +328,42 @@ public class Settings {
     SOFTWARE_CURSOR.put("all", true);
     SOFTWARE_CURSOR.put(
         "custom", getPropBoolean(props, "software_cursor", SOFTWARE_CURSOR.get("default")));
+    
+    VIEW_DISTANCE.put("vanilla", 2300);
+    VIEW_DISTANCE.put("vanilla_resizable", 3000);
+    VIEW_DISTANCE.put("lite", 10000);
+    VIEW_DISTANCE.put("default", 10000);
+    VIEW_DISTANCE.put("heavy", 20000);
+    VIEW_DISTANCE.put("all", 20000);
+    VIEW_DISTANCE.put("custom", getPropInt(props, "view_distance", VIEW_DISTANCE.get("default")));
+
+    AUTO_SCREENSHOT.put("vanilla", false);
+    AUTO_SCREENSHOT.put("vanilla_resizable", false);
+    AUTO_SCREENSHOT.put("lite", false);
+    AUTO_SCREENSHOT.put("default", true);
+    AUTO_SCREENSHOT.put("heavy", true);
+    AUTO_SCREENSHOT.put("all", true);
+    AUTO_SCREENSHOT.put(
+        "custom", getPropBoolean(props, "auto_screenshot", AUTO_SCREENSHOT.get("default")));
+
+    PATCH_GENDER.put("vanilla", false);
+    PATCH_GENDER.put("vanilla_resizable", false);
+    PATCH_GENDER.put("lite", false);
+    PATCH_GENDER.put("default", true);
+    PATCH_GENDER.put("heavy", true);
+    PATCH_GENDER.put("all", true);
+    PATCH_GENDER.put("custom", getPropBoolean(props, "patch_gender", PATCH_GENDER.get("default")));
+
+    PATCH_HBAR_512_LAST_PIXEL.put("vanilla", false);
+    PATCH_HBAR_512_LAST_PIXEL.put("vanilla_resizable", false);
+    PATCH_HBAR_512_LAST_PIXEL.put("lite", false);
+    PATCH_HBAR_512_LAST_PIXEL.put("default", false);
+    PATCH_HBAR_512_LAST_PIXEL.put("heavy", true);
+    PATCH_HBAR_512_LAST_PIXEL.put("all", true);
+    PATCH_HBAR_512_LAST_PIXEL.put(
+        "custom",
+        getPropBoolean(
+            props, "patch_hbar_512_last_pixel", PATCH_HBAR_512_LAST_PIXEL.get("default")));
 
 
     LOG_VERBOSITY.put("vanilla", Logger.Type.GAME.id);
@@ -837,6 +877,40 @@ public class Settings {
    WORLD.put("heavy", 1);
    WORLD.put("all", 1);
    WORLD.put("custom", getPropInt(props, "world", WORLD.get("default")));
+   
+// Sanitize settings
+   if (CUSTOM_CLIENT_SIZE_X.get("custom") < 512) {
+     CUSTOM_CLIENT_SIZE_X.put("custom", 512);
+     save("custom");
+   }
+   if (CUSTOM_CLIENT_SIZE_Y.get("custom") < 357) {
+     CUSTOM_CLIENT_SIZE_Y.put("custom", 357);
+     save("custom");
+   }
+
+   if (WORLD.get("custom") < 0) {
+     WORLD.put("custom", 0);
+     save("custom");
+   } else if (WORLD.get("custom") > Settings.WORLDS_TO_DISPLAY) {
+     WORLD.put("custom", Settings.WORLDS_TO_DISPLAY);
+     save("custom");
+   }
+
+   if (VIEW_DISTANCE.get("custom") < 2300) {
+     VIEW_DISTANCE.put("custom", 2300);
+     save("custom");
+   } else if (VIEW_DISTANCE.get("custom") > 20000) {
+     VIEW_DISTANCE.put("custom", 20000);
+     save("custom");
+   }
+
+   /*if (COMBAT_STYLE.get("custom") < Client.COMBAT_CONTROLLED) {
+     COMBAT_STYLE.put("custom", Client.COMBAT_CONTROLLED);
+     save("custom");
+   } else if (COMBAT_STYLE.get("custom") > Client.COMBAT_DEFENSIVE) {
+     COMBAT_STYLE.put("custom", Client.COMBAT_DEFENSIVE);
+     save("custom");
+   }*/
 
   }
 
@@ -1229,11 +1303,9 @@ public class Settings {
       Properties props = new Properties();
 
       //// general
-      /*
       props.setProperty("custom_client_size", Boolean.toString(CUSTOM_CLIENT_SIZE.get(preset)));
       props.setProperty("custom_client_size_x", Integer.toString(CUSTOM_CLIENT_SIZE_X.get(preset)));
       props.setProperty("custom_client_size_y", Integer.toString(CUSTOM_CLIENT_SIZE_Y.get(preset)));
-      */
       props.setProperty("check_updates", Boolean.toString(CHECK_UPDATES.get(preset)));
       /*
       props.setProperty(
@@ -1259,14 +1331,11 @@ public class Settings {
       props.setProperty("fps_limit_enabled", Boolean.toString(FPS_LIMIT_ENABLED.get(preset)));
       props.setProperty("fps_limit", Integer.toString(FPS_LIMIT.get(preset)));
       props.setProperty("software_cursor", Boolean.toString(SOFTWARE_CURSOR.get(preset)));
-      /*props.setProperty("auto_screenshot", Boolean.toString(AUTO_SCREENSHOT.get(preset)));
+      props.setProperty("auto_screenshot", Boolean.toString(AUTO_SCREENSHOT.get(preset)));
       props.setProperty("view_distance", Integer.toString(VIEW_DISTANCE.get(preset)));
       props.setProperty("patch_gender", Boolean.toString(PATCH_GENDER.get(preset)));
       props.setProperty(
               "patch_hbar_512_last_pixel", Boolean.toString(PATCH_HBAR_512_LAST_PIXEL.get(preset)));
-      props.setProperty(
-              "patch_wrench_menu_spacing", Boolean.toString(PATCH_WRENCH_MENU_SPACING.get(preset)));
-      */
       props.setProperty("log_verbosity", Integer.toString(LOG_VERBOSITY.get(preset)));
       props.setProperty("log_show_timestamps", Boolean.toString(LOG_SHOW_TIMESTAMPS.get(preset)));
       props.setProperty("log_show_level", Boolean.toString(LOG_SHOW_LEVEL.get(preset)));

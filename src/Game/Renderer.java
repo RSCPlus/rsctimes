@@ -651,8 +651,7 @@ public class Renderer {
           if (Settings.RSCTIMES_BUTTONS_FUNCTIONAL.get(Settings.currentProfile)
               || Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
             Rectangle mapButtonBounds = new Rectangle(width - 68, 3 + GAME_RENDER_OFFSET, 32, 32);
-            if (mapButtonBounds.x >= 460) {
-              if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
+            if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
                 g2.setColor(Renderer.color_text);
                 g2.drawLine(
                     mapButtonBounds.x + 4,
@@ -675,12 +674,10 @@ public class Renderer {
 
                 Launcher.getWorldMapWindow().showWorldMapWindow();
               }
-            }
 
             // Settings
             mapButtonBounds = new Rectangle(width - 200, 3 + GAME_RENDER_OFFSET, 32, 32);
-            if (mapButtonBounds.x >= 460) {
-              if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
+            if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
                 g2.setColor(Renderer.color_text);
                 g2.drawLine(
                     mapButtonBounds.x + 4,
@@ -703,13 +700,11 @@ public class Renderer {
 
                 Launcher.getConfigWindow().showConfigWindow();
               }
-            }
 
             // wiki button on magic book (Probably a bad idea due to misclicks)
             if (Settings.WIKI_LOOKUP_ON_MAGIC_BOOK.get(Settings.currentProfile)) {
               mapButtonBounds = new Rectangle(width - 68 - 66, 3 + GAME_RENDER_OFFSET, 32, 32);
-              if (mapButtonBounds.x >= 460) {
-                if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
+              if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
                   g2.setColor(Renderer.color_text);
                   g2.drawLine(
                       mapButtonBounds.x + 4,
@@ -733,7 +728,6 @@ public class Renderer {
                       "Click on something to look it up on the wiki...", Client.CHAT_NONE);
                   WikiURL.nextClickIsLookup = true;
                 }
-              }
             }
           }
 
@@ -1831,6 +1825,11 @@ public class Renderer {
     	// TODO: surfaces' drawstring need to be patched to accommodate >= 1000 offsets
     	int coord = Renderer.width - (512 - 439);
     	return "~" + coord + "~@whi@Remove         WWWWWWWWWW";
+    }
+    
+    public static void takeScreenshot(boolean quiet) {
+        quietScreenshot = quiet;
+        screenshot = true;
     }
 
     private static Dimension getStringBounds(Graphics2D g, String str) {

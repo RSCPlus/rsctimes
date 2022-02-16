@@ -244,6 +244,9 @@ public class Client {
     applet.addMouseWheelListener(handler_mouse);
     applet.addKeyListener(handler_keyboard);
     applet.setFocusTraversalKeysEnabled(false);
+    
+    // Initialize login
+    init_login();
   }
   
   /**
@@ -801,11 +804,11 @@ public class Client {
 	                && (colorMessage.contains("poisioned!")
 	                    || colorMessage.contains("***"))); // "***" is for Tourist Trap completion
 
-	    /*if (screenshotMessage
+	    if (screenshotMessage
 	        && Settings.AUTO_SCREENSHOT.get(Settings.currentProfile)
 	        && !Replay.isPlaying) {
 	      Renderer.takeScreenshot(true);
-	    }*/
+	    }
 
 	    if (blueMessage) { // this is one of the messages which we must overwrite expected color for
 	      return "@|cyan,intensity_faint " + colorReplace(colorMessage) + "|@";
@@ -925,21 +928,19 @@ public class Client {
   }
   
   public static void setInterlace(boolean value) {
-	  //TODO
-	    /*if (Reflection.interlace == null) return;
+	    if (Reflection.interlace == null) return;
 
 	    try {
 	      Reflection.interlace.set(Renderer.instance, value);
 	    } catch (Exception e) {
-	    }*/
+	    }
   }
 
   public static boolean getInterlace() {
-	  //TODO
-	    /*try {
+	    try {
 	      return (boolean) Reflection.interlace.get(Renderer.instance);
 	    } catch (Exception e) {
-	    }*/
+	    }
 	    return false;
   }
   

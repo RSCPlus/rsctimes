@@ -19,7 +19,7 @@
 package Client;
 
 import Client.KeybindSet.KeyModifier;
-// import Game.Camera;
+import Game.Camera;
 import Game.Client;
 import Game.Game;
 // import Game.Item;
@@ -167,7 +167,6 @@ public class ConfigWindow {
     private JCheckBox generalPanelAutoScreenshotCheckbox;
     private JCheckBox generalPanelPatchGenderCheckbox;
     private JCheckBox generalPanelPatchHbar512LastPixelCheckbox;
-    private JCheckBox generalPanelPatchWrenchMenuSpacingCheckbox;
     private JCheckBox generalPanelDebugModeCheckbox;
     private JCheckBox generalPanelExceptionHandlerCheckbox;
     private JLabel generalPanelNamePatchModeDesc;
@@ -536,18 +535,15 @@ public class ConfigWindow {
                 addCheckbox("Remind you how to open the Settings every time you log in", generalPanel);
         generalPanelWelcomeEnabled.setToolTipText(
                 "When enabled, rsctimes will insert a message telling the current keybinding to open the settings menu and remind you about the tray icon");
-        generalPanelWelcomeEnabled.setEnabled(false);
 
         generalPanelCustomCursorCheckbox = addCheckbox("Use custom mouse cursor", generalPanel);
         generalPanelCustomCursorCheckbox.setToolTipText(
                 "Switch to using a custom mouse cursor instead of the system default");
-        generalPanelCustomCursorCheckbox.setEnabled(false);
 
         generalPanelAutoScreenshotCheckbox =
                 addCheckbox("Take a screenshot when you level up or complete a quest", generalPanel);
         generalPanelAutoScreenshotCheckbox.setToolTipText(
                 "Takes a screenshot for you for level ups and quest completion");
-        generalPanelAutoScreenshotCheckbox.setEnabled(false);
 
         JLabel generalPanelFoVLabel = new JLabel("Field of view (Default 9)");
         generalPanelFoVLabel.setToolTipText("Sets the field of view (not recommended past 10)");
@@ -555,8 +551,6 @@ public class ConfigWindow {
         generalPanelFoVLabel.setAlignmentY((float) 0.9);
 
         generalPanelFoVSlider = new JSlider();
-        generalPanelFoVLabel.setEnabled(false);
-        generalPanelFoVSlider.setEnabled(false);
 
         generalPanel.add(generalPanelFoVSlider);
         generalPanelFoVSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -575,8 +569,6 @@ public class ConfigWindow {
         generalPanelViewDistanceLabel.setAlignmentY((float) 0.9);
 
         generalPanelViewDistanceSlider = new JSlider();
-        generalPanelViewDistanceLabel.setEnabled(false);
-        generalPanelViewDistanceSlider.setEnabled(false);
 
         generalPanel.add(generalPanelViewDistanceSlider);
         generalPanelViewDistanceSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -607,7 +599,6 @@ public class ConfigWindow {
                 addCheckbox("FPS limit (doubled while F1 interlaced):", generalPanelLimitFPSPanel);
         generalPanelLimitFPSCheckbox.setToolTipText(
                 "Limit FPS for a more 2001 feeling (or to save battery)");
-        generalPanelLimitFPSCheckbox.setEnabled(false);
 
         generalPanelLimitFPSSpinner = new JSpinner();
         generalPanelLimitFPSPanel.add(generalPanelLimitFPSSpinner);
@@ -2000,14 +1991,12 @@ public class ConfigWindow {
         presetsPanelPresetSlider.setValue(sliderValue);
 
         // General tab
-        /*
         generalPanelClientSizeCheckbox.setSelected(
                 Settings.CUSTOM_CLIENT_SIZE.get(Settings.currentProfile));
         generalPanelClientSizeXSpinner.setValue(
                 Settings.CUSTOM_CLIENT_SIZE_X.get(Settings.currentProfile));
         generalPanelClientSizeYSpinner.setValue(
                 Settings.CUSTOM_CLIENT_SIZE_Y.get(Settings.currentProfile));
-        */
         generalPanelCheckUpdates.setSelected(Settings.CHECK_UPDATES.get(Settings.currentProfile));
         /*
         generalPanelShowSecurityTipsAtLoginCheckbox.setSelected(
@@ -2047,7 +2036,6 @@ public class ConfigWindow {
                 Settings.LOG_FORCE_LEVEL.get(Settings.currentProfile));
         generalPanelLogForceTimestampsCheckbox.setSelected(
                 Settings.LOG_FORCE_TIMESTAMPS.get(Settings.currentProfile));
-        /*
         generalPanelFoVSlider.setValue(Settings.FOV.get(Settings.currentProfile));
         generalPanelLimitFPSCheckbox.setSelected(
                 Settings.FPS_LIMIT_ENABLED.get(Settings.currentProfile));
@@ -2060,9 +2048,6 @@ public class ConfigWindow {
         generalPanelPatchGenderCheckbox.setSelected(Settings.PATCH_GENDER.get(Settings.currentProfile));
         generalPanelPatchHbar512LastPixelCheckbox.setSelected(
                 Settings.PATCH_HBAR_512_LAST_PIXEL.get(Settings.currentProfile));
-        generalPanelPatchWrenchMenuSpacingCheckbox.setSelected(
-                Settings.PATCH_WRENCH_MENU_SPACING.get(Settings.currentProfile));
-        */
         generalPanelPrefersXdgOpenCheckbox.setSelected(
                 Settings.PREFERS_XDG_OPEN.get(Settings.currentProfile));
 
@@ -2261,7 +2246,6 @@ public class ConfigWindow {
         */
         Settings.COLORIZE_CONSOLE_TEXT.put(
                 Settings.currentProfile, generalPanelColoredTextCheckbox.isSelected());
-        /*
         Settings.FOV.put(Settings.currentProfile, generalPanelFoVSlider.getValue());
         Settings.SOFTWARE_CURSOR.put(
                 Settings.currentProfile, generalPanelCustomCursorCheckbox.isSelected());
@@ -2277,9 +2261,6 @@ public class ConfigWindow {
                 Settings.currentProfile, generalPanelPatchGenderCheckbox.isSelected());
         Settings.PATCH_HBAR_512_LAST_PIXEL.put(
                 Settings.currentProfile, generalPanelPatchHbar512LastPixelCheckbox.isSelected());
-        Settings.PATCH_WRENCH_MENU_SPACING.put(
-                Settings.currentProfile, generalPanelPatchWrenchMenuSpacingCheckbox.isSelected());
-         */
 
         // Overlays options
         Settings.SHOW_HP_OVERLAY.put(
@@ -2478,9 +2459,9 @@ public class ConfigWindow {
         if (Settings.CUSTOM_CLIENT_SIZE.get(Settings.currentProfile))
             Game.getInstance().resizeFrameWithContents();
         // Tell the Renderer to update the FoV from its thread to avoid thread-safety issues.
-        // Settings.fovUpdateRequired = true;
-        // Settings.checkSoftwareCursor();
-        // Camera.setDistance(Settings.VIEW_DISTANCE.get(Settings.currentProfile));
+        Settings.fovUpdateRequired = true;
+        Settings.checkSoftwareCursor();
+        Camera.setDistance(Settings.VIEW_DISTANCE.get(Settings.currentProfile));
         synchronizeGuiValues();
         // QueueWindow.syncColumnsWithSettings();
         //bQueueWindow.playlistTable.repaint();
