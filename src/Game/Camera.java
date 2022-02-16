@@ -56,10 +56,10 @@ public class Camera {
   }
 
   public static void init() {
-    /*if (Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile)) {
+    if (Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile)) {
       zoom = 750;
       delta_zoom = (float) zoom;
-    }*/
+    }
     // rotation = 126;
     // delta_rotation = (float) rotation;
     setDistance(Settings.VIEW_DISTANCE.get(Settings.currentProfile));
@@ -103,7 +103,7 @@ public class Camera {
       add_lookat_x = Util.lerp(add_lookat_x, tileX, 8.0f * delta_time);
       add_lookat_y = Util.lerp(add_lookat_y, tileY, 8.0f * delta_time);
 
-      /*if (!Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile)) {
+      if (!Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile)) {
         if ((add_lookat_x != 0.0f && add_lookat_y != 0.0f)
             && (add_lookat_x < new_lookat_x + 128 && add_lookat_x > new_lookat_x - 128)
             && (add_lookat_y < new_lookat_y + 128 && add_lookat_y > new_lookat_y - 128)) {
@@ -111,20 +111,20 @@ public class Camera {
           add_lookat_y = 0.0f;
           Client.displayMessage("The camera is now following the player", Client.CHAT_NONE);
         }
-      }*/
+      }
     }
 
     // If the user changes modes, reset
-    /*if (relative != Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile)) {
+    if (relative != Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile)) {
       add_lookat_x = 0;
       add_lookat_y = 0;
       relative = Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile);
-    }*/
+    }
 
     delta_lookat_x = new_lookat_x; // Util.lerp(delta_lookat_x, new_lookat_x, 8.0f * delta_time);
     delta_lookat_y = new_lookat_y; // Util.lerp(delta_lookat_y, new_lookat_y, 8.0f * delta_time);
 
-    /*if (!Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile)) {
+    if (!Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile)) {
       // Absolute mode
       if (add_lookat_x == 0.0f) lookat_x = (int) delta_lookat_x;
       else lookat_x = (int) add_lookat_x;
@@ -138,7 +138,7 @@ public class Camera {
     }
 
     // Reset auto speed
-    if (Settings.CAMERA_ROTATABLE.get(Settings.currentProfile)) auto_speed = 0;*/
+    if (Settings.CAMERA_ROTATABLE.get(Settings.currentProfile)) auto_speed = 0;
   }
 
   public static void resize() {
@@ -158,10 +158,10 @@ public class Camera {
   }
 
   public static void strafe(float speed) {
-    /*if (!Settings.CAMERA_MOVABLE.get(Settings.currentProfile)
+    if (!Settings.CAMERA_MOVABLE.get(Settings.currentProfile)
         || Settings.SPEEDRUNNER_MODE_ACTIVE.get(Settings.currentProfile)) {
       return;
-    }*/
+    }
     float rotation_degrees = ((float) rotation / 255.0f) * 360.0f + 90.0f;
     float xDiff = Util.lengthdir_x(64, rotation_degrees);
     float yDiff = Util.lengthdir_y(64, rotation_degrees);
@@ -169,10 +169,10 @@ public class Camera {
   }
 
   public static void move(float speed) {
-    /*if (!Settings.CAMERA_MOVABLE.get(Settings.currentProfile)
+    if (!Settings.CAMERA_MOVABLE.get(Settings.currentProfile)
         || Settings.SPEEDRUNNER_MODE_ACTIVE.get(Settings.currentProfile)) {
       return;
-    }*/
+    }
     float rotation_degrees = ((float) rotation / 255.0f) * 360.0f;
     float xDiff = Util.lengthdir_x(64, rotation_degrees);
     float yDiff = Util.lengthdir_y(64, rotation_degrees);
@@ -180,12 +180,12 @@ public class Camera {
   }
 
   public static void add_movement(float x, float y) {
-    /*if (!Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile)
+    if (!Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile)
         && ((add_lookat_x == 0.0f && x != 0.0f) || (add_lookat_y == 0.0f && y != 0.0f))) {
       add_lookat_x = lookat_x;
       add_lookat_y = lookat_y;
       Client.displayMessage("The camera is no longer following the player", Client.CHAT_NONE);
-    }*/
+    }
 
     add_lookat_x += x;
     add_lookat_y += y;
@@ -211,7 +211,7 @@ public class Camera {
   }
 
   public static void setFoV(int fov) {
-    //Settings.FOV_BOOL = (fov != 9);
+    Settings.FOV_BOOL = (fov != 9);
 
     // lower than 7 crashes (FoV 4, 5, 6 all crash)
     if (fov < 7) fov = 7;
@@ -224,14 +224,14 @@ public class Camera {
   }
 
   public static void addRotation(float amount) {
-    //if (!Settings.CAMERA_ROTATABLE.get(Settings.currentProfile)) return;
+    if (!Settings.CAMERA_ROTATABLE.get(Settings.currentProfile)) return;
 
     delta_rotation += amount;
     rotation = (int) delta_rotation & 0xFF;
   }
 
   public static void addZoom(float amount) {
-    //if (amount == 0 || !Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile)) return;
+    if (amount == 0 || !Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile)) return;
 
     delta_zoom += amount;
     if (delta_zoom > 1238.0f) delta_zoom = 1238.0f;

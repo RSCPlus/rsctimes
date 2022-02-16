@@ -59,6 +59,10 @@ public class Settings {
   public static HashMap<String, Integer> CUSTOM_CLIENT_SIZE_X = new HashMap<String, Integer>();
   public static HashMap<String, Integer> CUSTOM_CLIENT_SIZE_Y = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> CHECK_UPDATES = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> CAMERA_ZOOMABLE = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> CAMERA_ROTATABLE = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> CAMERA_MOVABLE = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> CAMERA_MOVABLE_RELATIVE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> COLORIZE_CONSOLE_TEXT = new HashMap<String, Boolean>();
   public static HashMap<String, Integer> FOV = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> SOFTWARE_CURSOR = new HashMap<String, Boolean>();
@@ -194,6 +198,8 @@ public class Settings {
       WorldMapWindow.showScenery = getPropBoolean(props, "worldmap_show_scenery", true);
       WorldMapWindow.renderChunkGrid = getPropBoolean(props, "worldmap_show_chunk_grid", false);
       WorldMapWindow.showOtherFloors = getPropBoolean(props, "worldmap_show_other_floors", false);
+      
+      updateInjectedVariables(); // TODO remove this function
 
 
       // Keybinds
@@ -285,6 +291,43 @@ public class Settings {
     CHECK_UPDATES.put("all", true);
     CHECK_UPDATES.put(
             "custom", getPropBoolean(props, "check_updates", CHECK_UPDATES.get("default")));
+    
+    CAMERA_ZOOMABLE.put("vanilla", false);
+    CAMERA_ZOOMABLE.put("vanilla_resizable", false);
+    CAMERA_ZOOMABLE.put("lite", true);
+    CAMERA_ZOOMABLE.put("default", true);
+    CAMERA_ZOOMABLE.put("heavy", true);
+    CAMERA_ZOOMABLE.put("all", true);
+    CAMERA_ZOOMABLE.put(
+        "custom", getPropBoolean(props, "camera_zoomable", CAMERA_ZOOMABLE.get("default")));
+
+    CAMERA_ROTATABLE.put("vanilla", false);
+    CAMERA_ROTATABLE.put("vanilla_resizable", false);
+    CAMERA_ROTATABLE.put("lite", true);
+    CAMERA_ROTATABLE.put("default", true);
+    CAMERA_ROTATABLE.put("heavy", true);
+    CAMERA_ROTATABLE.put("all", true);
+    CAMERA_ROTATABLE.put(
+        "custom", getPropBoolean(props, "camera_rotatable", CAMERA_ROTATABLE.get("default")));
+
+    CAMERA_MOVABLE.put("vanilla", false);
+    CAMERA_MOVABLE.put("vanilla_resizable", false);
+    CAMERA_MOVABLE.put("lite", true);
+    CAMERA_MOVABLE.put("default", true);
+    CAMERA_MOVABLE.put("heavy", true);
+    CAMERA_MOVABLE.put("all", true);
+    CAMERA_MOVABLE.put(
+        "custom", getPropBoolean(props, "camera_movable", CAMERA_MOVABLE.get("default")));
+
+    CAMERA_MOVABLE_RELATIVE.put("vanilla", false);
+    CAMERA_MOVABLE_RELATIVE.put("vanilla_resizable", false);
+    CAMERA_MOVABLE_RELATIVE.put("lite", false);
+    CAMERA_MOVABLE_RELATIVE.put("default", false);
+    CAMERA_MOVABLE_RELATIVE.put("heavy", false);
+    CAMERA_MOVABLE_RELATIVE.put("all", false);
+    CAMERA_MOVABLE_RELATIVE.put(
+        "custom",
+        getPropBoolean(props, "camera_movable_relative", CAMERA_MOVABLE_RELATIVE.get("default")));
 
     COLORIZE_CONSOLE_TEXT.put("vanilla", true);
     COLORIZE_CONSOLE_TEXT.put("vanilla_resizable", true);
@@ -1288,6 +1331,7 @@ public class Settings {
 
   /** Writes all setting variables to config.ini. */
   public static void save() {
+	updateInjectedVariables(); // TODO remove this function
     if (currentProfile.equals("custom")) {
       save("custom");
     }
@@ -1296,11 +1340,13 @@ public class Settings {
   public static void save(String preset) {
     if (!successfullyInitted) {
       Logger.Warn(
-              "Prevented erroneous save, please report this along with the RSC+ log file, set to debug logging mode");
+              "Prevented erroneous save, please report this along with the RSC× log file, set to debug logging mode");
       return;
     }
     try {
       Properties props = new Properties();
+      
+      updateInjectedVariables(); // TODO remove this function
 
       //// general
       props.setProperty("custom_client_size", Boolean.toString(CUSTOM_CLIENT_SIZE.get(preset)));
@@ -1312,21 +1358,19 @@ public class Settings {
               "welcome_enabled", Boolean.toString(REMIND_HOW_TO_OPEN_SETTINGS.get(preset)));
       props.setProperty("combat_menu", Boolean.toString(COMBAT_MENU_SHOWN.get(preset)));
       props.setProperty("combat_menu_hidden", Boolean.toString(COMBAT_MENU_HIDDEN.get(preset)));
-      props.setProperty("show_xpdrops", Boolean.toString(SHOW_XPDROPS.get(preset)));
-      props.setProperty("center_xpdrops", Boolean.toString(CENTER_XPDROPS.get(preset)));
       props.setProperty("inventory_full_alert", Boolean.toString(INVENTORY_FULL_ALERT.get(preset)));
       props.setProperty("name_patch_type", Integer.toString(NAME_PATCH_TYPE.get(preset)));
       props.setProperty("command_patch_quest", Boolean.toString(COMMAND_PATCH_QUEST.get(preset)));
       props.setProperty(
               "keep_scrollbar_pos_magic_prayer",
               Boolean.toString(KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(preset)));
-      props.setProperty("hide_roofs", Boolean.toString(HIDE_ROOFS.get(preset)));
+      props.setProperty("hide_roofs", Boolean.toString(HIDE_ROOFS.get(preset)));*/
       props.setProperty("camera_zoomable", Boolean.toString(CAMERA_ZOOMABLE.get(preset)));
       props.setProperty("camera_rotatable", Boolean.toString(CAMERA_ROTATABLE.get(preset)));
       props.setProperty("camera_movable", Boolean.toString(CAMERA_MOVABLE.get(preset)));
       props.setProperty(
               "camera_movable_relative", Boolean.toString(CAMERA_MOVABLE_RELATIVE.get(preset)));
-      props.setProperty("colorize", Boolean.toString(COLORIZE_CONSOLE_TEXT.get(preset)));*/
+      props.setProperty("colorize", Boolean.toString(COLORIZE_CONSOLE_TEXT.get(preset)));
       props.setProperty("fov", Integer.toString(FOV.get(preset)));
       props.setProperty("fps_limit_enabled", Boolean.toString(FPS_LIMIT_ENABLED.get(preset)));
       props.setProperty("fps_limit", Integer.toString(FPS_LIMIT.get(preset)));
@@ -1657,13 +1701,12 @@ public class Settings {
   
   public static void updateInjectedVariables() {
 	    // TODO: get rid of these variables and this function if possible
-	  	// TODO: place like rsc+?
 	    /*COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
 	    HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
 	    COMBAT_MENU_SHOWN_BOOL = COMBAT_MENU_SHOWN.get(currentProfile);
-	    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);
+	    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);*/
 	    CAMERA_ZOOMABLE_BOOL = CAMERA_ZOOMABLE.get(currentProfile);
 	    CAMERA_ROTATABLE_BOOL = CAMERA_ROTATABLE.get(currentProfile);
-	    CAMERA_MOVABLE_BOOL = CAMERA_MOVABLE.get(currentProfile);*/
+	    CAMERA_MOVABLE_BOOL = CAMERA_MOVABLE.get(currentProfile);
 	  }
 }

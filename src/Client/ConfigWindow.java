@@ -133,9 +133,6 @@ public class ConfigWindow {
     private JSpinner generalPanelClientSizeXSpinner;
     private JSpinner generalPanelClientSizeYSpinner;
     private JCheckBox generalPanelCheckUpdates;
-    private JCheckBox generalPanelAccountSecurityCheckbox;
-    private JCheckBox generalPanelConfirmCancelRecoveryChangeCheckbox;
-    private JCheckBox generalPanelShowSecurityTipsAtLoginCheckbox;
     private JCheckBox generalPanelWelcomeEnabled;
     // private JCheckBox generalPanelChatHistoryCheckbox;
     private JCheckBox generalPanelCombatXPMenuCheckbox;
@@ -728,23 +725,19 @@ public class ConfigWindow {
         generalPanelCameraZoomableCheckbox = addCheckbox("Camera zoom enhancement", generalPanel);
         generalPanelCameraZoomableCheckbox.setToolTipText(
                 "Zoom the camera in and out with the mouse wheel, and no longer zooms in inside buildings");
-        generalPanelCameraZoomableCheckbox.setEnabled(false);
 
         generalPanelCameraRotatableCheckbox = addCheckbox("Camera rotation enhancement", generalPanel);
         generalPanelCameraRotatableCheckbox.setToolTipText(
                 "Rotate the camera with middle mouse click, among other things");
-        generalPanelCameraRotatableCheckbox.setEnabled(false);
 
         generalPanelCameraMovableCheckbox = addCheckbox("Camera movement enhancement", generalPanel);
         generalPanelCameraMovableCheckbox.setToolTipText(
                 "Makes the camera follow the player more closely, and allow camera movement while holding shift, and pressing arrow keys");
-        generalPanelCameraMovableCheckbox.setEnabled(false);
 
         generalPanelCameraMovableRelativeCheckbox =
                 addCheckbox("Camera movement is relative to player", generalPanel);
         generalPanelCameraMovableRelativeCheckbox.setToolTipText(
                 "Camera movement will follow the player position");
-        generalPanelCameraMovableRelativeCheckbox.setEnabled(false);
 
         addSettingsHeader(generalPanel, "Menu/Item patching");
 
@@ -834,7 +827,7 @@ public class ConfigWindow {
         overlayPanel.setLayout(new BoxLayout(overlayPanel, BoxLayout.Y_AXIS));
 
         /// "Interface Overlays" are overlays that have a constant position on
-        /// the screen because they are designed to modify just the interface of RSC+
+        /// the screen because they are designed to modify just the interface of RSC×
         addSettingsHeader(overlayPanel, "Interface Overlays");
         overlayPanelStatusDisplayCheckbox = addCheckbox("Show HP display", overlayPanel);
         overlayPanelStatusDisplayCheckbox.setToolTipText("Toggle hits display");
@@ -2018,6 +2011,7 @@ public class ConfigWindow {
         generalPanelKeepScrollbarPosMagicPrayerCheckbox.setSelected(
                 Settings.KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(Settings.currentProfile));
         generalPanelRoofHidingCheckbox.setSelected(Settings.HIDE_ROOFS.get(Settings.currentProfile));
+        */
         generalPanelCameraZoomableCheckbox.setSelected(
                 Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile));
         generalPanelCameraRotatableCheckbox.setSelected(
@@ -2026,7 +2020,6 @@ public class ConfigWindow {
                 Settings.CAMERA_MOVABLE.get(Settings.currentProfile));
         generalPanelCameraMovableRelativeCheckbox.setSelected(
                 Settings.CAMERA_MOVABLE_RELATIVE.get(Settings.currentProfile));
-        */
         generalPanelColoredTextCheckbox.setSelected(
                 Settings.COLORIZE_CONSOLE_TEXT.get(Settings.currentProfile));
         generalPanelLogLevelCheckbox.setSelected(Settings.LOG_SHOW_LEVEL.get(Settings.currentProfile));
@@ -2235,6 +2228,7 @@ public class ConfigWindow {
         Settings.KEEP_SCROLLBAR_POS_MAGIC_PRAYER.put(
                 Settings.currentProfile, generalPanelKeepScrollbarPosMagicPrayerCheckbox.isSelected());
         Settings.HIDE_ROOFS.put(Settings.currentProfile, generalPanelRoofHidingCheckbox.isSelected());
+        */
         Settings.CAMERA_ZOOMABLE.put(
                 Settings.currentProfile, generalPanelCameraZoomableCheckbox.isSelected());
         Settings.CAMERA_ROTATABLE.put(
@@ -2243,7 +2237,6 @@ public class ConfigWindow {
                 Settings.currentProfile, generalPanelCameraMovableCheckbox.isSelected());
         Settings.CAMERA_MOVABLE_RELATIVE.put(
                 Settings.currentProfile, generalPanelCameraMovableRelativeCheckbox.isSelected());
-        */
         Settings.COLORIZE_CONSOLE_TEXT.put(
                 Settings.currentProfile, generalPanelColoredTextCheckbox.isSelected());
         Settings.FOV.put(Settings.currentProfile, generalPanelFoVSlider.getValue());

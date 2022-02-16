@@ -147,7 +147,6 @@ public class KeyboardHandler implements KeyListener {
      */
 
     // Handle camera keys
-    /* TODO: camera  keys...
     if (!e.isConsumed()) {
       if (e.getKeyCode() == KeyEvent.VK_LEFT) {
         keyLeft = true;
@@ -168,8 +167,6 @@ public class KeyboardHandler implements KeyListener {
 
       keyShift = e.isShiftDown();
     }
-
-     */
 
     // Translate modern java keycodes to ancient java keycodes
     if (!e.isConsumed() && !WorldMapWindow.hasFocus()) {
@@ -213,7 +210,6 @@ public class KeyboardHandler implements KeyListener {
     // TODO: implement tab to respond to pm
     // if (e.getKeyCode() == KeyEvent.VK_TAB) e.consume();
 
-    /* TODO: handle camera keys
     // Handle camera keys
     if (!e.isConsumed()) {
       if (e.getKeyCode() == KeyEvent.VK_LEFT) {
@@ -233,9 +229,8 @@ public class KeyboardHandler implements KeyListener {
         if (Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile)) e.consume();
       }
 
-     */
-
     keyShift = e.isShiftDown();
+    }
 
     // Translate modern java keycodes to ancient java keycodes
     if (!e.isConsumed()) {
