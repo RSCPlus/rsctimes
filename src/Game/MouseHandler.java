@@ -39,6 +39,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
   public static boolean mouseClicked = false;
   public static boolean rightClick = false;
   public static long lastWheelMovement = 0L;
+  public static long lastWheelClick = 0L;
 
   private boolean m_rotating = false;
   private Point m_rotatePosition;
@@ -145,13 +146,16 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
   @Override
   public void mouseDragged(MouseEvent e) {
     if (Settings.CAMERA_ROTATABLE.get(Settings.currentProfile) && m_rotating) {
-      m_rotateX += (float) (e.getX() - m_rotatePosition.x) / 2.0f;
-      int xDist = (int) m_rotateX;
+      if (e.getWhen() > lastWheelClick + 10) {
+        lastWheelClick = e.getWhen();
+        m_rotateX += (float) (e.getX() - m_rotatePosition.x) / 2.0f;
+        int xDist = (int) m_rotateX;
 
-      Camera.addRotation(xDist);
-      m_rotateX -= xDist;
+        Camera.addRotation(xDist);
+        m_rotateX -= xDist;
 
-      m_rotatePosition = e.getPoint();
+        m_rotatePosition = e.getPoint();
+      }
     }
     if (!e.isConsumed()) {
       x = e.getX();
