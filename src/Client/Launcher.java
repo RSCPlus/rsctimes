@@ -69,7 +69,6 @@ public class Launcher extends JFrame implements Runnable {
       setIconImage(icon.getImage());
     }
 
-
     // Set size
     getContentPane().setPreferredSize(new Dimension(280, 32));
     setTitle("rsctimes Launcher");
@@ -96,41 +95,41 @@ public class Launcher extends JFrame implements Runnable {
     if (Settings.UPDATE_CONFIRMATION.get(Settings.currentProfile)) {
       Client.firstTimeRunningRSCTimes = true;
       int response =
-              JOptionPane.showConfirmDialog(
-                      this,
-                      "rsctimes has an automatic update feature.\n"
-                              + "\n"
-                              + "When enabled, rsctimes will prompt for and install updates when launching the client.\n"
-                              + "The updates are obtained from our 'Latest' release on GitHub.\n"
-                              + "\n"
-                              + "Would you like to enable this feature?\n"
-                              + "\n"
-                              + "NOTE: This option can be toggled in the Settings interface under the General tab.",
-                      "rsctimes",
-                      JOptionPane.YES_NO_OPTION,
-                      JOptionPane.INFORMATION_MESSAGE,
-                      icon);
+          JOptionPane.showConfirmDialog(
+              this,
+              "rsctimes has an automatic update feature.\n"
+                  + "\n"
+                  + "When enabled, rsctimes will prompt for and install updates when launching the client.\n"
+                  + "The updates are obtained from our 'Latest' release on GitHub.\n"
+                  + "\n"
+                  + "Would you like to enable this feature?\n"
+                  + "\n"
+                  + "NOTE: This option can be toggled in the Settings interface under the General tab.",
+              "rsctimes",
+              JOptionPane.YES_NO_OPTION,
+              JOptionPane.INFORMATION_MESSAGE,
+              icon);
       if (response == JOptionPane.YES_OPTION || response == JOptionPane.CLOSED_OPTION) {
         Settings.CHECK_UPDATES.put(Settings.currentProfile, true);
         JOptionPane.showMessageDialog(
-                this,
-                "rsctimes is set to check for updates on GitHub at every launch!",
-                "rsctimes",
-                JOptionPane.INFORMATION_MESSAGE,
-                icon);
+            this,
+            "rsctimes is set to check for updates on GitHub at every launch!",
+            "rsctimes",
+            JOptionPane.INFORMATION_MESSAGE,
+            icon);
       } else if (response == JOptionPane.NO_OPTION) {
         Settings.CHECK_UPDATES.put(Settings.currentProfile, false);
         JOptionPane.showMessageDialog(
-                this,
-                "rsctimes will not check for updates automatically.\n"
-                        + "\n"
-                        + "You will not get notified when new releases are available. To update your client, you\n"
-                        + "will need to do it manually by replacing 'rsctimes.jar' in your rsctimes directory.\n"
-                        + "\n"
-                        + "You can enable GitHub updates again in the Settings interface under the General tab.",
-                "rsctimes",
-                JOptionPane.INFORMATION_MESSAGE,
-                icon_warn);
+            this,
+            "rsctimes will not check for updates automatically.\n"
+                + "\n"
+                + "You will not get notified when new releases are available. To update your client, you\n"
+                + "will need to do it manually by replacing 'rsctimes.jar' in your rsctimes directory.\n"
+                + "\n"
+                + "You can enable GitHub updates again in the Settings interface under the General tab.",
+            "rsctimes",
+            JOptionPane.INFORMATION_MESSAGE,
+            icon_warn);
       }
       Settings.UPDATE_CONFIRMATION.put(Settings.currentProfile, false);
       Settings.save();
@@ -143,44 +142,44 @@ public class Launcher extends JFrame implements Runnable {
         setStatus("rsctimes update is available");
         // TODO: before Y10K update this to %9.6f
         int response =
-                JOptionPane.showConfirmDialog(
-                        this,
-                        "An rsctimes client update is available!\n"
-                                + "\n"
-                                + "Latest: "
-                                + String.format("%8.6f", latestVersion)
-                                + "\n"
-                                + "Installed: "
-                                + String.format("%8.6f", Settings.VERSION_NUMBER)
-                                + "\n"
-                                + "\n"
-                                + "Would you like to update now?",
-                        "rsctimes",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.INFORMATION_MESSAGE,
-                        icon);
+            JOptionPane.showConfirmDialog(
+                this,
+                "An rsctimes client update is available!\n"
+                    + "\n"
+                    + "Latest: "
+                    + String.format("%8.6f", latestVersion)
+                    + "\n"
+                    + "Installed: "
+                    + String.format("%8.6f", Settings.VERSION_NUMBER)
+                    + "\n"
+                    + "\n"
+                    + "Would you like to update now?",
+                "rsctimes",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                icon);
         if (response == JOptionPane.YES_OPTION) {
           if (updateJar()) {
             JOptionPane.showMessageDialog(
-                    this,
-                    "rsctimes has been updated successfully!\n"
-                            + "\n"
-                            + "The client requires a restart, and will now exit.",
-                    "rsctimes",
-                    JOptionPane.INFORMATION_MESSAGE,
-                    icon);
+                this,
+                "rsctimes has been updated successfully!\n"
+                    + "\n"
+                    + "The client requires a restart, and will now exit.",
+                "rsctimes",
+                JOptionPane.INFORMATION_MESSAGE,
+                icon);
             System.exit(0);
           } else {
             response =
-                    JOptionPane.showConfirmDialog(
-                            this,
-                            "rsctimes has failed to update, please try again later.\n"
-                                    + "\n"
-                                    + "Would you like to continue without updating?",
-                            "rsctimes",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.ERROR_MESSAGE,
-                            icon_warn);
+                JOptionPane.showConfirmDialog(
+                    this,
+                    "rsctimes has failed to update, please try again later.\n"
+                        + "\n"
+                        + "Would you like to continue without updating?",
+                    "rsctimes",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.ERROR_MESSAGE,
+                    icon_warn);
             if (response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) {
               System.exit(0);
             }
@@ -188,8 +187,6 @@ public class Launcher extends JFrame implements Runnable {
         }
       }
     }
-
-
 
     JConfig config = Game.getInstance().getJConfig();
     config.create(1);
@@ -210,17 +207,17 @@ public class Launcher extends JFrame implements Runnable {
           new AWTEventListener() {
             public void eventDispatched(AWTEvent event) {
               if (event instanceof KeyEvent) {
-            	  // list of places to not call consumption of key
-            	  if (Launcher.getConfigWindow().getJFrame().isActive()) {
-            		  return;
-            	  }
+                // list of places to not call consumption of key
+                if (Launcher.getConfigWindow().getJFrame().isActive()) {
+                  return;
+                }
                 KeyEvent evt = (KeyEvent) event;
                 if (evt.getID() == 401) {
                   Client.handler_keyboard.keyPressed(evt);
                 } else if (evt.getID() == 402) {
                   Client.handler_keyboard.keyReleased(evt);
                 }
-                
+
                 evt.consume();
               }
             }
@@ -243,7 +240,8 @@ public class Launcher extends JFrame implements Runnable {
     setProgress(0, 1);
 
     try {
-      URL url = new URL("https://github.com/RSCPlus/rsctimes/releases/download/Latest/rsctimes.jar");
+      URL url =
+          new URL("https://github.com/RSCPlus/rsctimes/releases/download/Latest/rsctimes.jar");
 
       // Open connection
       URLConnection connection = url.openConnection();
@@ -280,7 +278,6 @@ public class Launcher extends JFrame implements Runnable {
 
     return success;
   }
-
 
   /**
    * Changes the launcher progress bar text and pauses the thread for 5 seconds.
@@ -328,7 +325,11 @@ public class Launcher extends JFrame implements Runnable {
             }
 
             m_progressBar.setValue(value * 100 / total);
-            try {Thread.sleep(100); } catch (Exception e ) {System.out.println("AAAAAAAA interupt");}
+            try {
+              Thread.sleep(100);
+            } catch (Exception e) {
+              System.out.println("AAAAAAAA interupt");
+            }
           }
         });
   }
@@ -360,7 +361,6 @@ public class Launcher extends JFrame implements Runnable {
     TrayHandler.initTrayIcon();
     NotificationsHandler.initialize();
     Launcher.getInstance().init();
-
   }
 
   public static Launcher getInstance() {
@@ -434,7 +434,6 @@ public class Launcher extends JFrame implements Runnable {
     Game.getInstance().getJConfig().changeWorld(1);
   }
 
-
   /** @return the window */
   public static ConfigWindow getConfigWindow() {
     return configWindow;
@@ -454,5 +453,4 @@ public class Launcher extends JFrame implements Runnable {
   public static void setWorldMapWindow(WorldMapWindow worldMapWindow) {
     Launcher.worldMapWindow = worldMapWindow;
   }
-
 }

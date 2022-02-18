@@ -179,6 +179,7 @@ public class ConfigWindow {
     private JCheckBox overlayPanelRscTimesButtonsFunctionalCheckbox;
     private JCheckBox overlayPanelWikiLookupOnMagicBookCheckbox;
     private JCheckBox overlayPanelWikiLookupOnHbarCheckbox;
+    private JCheckBox overlayPanelToggleMotivationalQuotesCheckbox;
     private JCheckBox overlayPanelPositionCheckbox;
     private JCheckBox overlayPanelHideFpsCheckbox;
     private JCheckBox overlayPanelItemNamesCheckbox;
@@ -219,7 +220,6 @@ public class ConfigWindow {
     private JTextField streamingPanelTwitchChannelNameTextField;
     private JTextField streamingPanelTwitchOAuthTextField;
     private JTextField streamingPanelTwitchUserTextField;
-    private JCheckBox streamingPanelIPAtLoginCheckbox;
     private JCheckBox streamingPanelSaveLoginCheckbox;
     private JCheckBox streamingPanelStartLoginCheckbox;
     private JCheckBox streamingPanelSpeedrunnerCheckbox;
@@ -305,7 +305,7 @@ public class ConfigWindow {
         frame.setBounds(100, 100, 800, 650);
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.getContentPane().setLayout(new BorderLayout(0, 0));
-        URL iconURL = Launcher.getResource("/assets/icon.png");
+        URL iconURL = Launcher.getResource("/assets/RSCX.logo.png");
         if (iconURL != null) {
             ImageIcon icon = new ImageIcon(iconURL);
             frame.setIconImage(icon.getImage());
@@ -345,7 +345,7 @@ public class ConfigWindow {
         tabbedPane.addTab("General", null, generalScrollPane, null);
         tabbedPane.addTab("Overlays", null, overlayScrollPane, null);
         // tabbedPane.addTab("Notifications", null, notificationScrollPane, null);
-        // tabbedPane.addTab("Streaming & Privacy", null, streamingScrollPane, null);
+        tabbedPane.addTab("Streaming & Privacy", null, streamingScrollPane, null);
         tabbedPane.addTab("Keybinds", null, keybindScrollPane, null);
         tabbedPane.addTab("World List", null, worldListScrollPane, null);
         tabbedPane.addTab("Authors", null, authorsScrollPane, null);
@@ -855,9 +855,9 @@ public class ConfigWindow {
         overlayPanelInvCountCheckbox.setToolTipText("Shows the number of items in your inventory");
 
         overlayPanelRscTimesButtonsFunctionalCheckbox =
-                addCheckbox("Able to click in-game buttons to activate RSCx features", overlayPanel);
+                addCheckbox("Able to click in-game buttons to activate RSC× features", overlayPanel);
         overlayPanelRscTimesButtonsFunctionalCheckbox.setToolTipText(
-                "Able to click in-game buttons to activate RSCx features");
+                "Able to click in-game buttons to activate RSC× features");
 
         JPanel overlayPanelRscTimesButtonsPanel = new JPanel();
         overlayPanel.add(overlayPanelRscTimesButtonsPanel);
@@ -885,11 +885,17 @@ public class ConfigWindow {
                         overlayPanel);
         overlayPanelWikiLookupOnHbarCheckbox.setToolTipText(
                 "Click the button on the bottom bar, then click on anything else, and it will look it up on the RSC wiki.");
+        
+        overlayPanelToggleMotivationalQuotesCheckbox =
+                addCheckbox(
+                    "Right click on the Friends button to display a motivational quote", overlayPanel);
+            overlayPanelToggleMotivationalQuotesCheckbox.setToolTipText(
+                "Motivational quotes are displayed when you need motivation.");
 
         overlayPanelPositionCheckbox = addCheckbox("Display position", overlayPanel);
         overlayPanelPositionCheckbox.setToolTipText("Shows the player's global position");
 
-        overlayPanelHideFpsCheckbox = addCheckbox("Hides FPS like newer RSC", overlayPanel);
+        overlayPanelHideFpsCheckbox = addCheckbox("Hide FPS like newer RSC", overlayPanel);
         overlayPanelHideFpsCheckbox.setToolTipText(
                 "Hides the FPS like it would occur in newer RSC versions");
 
@@ -1209,11 +1215,6 @@ public class ConfigWindow {
         streamingPanelTwitchOAuthTextField.setMinimumSize(new Dimension(100, 28));
         streamingPanelTwitchOAuthTextField.setMaximumSize(new Dimension(Short.MAX_VALUE, 28));
         streamingPanelTwitchOAuthTextField.setAlignmentY((float) 0.75);
-
-        streamingPanelIPAtLoginCheckbox =
-                addCheckbox("Show IP details at login welcome screen", streamingPanel);
-        streamingPanelIPAtLoginCheckbox.setToolTipText(
-                "Shows the last IP you last logged in from when you log in (Disable this if you're streaming)");
 
         streamingPanelSaveLoginCheckbox =
                 addCheckbox("Save login information between logins (Requires restart)", streamingPanel);
@@ -1991,11 +1992,11 @@ public class ConfigWindow {
         generalPanelClientSizeYSpinner.setValue(
                 Settings.CUSTOM_CLIENT_SIZE_Y.get(Settings.currentProfile));
         generalPanelCheckUpdates.setSelected(Settings.CHECK_UPDATES.get(Settings.currentProfile));
+        generalPanelWelcomeEnabled.setSelected(
+                Settings.REMIND_HOW_TO_OPEN_SETTINGS.get(Settings.currentProfile));
         /*
         generalPanelShowSecurityTipsAtLoginCheckbox.setSelected(
                 Settings.SHOW_SECURITY_TIP_DAY.get(Settings.currentProfile));
-        generalPanelWelcomeEnabled.setSelected(
-                Settings.REMIND_HOW_TO_OPEN_SETTINGS.get(Settings.currentProfile));
         generalPanelCombatXPMenuCheckbox.setSelected(
                 Settings.COMBAT_MENU_SHOWN.get(Settings.currentProfile));
         generalPanelCombatXPMenuHiddenCheckbox.setSelected(
@@ -2086,6 +2087,8 @@ public class ConfigWindow {
                 Settings.WIKI_LOOKUP_ON_MAGIC_BOOK.get(Settings.currentProfile));
         overlayPanelWikiLookupOnHbarCheckbox.setSelected(
                 Settings.WIKI_LOOKUP_ON_HBAR.get(Settings.currentProfile));
+        overlayPanelToggleMotivationalQuotesCheckbox.setSelected(
+                Settings.MOTIVATIONAL_QUOTES_BUTTON.get(Settings.currentProfile));
         overlayPanelPositionCheckbox.setSelected(
                 Settings.SHOW_PLAYER_POSITION.get(Settings.currentProfile));
         overlayPanelHideFpsCheckbox.setSelected(Settings.HIDE_FPS.get(Settings.currentProfile));
@@ -2153,7 +2156,6 @@ public class ConfigWindow {
                 Settings.SOUND_NOTIFS_ALWAYS.get(Settings.currentProfile));
 
         // Streaming & Privacy tab
-        /*
         streamingPanelTwitchChatIntegrationEnabledCheckbox.setSelected(
                 Settings.TWITCH_CHAT_ENABLED.get(Settings.currentProfile));
         streamingPanelTwitchChatCheckbox.setSelected(
@@ -2163,16 +2165,16 @@ public class ConfigWindow {
         streamingPanelTwitchOAuthTextField.setText(Settings.TWITCH_OAUTH.get(Settings.currentProfile));
         streamingPanelTwitchUserTextField.setText(
                 Settings.TWITCH_USERNAME.get(Settings.currentProfile));
-        streamingPanelIPAtLoginCheckbox.setSelected(
-                Settings.SHOW_LOGIN_IP_ADDRESS.get(Settings.currentProfile));
         streamingPanelSaveLoginCheckbox.setSelected(
                 Settings.SAVE_LOGININFO.get(Settings.currentProfile));
         streamingPanelStartLoginCheckbox.setSelected(
                 Settings.START_LOGINSCREEN.get(Settings.currentProfile));
+        /*
         streamingPanelSpeedrunnerCheckbox.setSelected(
                 Settings.SPEEDRUNNER_MODE_ACTIVE.get(Settings.currentProfile));
-         */
+        
         // streamingPanelSpeedrunnerUsernameTextField.setText(Settings.SPEEDRUNNER_USERNAME.get(Settings.currentProfile));
+        */
 
 
         // World List tab
@@ -2195,11 +2197,11 @@ public class ConfigWindow {
                 Settings.currentProfile,
                 ((SpinnerNumberModel) (generalPanelClientSizeYSpinner.getModel())).getNumber().intValue());
         Settings.CHECK_UPDATES.put(Settings.currentProfile, generalPanelCheckUpdates.isSelected());
+        Settings.REMIND_HOW_TO_OPEN_SETTINGS.put(
+                Settings.currentProfile, generalPanelWelcomeEnabled.isSelected());
         /*
         Settings.SHOW_SECURITY_TIP_DAY.put(
                 Settings.currentProfile, generalPanelShowSecurityTipsAtLoginCheckbox.isSelected());
-        Settings.REMIND_HOW_TO_OPEN_SETTINGS.put(
-                Settings.currentProfile, generalPanelWelcomeEnabled.isSelected());
         Settings.COMBAT_MENU_SHOWN.put(
                 Settings.currentProfile, generalPanelCombatXPMenuCheckbox.isSelected());
         Settings.COMBAT_MENU_HIDDEN.put(
@@ -2276,6 +2278,8 @@ public class ConfigWindow {
                 Settings.currentProfile, overlayPanelWikiLookupOnMagicBookCheckbox.isSelected());
         Settings.WIKI_LOOKUP_ON_HBAR.put(
                 Settings.currentProfile, overlayPanelWikiLookupOnHbarCheckbox.isSelected());
+        Settings.MOTIVATIONAL_QUOTES_BUTTON.put(
+                Settings.currentProfile, overlayPanelToggleMotivationalQuotesCheckbox.isSelected());
         Settings.SHOW_PLAYER_POSITION.put(
                 Settings.currentProfile, overlayPanelPositionCheckbox.isSelected());
         Settings.HIDE_FPS.put(Settings.currentProfile, overlayPanelHideFpsCheckbox.isSelected());
@@ -2345,7 +2349,6 @@ public class ConfigWindow {
                 Settings.currentProfile, notificationPanelNotifSoundAnyFocusButton.isSelected());
 
         // Streaming & Privacy
-        /*
         Settings.TWITCH_CHAT_ENABLED.put(
                 Settings.currentProfile, streamingPanelTwitchChatIntegrationEnabledCheckbox.isSelected());
         Settings.TWITCH_HIDE_CHAT.put(
@@ -2356,12 +2359,11 @@ public class ConfigWindow {
                 Settings.currentProfile, streamingPanelTwitchOAuthTextField.getText());
         Settings.TWITCH_USERNAME.put(
                 Settings.currentProfile, streamingPanelTwitchUserTextField.getText());
-        Settings.SHOW_LOGIN_IP_ADDRESS.put(
-                Settings.currentProfile, streamingPanelIPAtLoginCheckbox.isSelected());
         Settings.SAVE_LOGININFO.put(
                 Settings.currentProfile, streamingPanelSaveLoginCheckbox.isSelected());
         Settings.START_LOGINSCREEN.put(
                 Settings.currentProfile, streamingPanelStartLoginCheckbox.isSelected());
+        /*
         Settings.SPEEDRUNNER_MODE_ACTIVE.put(
                 Settings.currentProfile, streamingPanelSpeedrunnerCheckbox.isSelected());
         // Settings.SPEEDRUNNER_USERNAME.put(

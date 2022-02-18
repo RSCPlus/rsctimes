@@ -110,7 +110,29 @@ public class Game extends JFrame
   }
 
   public void updateTitle() {
-    String title = "rsctimes";
+    String title = "rsctimes (";
+
+    if (!Replay.isPlaying) {
+      title += Settings.WORLD_NAMES.get(Settings.WORLD.get(Settings.currentProfile));
+
+      if (Client.player_name.length() != 0) {
+        title += "; " + Client.player_name;
+      }
+    } /*else {
+        String elapsed = Util.formatTimeDuration(Replay.elapsedTimeMillis(), Replay.endTimeMillis());
+        String end = Util.formatTimeDuration(Replay.endTimeMillis(), Replay.endTimeMillis());
+        title += elapsed + " / " + end;
+        title += ", Speed: " + new DecimalFormat("##.##").format(Replay.fpsPlayMultiplier) + "x";
+        if (Replay.paused) title += ", Paused";
+      }
+
+      if (Replay.isRecording) {
+        String elapsed =
+            Util.formatTimeDuration(Replay.elapsedTimeMillis(), Replay.elapsedTimeMillis());
+        title += "; Recording: " + elapsed;
+      }*/
+
+    title += ")";
 
     if (m_title.equals(title)) {
       return;
@@ -178,12 +200,12 @@ public class Game extends JFrame
 
   @Override
   public final void windowClosing(WindowEvent e) {
-      dispose();
-      Launcher.getConfigWindow().disposeJFrame();
-      WorldMapWindow.disposeJFrame();
-      TrayHandler.removeTrayIcon();
-      NotificationsHandler.closeNotificationSoundClip();
-      NotificationsHandler.disposeNotificationHandler();
+    dispose();
+    Launcher.getConfigWindow().disposeJFrame();
+    WorldMapWindow.disposeJFrame();
+    TrayHandler.removeTrayIcon();
+    NotificationsHandler.closeNotificationSoundClip();
+    NotificationsHandler.disposeNotificationHandler();
   }
 
   @Override
@@ -229,7 +251,8 @@ public class Game extends JFrame
       }
     }
 
-    Renderer.resize(getContentPane().getWidth(), getContentPane().getHeight() - Renderer.GAME_RENDER_OFFSET);
+    Renderer.resize(
+        getContentPane().getWidth(), getContentPane().getHeight() - Renderer.GAME_RENDER_OFFSET);
   }
 
   @Override
@@ -262,8 +285,8 @@ public class Game extends JFrame
         Settings.CUSTOM_CLIENT_SIZE_Y.get(Settings.currentProfile)
             + getInsets().top
             + getInsets().bottom;
-    //int windowWidth = 512;
-    //int windowHeight = 396;//357;
+    // int windowWidth = 512;
+    // int windowHeight = 396;//357;
     setSize(windowWidth, windowHeight);
     setLocationRelativeTo(null);
   }

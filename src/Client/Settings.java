@@ -23,7 +23,6 @@ import Game.Client;
 import Game.Game;
 import Game.KeyboardHandler;
 import Game.XPBar;
-
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
@@ -37,7 +36,7 @@ import java.util.HashMap;
 import java.util.Properties;
 
 public class Settings {
-	// Internally used variables
+  // Internally used variables
   public static boolean fovUpdateRequired;
   public static boolean versionCheckRequired = true;
   public static int javaVersion = 0;
@@ -56,9 +55,12 @@ public class Settings {
    */
   //// General
   public static HashMap<String, Boolean> CUSTOM_CLIENT_SIZE = new HashMap<String, Boolean>();
+
   public static HashMap<String, Integer> CUSTOM_CLIENT_SIZE_X = new HashMap<String, Integer>();
   public static HashMap<String, Integer> CUSTOM_CLIENT_SIZE_Y = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> CHECK_UPDATES = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> REMIND_HOW_TO_OPEN_SETTINGS =
+      new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ZOOMABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ROTATABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_MOVABLE = new HashMap<String, Boolean>();
@@ -89,21 +91,21 @@ public class Settings {
   public static HashMap<String, Boolean> FATIGUE_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> PM_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> TRADE_NOTIFICATIONS = new HashMap<String, Boolean>();
-  public static HashMap<String, Boolean> UNDER_ATTACK_NOTIFICATIONS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> UNDER_ATTACK_NOTIFICATIONS =
+      new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> LOGOUT_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> LOW_HP_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Integer> LOW_HP_NOTIF_VALUE = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> HIGHLIGHTED_ITEM_NOTIFICATIONS =
-          new HashMap<String, Boolean>();
+      new HashMap<String, Boolean>();
   public static HashMap<String, Integer> HIGHLIGHTED_ITEM_NOTIF_VALUE =
-          new HashMap<String, Integer>();
-  
+      new HashMap<String, Integer>();
+
   public static HashMap<String, Boolean> SHOW_XP_BAR = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CENTER_XPDROPS = new HashMap<String, Boolean>();
 
-  ////overlays
-  public static HashMap<String, Boolean> SHOW_HP_OVERLAY =
-   new HashMap<String, Boolean>();
+  //// overlays
+  public static HashMap<String, Boolean> SHOW_HP_OVERLAY = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_MOUSE_TOOLTIP = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_EXTENDED_TOOLTIP = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_BUFFS = new HashMap<String, Boolean>();
@@ -111,8 +113,10 @@ public class Settings {
   public static HashMap<String, Boolean> SHOW_INVCOUNT = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_RSCTIMES_BUTTONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> RSCTIMES_BUTTONS_FUNCTIONAL =
-   new HashMap<String, Boolean>();
+      new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> WIKI_LOOKUP_ON_MAGIC_BOOK = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> MOTIVATIONAL_QUOTES_BUTTON =
+      new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> WIKI_LOOKUP_ON_HBAR = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_ITEM_GROUND_OVERLAY = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_PLAYER_NAME_OVERLAY = new HashMap<String, Boolean>();
@@ -124,7 +128,7 @@ public class Settings {
   public static HashMap<String, Boolean> SHOW_PLAYER_POSITION = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> HIDE_FPS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> NPC_HEALTH_SHOW_PERCENTAGE =
-   new HashMap<String, Boolean>();
+      new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_HITBOX = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> LAG_INDICATOR = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_FOOD_HEAL_OVERLAY = new HashMap<String, Boolean>();
@@ -132,10 +136,16 @@ public class Settings {
   public static HashMap<String, Boolean> DEBUG = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> EXCEPTION_HANDLER = new HashMap<String, Boolean>();
   public static HashMap<String, ArrayList<String>> HIGHLIGHTED_ITEMS =
-   new HashMap<String, ArrayList<String>>();
+      new HashMap<String, ArrayList<String>>();
   public static HashMap<String, ArrayList<String>> BLOCKED_ITEMS =
-   new HashMap<String, ArrayList<String>>();
-  
+      new HashMap<String, ArrayList<String>>();
+
+  //// streaming
+  public static HashMap<String, Boolean> TWITCH_CHAT_ENABLED = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> TWITCH_HIDE_CHAT = new HashMap<String, Boolean>();
+  public static HashMap<String, String> TWITCH_CHANNEL = new HashMap<String, String>();
+  public static HashMap<String, String> TWITCH_OAUTH = new HashMap<String, String>();
+  public static HashMap<String, String> TWITCH_USERNAME = new HashMap<String, String>();
   public static HashMap<String, Boolean> SAVE_LOGININFO = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> START_LOGINSCREEN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SPEEDRUNNER_MODE_ACTIVE = new HashMap<String, Boolean>();
@@ -152,17 +162,17 @@ public class Settings {
   public static HashMap<String, Integer> WORLD = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> FIRST_TIME = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> UPDATE_CONFIRMATION = new HashMap<String, Boolean>();
-  
- //these are variables that are injected with JClassPatcher
- public static int COMBAT_STYLE_INT = Client.COMBAT_AGGRESSIVE;
- public static boolean HIDE_ROOFS_BOOL = false;
- public static boolean COMBAT_MENU_SHOWN_BOOL = false;
- public static boolean COMBAT_MENU_HIDDEN_BOOL = false;
- public static boolean CAMERA_ZOOMABLE_BOOL = false;
- public static boolean CAMERA_ROTATABLE_BOOL = false;
- public static boolean CAMERA_MOVABLE_BOOL = false;
- public static boolean VIEW_DISTANCE_BOOL = false;
- public static boolean FOV_BOOL = false;
+
+  // these are variables that are injected with JClassPatcher
+  public static int COMBAT_STYLE_INT = Client.COMBAT_AGGRESSIVE;
+  public static boolean HIDE_ROOFS_BOOL = false;
+  public static boolean COMBAT_MENU_SHOWN_BOOL = false;
+  public static boolean COMBAT_MENU_HIDDEN_BOOL = false;
+  public static boolean CAMERA_ZOOMABLE_BOOL = false;
+  public static boolean CAMERA_ROTATABLE_BOOL = false;
+  public static boolean CAMERA_MOVABLE_BOOL = false;
+  public static boolean VIEW_DISTANCE_BOOL = false;
+  public static boolean FOV_BOOL = false;
 
   // determines which preset to load, or your custom settings :-)
   public static String currentProfile = "custom";
@@ -198,9 +208,8 @@ public class Settings {
       WorldMapWindow.showScenery = getPropBoolean(props, "worldmap_show_scenery", true);
       WorldMapWindow.renderChunkGrid = getPropBoolean(props, "worldmap_show_chunk_grid", false);
       WorldMapWindow.showOtherFloors = getPropBoolean(props, "worldmap_show_other_floors", false);
-      
-      updateInjectedVariables(); // TODO remove this function
 
+      updateInjectedVariables(); // TODO remove this function
 
       // Keybinds
       if (KeyboardHandler.keybindSetList.size() == 0) {
@@ -218,16 +227,16 @@ public class Settings {
         Client.lvlGoals.put(goalerUsernames[usernameID], new Float[Client.NUM_SKILLS]);
         for (int skill = 0; skill < Client.NUM_SKILLS; skill++) {
           Client.xpGoals.get(goalerUsernames[usernameID])[skill] =
-                  getPropInt(props, String.format("xpGoal%02d%03d", skill, usernameID), 0);
+              getPropInt(props, String.format("xpGoal%02d%03d", skill, usernameID), 0);
           try {
             Client.lvlGoals.get(goalerUsernames[usernameID])[skill] =
-                    Float.parseFloat(
-                            getPropString(props, String.format("lvlGoal%02d%03d", skill, usernameID), "0"));
+                Float.parseFloat(
+                    getPropString(props, String.format("lvlGoal%02d%03d", skill, usernameID), "0"));
           } catch (Exception e1) {
             Client.lvlGoals.get(goalerUsernames[usernameID])[skill] = new Float(0);
             Logger.Warn(
-                    "Couldn't parse settings key "
-                            + String.format("lvlGoal%02d%03d", skill, usernameID));
+                "Couldn't parse settings key "
+                    + String.format("lvlGoal%02d%03d", skill, usernameID));
           }
         }
       }
@@ -242,7 +251,6 @@ public class Settings {
     }
     return null;
   }
-
 
   public static void definePresets(Properties props) {
     if (presetTable.size() == 0) {
@@ -263,7 +271,7 @@ public class Settings {
     CUSTOM_CLIENT_SIZE.put("heavy", false);
     CUSTOM_CLIENT_SIZE.put("all", false);
     CUSTOM_CLIENT_SIZE.put(
-            "custom", getPropBoolean(props, "custom_client_size", CUSTOM_CLIENT_SIZE.get("default")));
+        "custom", getPropBoolean(props, "custom_client_size", CUSTOM_CLIENT_SIZE.get("default")));
 
     CUSTOM_CLIENT_SIZE_X.put("vanilla", 512);
     CUSTOM_CLIENT_SIZE_X.put("vanilla_resizable", 512);
@@ -272,7 +280,7 @@ public class Settings {
     CUSTOM_CLIENT_SIZE_X.put("heavy", 512);
     CUSTOM_CLIENT_SIZE_X.put("all", 512);
     CUSTOM_CLIENT_SIZE_X.put(
-            "custom", getPropInt(props, "custom_client_size_x", CUSTOM_CLIENT_SIZE_X.get("default")));
+        "custom", getPropInt(props, "custom_client_size_x", CUSTOM_CLIENT_SIZE_X.get("default")));
 
     CUSTOM_CLIENT_SIZE_Y.put("vanilla", 357);
     CUSTOM_CLIENT_SIZE_Y.put("vanilla_resizable", 357);
@@ -281,7 +289,7 @@ public class Settings {
     CUSTOM_CLIENT_SIZE_Y.put("heavy", 357);
     CUSTOM_CLIENT_SIZE_Y.put("all", 357);
     CUSTOM_CLIENT_SIZE_Y.put(
-            "custom", getPropInt(props, "custom_client_size_y", CUSTOM_CLIENT_SIZE_Y.get("default")));
+        "custom", getPropInt(props, "custom_client_size_y", CUSTOM_CLIENT_SIZE_Y.get("default")));
 
     CHECK_UPDATES.put("vanilla", true);
     CHECK_UPDATES.put("vanilla_resizable", true);
@@ -290,8 +298,18 @@ public class Settings {
     CHECK_UPDATES.put("heavy", true);
     CHECK_UPDATES.put("all", true);
     CHECK_UPDATES.put(
-            "custom", getPropBoolean(props, "check_updates", CHECK_UPDATES.get("default")));
-    
+        "custom", getPropBoolean(props, "check_updates", CHECK_UPDATES.get("default")));
+
+    REMIND_HOW_TO_OPEN_SETTINGS.put("vanilla", false);
+    REMIND_HOW_TO_OPEN_SETTINGS.put("vanilla_resizable", false);
+    REMIND_HOW_TO_OPEN_SETTINGS.put("lite", false);
+    REMIND_HOW_TO_OPEN_SETTINGS.put("default", true);
+    REMIND_HOW_TO_OPEN_SETTINGS.put("heavy", true);
+    REMIND_HOW_TO_OPEN_SETTINGS.put("all", true);
+    REMIND_HOW_TO_OPEN_SETTINGS.put(
+        "custom",
+        getPropBoolean(props, "welcome_enabled", REMIND_HOW_TO_OPEN_SETTINGS.get("default")));
+
     CAMERA_ZOOMABLE.put("vanilla", false);
     CAMERA_ZOOMABLE.put("vanilla_resizable", false);
     CAMERA_ZOOMABLE.put("lite", true);
@@ -336,8 +354,8 @@ public class Settings {
     COLORIZE_CONSOLE_TEXT.put("heavy", true);
     COLORIZE_CONSOLE_TEXT.put("all", true);
     COLORIZE_CONSOLE_TEXT.put(
-            "custom", getPropBoolean(props, "colorize", COLORIZE_CONSOLE_TEXT.get("default")));
-    
+        "custom", getPropBoolean(props, "colorize", COLORIZE_CONSOLE_TEXT.get("default")));
+
     FOV.put("vanilla", 9);
     FOV.put("vanilla_resizable", 9);
     FOV.put("lite", 9);
@@ -345,7 +363,7 @@ public class Settings {
     FOV.put("heavy", 9);
     FOV.put("all", 9);
     FOV.put("custom", getPropInt(props, "fov", FOV.get("default")));
-    
+
     FPS_LIMIT_ENABLED.put("vanilla", false);
     FPS_LIMIT_ENABLED.put("vanilla_resizable", false);
     FPS_LIMIT_ENABLED.put("lite", false);
@@ -362,7 +380,7 @@ public class Settings {
     FPS_LIMIT.put("heavy", 10);
     FPS_LIMIT.put("all", 10);
     FPS_LIMIT.put("custom", getPropInt(props, "fps_limit", FPS_LIMIT.get("default")));
-    
+
     SOFTWARE_CURSOR.put("vanilla", false);
     SOFTWARE_CURSOR.put("vanilla_resizable", false);
     SOFTWARE_CURSOR.put("lite", false);
@@ -371,7 +389,7 @@ public class Settings {
     SOFTWARE_CURSOR.put("all", true);
     SOFTWARE_CURSOR.put(
         "custom", getPropBoolean(props, "software_cursor", SOFTWARE_CURSOR.get("default")));
-    
+
     VIEW_DISTANCE.put("vanilla", 2300);
     VIEW_DISTANCE.put("vanilla_resizable", 3000);
     VIEW_DISTANCE.put("lite", 10000);
@@ -408,7 +426,6 @@ public class Settings {
         getPropBoolean(
             props, "patch_hbar_512_last_pixel", PATCH_HBAR_512_LAST_PIXEL.get("default")));
 
-
     LOG_VERBOSITY.put("vanilla", Logger.Type.GAME.id);
     LOG_VERBOSITY.put("vanilla_resizable", Logger.Type.GAME.id);
     LOG_VERBOSITY.put("lite", Logger.Type.WARN.id);
@@ -424,7 +441,7 @@ public class Settings {
     LOG_SHOW_TIMESTAMPS.put("heavy", true);
     LOG_SHOW_TIMESTAMPS.put("all", true);
     LOG_SHOW_TIMESTAMPS.put(
-            "custom", getPropBoolean(props, "log_show_timestamps", LOG_SHOW_TIMESTAMPS.get("default")));
+        "custom", getPropBoolean(props, "log_show_timestamps", LOG_SHOW_TIMESTAMPS.get("default")));
 
     LOG_SHOW_LEVEL.put("vanilla", true);
     LOG_SHOW_LEVEL.put("vanilla_resizable", true);
@@ -433,7 +450,7 @@ public class Settings {
     LOG_SHOW_LEVEL.put("heavy", true);
     LOG_SHOW_LEVEL.put("all", true);
     LOG_SHOW_LEVEL.put(
-            "custom", getPropBoolean(props, "log_show_level", LOG_SHOW_LEVEL.get("default")));
+        "custom", getPropBoolean(props, "log_show_level", LOG_SHOW_LEVEL.get("default")));
 
     LOG_FORCE_TIMESTAMPS.put("vanilla", false);
     LOG_FORCE_TIMESTAMPS.put("vanilla_resizable", false);
@@ -442,8 +459,8 @@ public class Settings {
     LOG_FORCE_TIMESTAMPS.put("heavy", false);
     LOG_FORCE_TIMESTAMPS.put("all", true);
     LOG_FORCE_TIMESTAMPS.put(
-            "custom",
-            getPropBoolean(props, "log_force_timestamps", LOG_FORCE_TIMESTAMPS.get("default")));
+        "custom",
+        getPropBoolean(props, "log_force_timestamps", LOG_FORCE_TIMESTAMPS.get("default")));
 
     LOG_FORCE_LEVEL.put("vanilla", false);
     LOG_FORCE_LEVEL.put("vanilla_resizable", false);
@@ -452,7 +469,7 @@ public class Settings {
     LOG_FORCE_LEVEL.put("heavy", false);
     LOG_FORCE_LEVEL.put("all", true);
     LOG_FORCE_LEVEL.put(
-            "custom", getPropBoolean(props, "log_force_level", LOG_FORCE_LEVEL.get("default")));
+        "custom", getPropBoolean(props, "log_force_level", LOG_FORCE_LEVEL.get("default")));
 
     Util.hasXdgOpen = Util.detectBinaryAvailable("xdg-open", "URL opening");
     PREFERS_XDG_OPEN.put("vanilla", false);
@@ -462,8 +479,8 @@ public class Settings {
     PREFERS_XDG_OPEN.put("heavy", true);
     PREFERS_XDG_OPEN.put("all", true);
     PREFERS_XDG_OPEN.put(
-            "custom", getPropBoolean(props, "prefers_xdg_open", PREFERS_XDG_OPEN.get("default")));
-    
+        "custom", getPropBoolean(props, "prefers_xdg_open", PREFERS_XDG_OPEN.get("default")));
+
     INVENTORY_FULL_ALERT.put("vanilla", false);
     INVENTORY_FULL_ALERT.put("vanilla_resizable", false);
     INVENTORY_FULL_ALERT.put("lite", false);
@@ -473,7 +490,6 @@ public class Settings {
     INVENTORY_FULL_ALERT.put(
         "custom",
         getPropBoolean(props, "inventory_full_alert", INVENTORY_FULL_ALERT.get("default")));
-
 
     //// notifications
     TRAY_NOTIFS.put("vanilla", false);
@@ -491,7 +507,7 @@ public class Settings {
     TRAY_NOTIFS_ALWAYS.put("heavy", false);
     TRAY_NOTIFS_ALWAYS.put("all", true);
     TRAY_NOTIFS_ALWAYS.put(
-            "custom", getPropBoolean(props, "tray_notifs_always", TRAY_NOTIFS_ALWAYS.get("default")));
+        "custom", getPropBoolean(props, "tray_notifs_always", TRAY_NOTIFS_ALWAYS.get("default")));
 
     NOTIFICATION_SOUNDS.put("vanilla", false);
     NOTIFICATION_SOUNDS.put("vanilla_resizable", false);
@@ -500,7 +516,7 @@ public class Settings {
     NOTIFICATION_SOUNDS.put("heavy", !Settings.isRecommendedToUseSystemNotifs());
     NOTIFICATION_SOUNDS.put("all", true);
     NOTIFICATION_SOUNDS.put(
-            "custom", getPropBoolean(props, "notification_sounds", NOTIFICATION_SOUNDS.get("default")));
+        "custom", getPropBoolean(props, "notification_sounds", NOTIFICATION_SOUNDS.get("default")));
 
     SOUND_NOTIFS_ALWAYS.put("vanilla", false);
     SOUND_NOTIFS_ALWAYS.put("vanilla_resizable", false);
@@ -509,7 +525,7 @@ public class Settings {
     SOUND_NOTIFS_ALWAYS.put("heavy", false);
     SOUND_NOTIFS_ALWAYS.put("all", true);
     SOUND_NOTIFS_ALWAYS.put(
-            "custom", getPropBoolean(props, "sound_notifs_always", SOUND_NOTIFS_ALWAYS.get("default")));
+        "custom", getPropBoolean(props, "sound_notifs_always", SOUND_NOTIFS_ALWAYS.get("default")));
 
     USE_SYSTEM_NOTIFICATIONS.put("vanilla", false);
     USE_SYSTEM_NOTIFICATIONS.put("vanilla_resizable", false);
@@ -518,8 +534,8 @@ public class Settings {
     USE_SYSTEM_NOTIFICATIONS.put("heavy", Settings.isRecommendedToUseSystemNotifs());
     USE_SYSTEM_NOTIFICATIONS.put("all", true);
     USE_SYSTEM_NOTIFICATIONS.put(
-            "custom",
-            getPropBoolean(props, "use_system_notifications", USE_SYSTEM_NOTIFICATIONS.get("default")));
+        "custom",
+        getPropBoolean(props, "use_system_notifications", USE_SYSTEM_NOTIFICATIONS.get("default")));
 
     PM_NOTIFICATIONS.put("vanilla", false);
     PM_NOTIFICATIONS.put("vanilla_resizable", false);
@@ -528,7 +544,7 @@ public class Settings {
     PM_NOTIFICATIONS.put("heavy", true);
     PM_NOTIFICATIONS.put("all", true);
     PM_NOTIFICATIONS.put(
-            "custom", getPropBoolean(props, "pm_notifications", PM_NOTIFICATIONS.get("default")));
+        "custom", getPropBoolean(props, "pm_notifications", PM_NOTIFICATIONS.get("default")));
 
     TRADE_NOTIFICATIONS.put("vanilla", false);
     TRADE_NOTIFICATIONS.put("vanilla_resizable", false);
@@ -537,7 +553,7 @@ public class Settings {
     TRADE_NOTIFICATIONS.put("heavy", true);
     TRADE_NOTIFICATIONS.put("all", true);
     TRADE_NOTIFICATIONS.put(
-            "custom", getPropBoolean(props, "trade_notifications", TRADE_NOTIFICATIONS.get("default")));
+        "custom", getPropBoolean(props, "trade_notifications", TRADE_NOTIFICATIONS.get("default")));
 
     UNDER_ATTACK_NOTIFICATIONS.put("vanilla", false);
     UNDER_ATTACK_NOTIFICATIONS.put("vanilla_resizable", false);
@@ -546,7 +562,9 @@ public class Settings {
     UNDER_ATTACK_NOTIFICATIONS.put("heavy", true);
     UNDER_ATTACK_NOTIFICATIONS.put("all", true);
     UNDER_ATTACK_NOTIFICATIONS.put(
-            "custom", getPropBoolean(props, "under_attack_notifications", UNDER_ATTACK_NOTIFICATIONS.get("default")));
+        "custom",
+        getPropBoolean(
+            props, "under_attack_notifications", UNDER_ATTACK_NOTIFICATIONS.get("default")));
 
     LOGOUT_NOTIFICATIONS.put("vanilla", false);
     LOGOUT_NOTIFICATIONS.put("vanilla_resizable", false);
@@ -555,8 +573,8 @@ public class Settings {
     LOGOUT_NOTIFICATIONS.put("heavy", true);
     LOGOUT_NOTIFICATIONS.put("all", true);
     LOGOUT_NOTIFICATIONS.put(
-            "custom",
-            getPropBoolean(props, "logout_notifications", LOGOUT_NOTIFICATIONS.get("default")));
+        "custom",
+        getPropBoolean(props, "logout_notifications", LOGOUT_NOTIFICATIONS.get("default")));
 
     LOW_HP_NOTIFICATIONS.put("vanilla", false);
     LOW_HP_NOTIFICATIONS.put("vanilla_resizable", false);
@@ -565,8 +583,8 @@ public class Settings {
     LOW_HP_NOTIFICATIONS.put("heavy", true);
     LOW_HP_NOTIFICATIONS.put("all", true);
     LOW_HP_NOTIFICATIONS.put(
-            "custom",
-            getPropBoolean(props, "low_hp_notifications", LOW_HP_NOTIFICATIONS.get("default")));
+        "custom",
+        getPropBoolean(props, "low_hp_notifications", LOW_HP_NOTIFICATIONS.get("default")));
 
     LOW_HP_NOTIF_VALUE.put("vanilla", 0);
     LOW_HP_NOTIF_VALUE.put("vanilla_resizable", 0);
@@ -575,8 +593,8 @@ public class Settings {
     LOW_HP_NOTIF_VALUE.put("heavy", 25);
     LOW_HP_NOTIF_VALUE.put("all", 30);
     LOW_HP_NOTIF_VALUE.put(
-            "custom", getPropInt(props, "low_hp_notif_value", LOW_HP_NOTIF_VALUE.get("default")));
-    
+        "custom", getPropInt(props, "low_hp_notif_value", LOW_HP_NOTIF_VALUE.get("default")));
+
     FATIGUE_NOTIFICATIONS.put("vanilla", false);
     FATIGUE_NOTIFICATIONS.put("vanilla_resizable", false);
     FATIGUE_NOTIFICATIONS.put("lite", false);
@@ -594,11 +612,11 @@ public class Settings {
     HIGHLIGHTED_ITEM_NOTIFICATIONS.put("heavy", true);
     HIGHLIGHTED_ITEM_NOTIFICATIONS.put("all", true);
     HIGHLIGHTED_ITEM_NOTIFICATIONS.put(
-            "custom",
-            getPropBoolean(
-                    props,
-                    "highlighted_item_notifications",
-                    HIGHLIGHTED_ITEM_NOTIFICATIONS.get("default")));
+        "custom",
+        getPropBoolean(
+            props,
+            "highlighted_item_notifications",
+            HIGHLIGHTED_ITEM_NOTIFICATIONS.get("default")));
 
     HIGHLIGHTED_ITEM_NOTIF_VALUE.put("vanilla", 11000);
     HIGHLIGHTED_ITEM_NOTIF_VALUE.put("vanilla_resizable", 11000);
@@ -607,9 +625,9 @@ public class Settings {
     HIGHLIGHTED_ITEM_NOTIF_VALUE.put("heavy", 100);
     HIGHLIGHTED_ITEM_NOTIF_VALUE.put("all", 0);
     HIGHLIGHTED_ITEM_NOTIF_VALUE.put(
-            "custom",
-            getPropInt(
-                    props, "highlighted_item_notif_value", HIGHLIGHTED_ITEM_NOTIF_VALUE.get("default")));
+        "custom",
+        getPropInt(
+            props, "highlighted_item_notif_value", HIGHLIGHTED_ITEM_NOTIF_VALUE.get("default")));
 
     // OVERLAYS
     SHOW_HP_OVERLAY.put("vanilla", false);
@@ -619,8 +637,7 @@ public class Settings {
     SHOW_HP_OVERLAY.put("heavy", true);
     SHOW_HP_OVERLAY.put("all", true);
     SHOW_HP_OVERLAY.put(
-        "custom",
-        getPropBoolean(props, "show_statusdisplay", SHOW_HP_OVERLAY.get("default")));
+        "custom", getPropBoolean(props, "show_statusdisplay", SHOW_HP_OVERLAY.get("default")));
 
     SHOW_BUFFS.put("vanilla", false);
     SHOW_BUFFS.put("vanilla_resizable", false);
@@ -699,6 +716,17 @@ public class Settings {
         "custom",
         getPropBoolean(
             props, "wiki_lookup_on_magic_book", WIKI_LOOKUP_ON_MAGIC_BOOK.get("default")));
+
+    MOTIVATIONAL_QUOTES_BUTTON.put("vanilla", false);
+    MOTIVATIONAL_QUOTES_BUTTON.put("vanilla_resizable", false);
+    MOTIVATIONAL_QUOTES_BUTTON.put("lite", false);
+    MOTIVATIONAL_QUOTES_BUTTON.put("default", false);
+    MOTIVATIONAL_QUOTES_BUTTON.put("heavy", true);
+    MOTIVATIONAL_QUOTES_BUTTON.put("all", true);
+    MOTIVATIONAL_QUOTES_BUTTON.put(
+        "custom",
+        getPropBoolean(
+            props, "motivational_quotes_button", MOTIVATIONAL_QUOTES_BUTTON.get("default")));
 
     WIKI_LOOKUP_ON_HBAR.put("vanilla", false);
     WIKI_LOOKUP_ON_HBAR.put("vanilla_resizable", false);
@@ -798,8 +826,7 @@ public class Settings {
     HIDE_FPS.put("default", false);
     HIDE_FPS.put("heavy", true);
     HIDE_FPS.put("all", true);
-    HIDE_FPS.put(
-        "custom", getPropBoolean(props, "hide_fps", HIDE_FPS.get("default")));
+    HIDE_FPS.put("custom", getPropBoolean(props, "hide_fps", HIDE_FPS.get("default")));
 
     NPC_HEALTH_SHOW_PERCENTAGE.put("vanilla", false);
     NPC_HEALTH_SHOW_PERCENTAGE.put("vanilla_resizable", false);
@@ -874,7 +901,52 @@ public class Settings {
     BLOCKED_ITEMS.put("all", new ArrayList<String>());
     BLOCKED_ITEMS.put(
         "custom", getPropArrayListString(props, "blocked_items", BLOCKED_ITEMS.get("default")));
-    
+
+    //// streaming
+    TWITCH_CHAT_ENABLED.put("vanilla", false);
+    TWITCH_CHAT_ENABLED.put("vanilla_resizable", false);
+    TWITCH_CHAT_ENABLED.put("lite", true);
+    TWITCH_CHAT_ENABLED.put("default", true);
+    TWITCH_CHAT_ENABLED.put("heavy", true);
+    TWITCH_CHAT_ENABLED.put("all", true);
+    TWITCH_CHAT_ENABLED.put(
+        "custom", getPropBoolean(props, "twitch_enabled", TWITCH_CHAT_ENABLED.get("default")));
+
+    TWITCH_HIDE_CHAT.put("vanilla", true);
+    TWITCH_HIDE_CHAT.put("vanilla_resizable", true);
+    TWITCH_HIDE_CHAT.put("lite", false);
+    TWITCH_HIDE_CHAT.put("default", false);
+    TWITCH_HIDE_CHAT.put("heavy", false);
+    TWITCH_HIDE_CHAT.put("all", false);
+    TWITCH_HIDE_CHAT.put(
+        "custom", getPropBoolean(props, "twitch_hide", TWITCH_HIDE_CHAT.get("default")));
+
+    TWITCH_CHANNEL.put("vanilla", "");
+    TWITCH_CHANNEL.put("vanilla_resizable", "");
+    TWITCH_CHANNEL.put("lite", "");
+    TWITCH_CHANNEL.put("default", "");
+    TWITCH_CHANNEL.put("heavy", "");
+    TWITCH_CHANNEL.put("all", "");
+    TWITCH_CHANNEL.put(
+        "custom", getPropString(props, "twitch_channel", TWITCH_CHANNEL.get("default")));
+
+    TWITCH_OAUTH.put("vanilla", "");
+    TWITCH_OAUTH.put("vanilla_resizable", "");
+    TWITCH_OAUTH.put("lite", "");
+    TWITCH_OAUTH.put("default", "");
+    TWITCH_OAUTH.put("heavy", "");
+    TWITCH_OAUTH.put("all", "");
+    TWITCH_OAUTH.put("custom", getPropString(props, "twitch_oauth", TWITCH_OAUTH.get("default")));
+
+    TWITCH_USERNAME.put("vanilla", "");
+    TWITCH_USERNAME.put("vanilla_resizable", "");
+    TWITCH_USERNAME.put("lite", "");
+    TWITCH_USERNAME.put("default", "");
+    TWITCH_USERNAME.put("heavy", "");
+    TWITCH_USERNAME.put("all", "");
+    TWITCH_USERNAME.put(
+        "custom", getPropString(props, "twitch_username", TWITCH_USERNAME.get("default")));
+
     SAVE_LOGININFO.put("vanilla", false);
     SAVE_LOGININFO.put("vanilla_resizable", false);
     SAVE_LOGININFO.put("lite", true);
@@ -909,51 +981,67 @@ public class Settings {
     UPDATE_CONFIRMATION.put("heavy", false);
     UPDATE_CONFIRMATION.put("all", false);
     UPDATE_CONFIRMATION.put("custom", getPropBoolean(props, "update_confirmation", true));
-    
-    ////world list
-   initWorlds();
-   
-   WORLD.put("vanilla", 1);
-   WORLD.put("vanilla_resizable", 1);
-   WORLD.put("lite", 1);
-   WORLD.put("default", 1);
-   WORLD.put("heavy", 1);
-   WORLD.put("all", 1);
-   WORLD.put("custom", getPropInt(props, "world", WORLD.get("default")));
-   
-// Sanitize settings
-   if (CUSTOM_CLIENT_SIZE_X.get("custom") < 512) {
-     CUSTOM_CLIENT_SIZE_X.put("custom", 512);
-     save("custom");
-   }
-   if (CUSTOM_CLIENT_SIZE_Y.get("custom") < 357) {
-     CUSTOM_CLIENT_SIZE_Y.put("custom", 357);
-     save("custom");
-   }
 
-   if (WORLD.get("custom") < 0) {
-     WORLD.put("custom", 0);
-     save("custom");
-   } else if (WORLD.get("custom") > Settings.WORLDS_TO_DISPLAY) {
-     WORLD.put("custom", Settings.WORLDS_TO_DISPLAY);
-     save("custom");
-   }
+    //// world list
+    initWorlds();
 
-   if (VIEW_DISTANCE.get("custom") < 2300) {
-     VIEW_DISTANCE.put("custom", 2300);
-     save("custom");
-   } else if (VIEW_DISTANCE.get("custom") > 20000) {
-     VIEW_DISTANCE.put("custom", 20000);
-     save("custom");
-   }
+    WORLD.put("vanilla", 1);
+    WORLD.put("vanilla_resizable", 1);
+    WORLD.put("lite", 1);
+    WORLD.put("default", 1);
+    WORLD.put("heavy", 1);
+    WORLD.put("all", 1);
+    WORLD.put("custom", getPropInt(props, "world", WORLD.get("default")));
 
-   /*if (COMBAT_STYLE.get("custom") < Client.COMBAT_CONTROLLED) {
-     COMBAT_STYLE.put("custom", Client.COMBAT_CONTROLLED);
-     save("custom");
-   } else if (COMBAT_STYLE.get("custom") > Client.COMBAT_DEFENSIVE) {
-     COMBAT_STYLE.put("custom", Client.COMBAT_DEFENSIVE);
-     save("custom");
-   }*/
+    FIRST_TIME.put("vanilla", false);
+    FIRST_TIME.put("vanilla_resizable", false);
+    FIRST_TIME.put("lite", false);
+    FIRST_TIME.put("default", false);
+    FIRST_TIME.put("heavy", false);
+    FIRST_TIME.put("all", false);
+    FIRST_TIME.put("custom", getPropBoolean(props, "first_time", true));
+
+    UPDATE_CONFIRMATION.put("vanilla", false);
+    UPDATE_CONFIRMATION.put("vanilla_resizable", false);
+    UPDATE_CONFIRMATION.put("lite", false);
+    UPDATE_CONFIRMATION.put("default", false);
+    UPDATE_CONFIRMATION.put("heavy", false);
+    UPDATE_CONFIRMATION.put("all", false);
+    UPDATE_CONFIRMATION.put("custom", getPropBoolean(props, "update_confirmation", true));
+
+    // Sanitize settings
+    if (CUSTOM_CLIENT_SIZE_X.get("custom") < 512) {
+      CUSTOM_CLIENT_SIZE_X.put("custom", 512);
+      save("custom");
+    }
+    if (CUSTOM_CLIENT_SIZE_Y.get("custom") < 357) {
+      CUSTOM_CLIENT_SIZE_Y.put("custom", 357);
+      save("custom");
+    }
+
+    if (WORLD.get("custom") < 0) {
+      WORLD.put("custom", 0);
+      save("custom");
+    } else if (WORLD.get("custom") > Settings.WORLDS_TO_DISPLAY) {
+      WORLD.put("custom", Settings.WORLDS_TO_DISPLAY);
+      save("custom");
+    }
+
+    if (VIEW_DISTANCE.get("custom") < 2300) {
+      VIEW_DISTANCE.put("custom", 2300);
+      save("custom");
+    } else if (VIEW_DISTANCE.get("custom") > 20000) {
+      VIEW_DISTANCE.put("custom", 20000);
+      save("custom");
+    }
+
+    /*if (COMBAT_STYLE.get("custom") < Client.COMBAT_CONTROLLED) {
+      COMBAT_STYLE.put("custom", Client.COMBAT_CONTROLLED);
+      save("custom");
+    } else if (COMBAT_STYLE.get("custom") > Client.COMBAT_DEFENSIVE) {
+      COMBAT_STYLE.put("custom", Client.COMBAT_DEFENSIVE);
+      save("custom");
+    }*/
 
   }
 
@@ -963,14 +1051,14 @@ public class Settings {
     Dir.JAR = ".";
     try {
       Dir.JAR =
-              Settings.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+          Settings.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
       int indexFileSep1 = Dir.JAR.lastIndexOf('/');
       int indexFileSep2 = Dir.JAR.lastIndexOf('\\');
       int index = (indexFileSep1 > indexFileSep2) ? indexFileSep1 : indexFileSep2;
       if (index != -1) Dir.JAR = Dir.JAR.substring(0, index);
     } catch (Exception e) {
     }
-    
+
     // Load other directories
     Dir.SCREENSHOT = Dir.JAR + "/screenshots";
     Util.makeDirectory(Dir.SCREENSHOT);
@@ -1087,7 +1175,6 @@ public class Settings {
                 || Client.state == Client.STATE_LOGIN) Launcher.getQueueWindow().showQueueWindow();
          */
         return true;
-        /* TODO: world choosing
       case "world_1":
         if (Client.state == Client.STATE_LOGIN) Game.getInstance().getJConfig().changeWorld(1);
         return true;
@@ -1118,8 +1205,6 @@ public class Settings {
       case "world_10":
         if (Client.state == Client.STATE_LOGIN) Game.getInstance().getJConfig().changeWorld(10);
         return true;
-
-         */
       case "toggle_wiki_hbar_button":
         // TODO: Settings.toggleWikiHbar();
         return true;
@@ -1151,21 +1236,21 @@ public class Settings {
     }
     return false;
   }
-  
+
   public static void checkSoftwareCursor() {
-	    if (SOFTWARE_CURSOR.get(currentProfile)) {
-	      Game.getInstance()
-	          .setCursor(
-	              Game.getInstance()
-	                  .getToolkit()
-	                  .createCustomCursor(
-	                      new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB),
-	                      new Point(0, 0),
-	                      "null"));
-	    } else {
-	      Game.getInstance().setCursor(Cursor.getDefaultCursor());
-	    }
-	  }
+    if (SOFTWARE_CURSOR.get(currentProfile)) {
+      Game.getInstance()
+          .setCursor(
+              Game.getInstance()
+                  .getToolkit()
+                  .createCustomCursor(
+                      new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB),
+                      new Point(0, 0),
+                      "null"));
+    } else {
+      Game.getInstance().setCursor(Cursor.getDefaultCursor());
+    }
+  }
 
   /**
    * Gets the String value of a Properties object for the specified key. If no value is defined for
@@ -1184,7 +1269,7 @@ public class Settings {
 
     return value;
   }
-  
+
   /**
    * Gets the ArrayList<String> value of a Properties object for the specified key. If no value is
    * defined for that key, it returns the specified default value.
@@ -1224,7 +1309,6 @@ public class Settings {
     }
   }
 
-
   /**
    * Gets the Boolean value of a Properties object for the specified key. If no value is defined for
    * that key, it returns the specified default value.
@@ -1254,7 +1338,7 @@ public class Settings {
     // Users on Windows 8.1 or 10 are recommend to set USE_SYSTEM_NOTIFICATIONS = true
     if (System.getProperty("os.name").contains("Windows")) {
       return "Windows 10".equals(System.getProperty("os.name"))
-              || "Windows 8.1".equals(System.getProperty("os.name"));
+          || "Windows 8.1".equals(System.getProperty("os.name"));
     } else { // Linux, macOS, etc.
       return NotificationsHandler.hasNotifySend;
     }
@@ -1321,17 +1405,16 @@ public class Settings {
     }
     for (KeybindSet kbs : KeyboardHandler.keybindSetList) {
       String keybindCombo =
-              getPropString(
-                      props, "key_" + kbs.commandName, "" + getPropIntForKeyModifier(kbs) + "*" + kbs.key);
+          getPropString(
+              props, "key_" + kbs.commandName, "" + getPropIntForKeyModifier(kbs) + "*" + kbs.key);
       kbs.modifier = getKeyModifierFromString(keybindCombo);
       kbs.key = Integer.parseInt(keybindCombo.substring(2));
     }
   }
 
-
   /** Writes all setting variables to config.ini. */
   public static void save() {
-	updateInjectedVariables(); // TODO remove this function
+    updateInjectedVariables(); // TODO remove this function
     if (currentProfile.equals("custom")) {
       save("custom");
     }
@@ -1340,12 +1423,12 @@ public class Settings {
   public static void save(String preset) {
     if (!successfullyInitted) {
       Logger.Warn(
-              "Prevented erroneous save, please report this along with the RSC× log file, set to debug logging mode");
+          "Prevented erroneous save, please report this along with the RSC× log file, set to debug logging mode");
       return;
     }
     try {
       Properties props = new Properties();
-      
+
       updateInjectedVariables(); // TODO remove this function
 
       //// general
@@ -1353,9 +1436,9 @@ public class Settings {
       props.setProperty("custom_client_size_x", Integer.toString(CUSTOM_CLIENT_SIZE_X.get(preset)));
       props.setProperty("custom_client_size_y", Integer.toString(CUSTOM_CLIENT_SIZE_Y.get(preset)));
       props.setProperty("check_updates", Boolean.toString(CHECK_UPDATES.get(preset)));
-      /*
       props.setProperty(
-              "welcome_enabled", Boolean.toString(REMIND_HOW_TO_OPEN_SETTINGS.get(preset)));
+          "welcome_enabled", Boolean.toString(REMIND_HOW_TO_OPEN_SETTINGS.get(preset)));
+      /*
       props.setProperty("combat_menu", Boolean.toString(COMBAT_MENU_SHOWN.get(preset)));
       props.setProperty("combat_menu_hidden", Boolean.toString(COMBAT_MENU_HIDDEN.get(preset)));
       props.setProperty("inventory_full_alert", Boolean.toString(INVENTORY_FULL_ALERT.get(preset)));
@@ -1369,7 +1452,7 @@ public class Settings {
       props.setProperty("camera_rotatable", Boolean.toString(CAMERA_ROTATABLE.get(preset)));
       props.setProperty("camera_movable", Boolean.toString(CAMERA_MOVABLE.get(preset)));
       props.setProperty(
-              "camera_movable_relative", Boolean.toString(CAMERA_MOVABLE_RELATIVE.get(preset)));
+          "camera_movable_relative", Boolean.toString(CAMERA_MOVABLE_RELATIVE.get(preset)));
       props.setProperty("colorize", Boolean.toString(COLORIZE_CONSOLE_TEXT.get(preset)));
       props.setProperty("fov", Integer.toString(FOV.get(preset)));
       props.setProperty("fps_limit_enabled", Boolean.toString(FPS_LIMIT_ENABLED.get(preset)));
@@ -1379,7 +1462,7 @@ public class Settings {
       props.setProperty("view_distance", Integer.toString(VIEW_DISTANCE.get(preset)));
       props.setProperty("patch_gender", Boolean.toString(PATCH_GENDER.get(preset)));
       props.setProperty(
-              "patch_hbar_512_last_pixel", Boolean.toString(PATCH_HBAR_512_LAST_PIXEL.get(preset)));
+          "patch_hbar_512_last_pixel", Boolean.toString(PATCH_HBAR_512_LAST_PIXEL.get(preset)));
       props.setProperty("log_verbosity", Integer.toString(LOG_VERBOSITY.get(preset)));
       props.setProperty("log_show_timestamps", Boolean.toString(LOG_SHOW_TIMESTAMPS.get(preset)));
       props.setProperty("log_show_level", Boolean.toString(LOG_SHOW_LEVEL.get(preset)));
@@ -1388,21 +1471,23 @@ public class Settings {
       props.setProperty("prefers_xdg_open", Boolean.toString(PREFERS_XDG_OPEN.get(preset)));
 
       //// overlays
-      props.setProperty(
-              "show_statusdisplay", Boolean.toString(SHOW_HP_OVERLAY.get(preset)));
+      props.setProperty("show_statusdisplay", Boolean.toString(SHOW_HP_OVERLAY.get(preset)));
       props.setProperty("show_buffs", Boolean.toString(SHOW_BUFFS.get(preset)));
       props.setProperty(
-              "show_last_menu_action", Boolean.toString(SHOW_LAST_MENU_ACTION.get(preset)));
+          "show_last_menu_action", Boolean.toString(SHOW_LAST_MENU_ACTION.get(preset)));
       props.setProperty("show_mouse_tooltip", Boolean.toString(SHOW_MOUSE_TOOLTIP.get(preset)));
       props.setProperty(
-              "show_extended_tooltip", Boolean.toString(SHOW_EXTENDED_TOOLTIP.get(preset)));
+          "show_extended_tooltip", Boolean.toString(SHOW_EXTENDED_TOOLTIP.get(preset)));
       props.setProperty("show_invcount", Boolean.toString(SHOW_INVCOUNT.get(preset)));
-      props.setProperty("show_rsctimes_buttons", Boolean.toString(SHOW_RSCTIMES_BUTTONS.get(preset)));
       props.setProperty(
-              "rsctimes_buttons_functional", Boolean.toString(RSCTIMES_BUTTONS_FUNCTIONAL.get(preset)));
+          "show_rsctimes_buttons", Boolean.toString(SHOW_RSCTIMES_BUTTONS.get(preset)));
       props.setProperty(
-              "wiki_lookup_on_magic_book", Boolean.toString(WIKI_LOOKUP_ON_MAGIC_BOOK.get(preset)));
+          "rsctimes_buttons_functional", Boolean.toString(RSCTIMES_BUTTONS_FUNCTIONAL.get(preset)));
+      props.setProperty(
+          "wiki_lookup_on_magic_book", Boolean.toString(WIKI_LOOKUP_ON_MAGIC_BOOK.get(preset)));
       props.setProperty("wiki_lookup_on_hbar", Boolean.toString(WIKI_LOOKUP_ON_HBAR.get(preset)));
+      props.setProperty(
+          "motivational_quotes_button", Boolean.toString(MOTIVATIONAL_QUOTES_BUTTON.get(preset)));
       props.setProperty("show_iteminfo", Boolean.toString(SHOW_ITEM_GROUND_OVERLAY.get(preset)));
       props.setProperty("show_playerinfo", Boolean.toString(SHOW_PLAYER_NAME_OVERLAY.get(preset)));
       props.setProperty("show_friendinfo", Boolean.toString(SHOW_FRIEND_NAME_OVERLAY.get(preset)));
@@ -1415,9 +1500,9 @@ public class Settings {
       props.setProperty("use_percentage", Boolean.toString(NPC_HEALTH_SHOW_PERCENTAGE.get(preset)));
       props.setProperty("show_hitbox", Boolean.toString(SHOW_HITBOX.get(preset)));
       props.setProperty(
-              "show_food_heal_overlay", Boolean.toString(SHOW_FOOD_HEAL_OVERLAY.get(preset)));
+          "show_food_heal_overlay", Boolean.toString(SHOW_FOOD_HEAL_OVERLAY.get(preset)));
       props.setProperty(
-              "show_time_until_hp_regen", Boolean.toString(SHOW_TIME_UNTIL_HP_REGEN.get(preset)));
+          "show_time_until_hp_regen", Boolean.toString(SHOW_TIME_UNTIL_HP_REGEN.get(preset)));
       props.setProperty("indicators", Boolean.toString(LAG_INDICATOR.get(preset)));
       props.setProperty("debug", Boolean.toString(DEBUG.get(preset)));
       props.setProperty("exception_handler", Boolean.toString(EXCEPTION_HANDLER.get(preset)));
@@ -1430,19 +1515,20 @@ public class Settings {
       props.setProperty("notification_sounds", Boolean.toString(NOTIFICATION_SOUNDS.get(preset)));
       props.setProperty("sound_notifs_always", Boolean.toString(SOUND_NOTIFS_ALWAYS.get(preset)));
       props.setProperty(
-              "use_system_notifications", Boolean.toString(USE_SYSTEM_NOTIFICATIONS.get(preset)));
+          "use_system_notifications", Boolean.toString(USE_SYSTEM_NOTIFICATIONS.get(preset)));
       props.setProperty("pm_notifications", Boolean.toString(PM_NOTIFICATIONS.get(preset)));
       props.setProperty("trade_notifications", Boolean.toString(TRADE_NOTIFICATIONS.get(preset)));
-      props.setProperty("under_attack_notifications", Boolean.toString(UNDER_ATTACK_NOTIFICATIONS.get(preset)));
+      props.setProperty(
+          "under_attack_notifications", Boolean.toString(UNDER_ATTACK_NOTIFICATIONS.get(preset)));
       props.setProperty("logout_notifications", Boolean.toString(LOGOUT_NOTIFICATIONS.get(preset)));
       props.setProperty("low_hp_notifications", Boolean.toString(LOW_HP_NOTIFICATIONS.get(preset)));
       props.setProperty("low_hp_notif_value", Integer.toString(LOW_HP_NOTIF_VALUE.get(preset)));
       props.setProperty(
-              "highlighted_item_notifications",
-              Boolean.toString(HIGHLIGHTED_ITEM_NOTIFICATIONS.get(preset)));
+          "highlighted_item_notifications",
+          Boolean.toString(HIGHLIGHTED_ITEM_NOTIFICATIONS.get(preset)));
       props.setProperty(
-              "highlighted_item_notif_value",
-              Integer.toString(HIGHLIGHTED_ITEM_NOTIF_VALUE.get(preset)));
+          "highlighted_item_notif_value",
+          Integer.toString(HIGHLIGHTED_ITEM_NOTIF_VALUE.get(preset)));
 
       //// streaming
       /*
@@ -1503,8 +1589,8 @@ public class Settings {
       // Keybinds
       for (KeybindSet kbs : KeyboardHandler.keybindSetList) {
         props.setProperty(
-                "key_" + kbs.commandName,
-                Integer.toString(getPropIntForKeyModifier(kbs)) + "*" + kbs.key);
+            "key_" + kbs.commandName,
+            Integer.toString(getPropIntForKeyModifier(kbs)) + "*" + kbs.key);
       }
 
       // XP Goals
@@ -1525,9 +1611,9 @@ public class Settings {
           }
 
           props.setProperty(
-                  String.format("xpGoal%02d%03d", skill, usernameID), Integer.toString(skillgoal));
+              String.format("xpGoal%02d%03d", skill, usernameID), Integer.toString(skillgoal));
           props.setProperty(
-                  String.format("lvlGoal%02d%03d", skill, usernameID), Float.toString(lvlgoal));
+              String.format("lvlGoal%02d%03d", skill, usernameID), Float.toString(lvlgoal));
         }
         props.setProperty(String.format("username%d", usernameID), username);
         usernameID++;
@@ -1542,9 +1628,9 @@ public class Settings {
       props.setProperty("worldmap_show_labels", Boolean.toString(WorldMapWindow.showLabels));
       props.setProperty("worldmap_show_scenery", Boolean.toString(WorldMapWindow.showScenery));
       props.setProperty(
-              "worldmap_show_chunk_grid", Boolean.toString(WorldMapWindow.renderChunkGrid));
+          "worldmap_show_chunk_grid", Boolean.toString(WorldMapWindow.renderChunkGrid));
       props.setProperty(
-              "worldmap_show_other_floors", Boolean.toString(WorldMapWindow.showOtherFloors));
+          "worldmap_show_other_floors", Boolean.toString(WorldMapWindow.showOtherFloors));
 
       FileOutputStream out = new FileOutputStream(Dir.JAR + "/config.ini");
       props.store(out, "---rsctimes config---");
@@ -1561,8 +1647,8 @@ public class Settings {
     WORLD_PORTS.put(worldNum, 43594);
 
     String worldFileName =
-            String.format(
-                    "%s%d_%s%s", worldNum < 10 ? "0" : "", worldNum, WORLD_NAMES.get(worldNum), ".ini");
+        String.format(
+            "%s%d_%s%s", worldNum < 10 ? "0" : "", worldNum, WORLD_NAMES.get(worldNum), ".ini");
     Properties worldProps = new Properties();
 
     worldProps.setProperty("name", WORLD_NAMES.get(worldNum));
@@ -1604,62 +1690,62 @@ public class Settings {
     Launcher.getConfigWindow().synchronizeWorldTab();
     saveWorlds();
   }
-  
+
   public static void initWorlds() {
-	    File[] fList = new File(Dir.WORLDS).listFiles();
+    File[] fList = new File(Dir.WORLDS).listFiles();
 
-	    // Sorts alphabetically
-	    Arrays.sort(
-	        fList,
-	        new Comparator<File>() {
-	          @Override
-	          public int compare(File o1, File o2) {
-	            return o1.getName().compareTo(o2.getName());
-	          }
-	        });
+    // Sorts alphabetically
+    Arrays.sort(
+        fList,
+        new Comparator<File>() {
+          @Override
+          public int compare(File o1, File o2) {
+            return o1.getName().compareTo(o2.getName());
+          }
+        });
 
-	    int i = 1;
-	    if (fList != null) {
-	      for (File worldFile : fList) {
-	        if (!worldFile.isDirectory()) {
-	          Properties worldProps = new Properties();
-	          try {
-	            FileInputStream in = new FileInputStream(worldFile);
-	            worldProps.load(in);
-	            in.close();
+    int i = 1;
+    if (fList != null) {
+      for (File worldFile : fList) {
+        if (!worldFile.isDirectory()) {
+          Properties worldProps = new Properties();
+          try {
+            FileInputStream in = new FileInputStream(worldFile);
+            worldProps.load(in);
+            in.close();
 
-	            WORLD_FILE_PATHS.put(i, worldFile.getAbsolutePath());
-	            WORLD_NAMES.put(i, worldProps.getProperty("name"));
-	            WORLD_URLS.put(i, worldProps.getProperty("url"));
-	            WORLD_PORTS.put(i, Integer.parseInt(worldProps.getProperty("port")));
-	            // TODO?
-	            /*WORLD_SERVER_TYPES.put(
-	                i, Integer.parseInt((String) worldProps.getOrDefault("servertype", "1")));
-	            WORLD_RSA_PUB_KEYS.put(i, worldProps.getProperty("rsa_pub_key"));
-	            WORLD_RSA_EXPONENTS.put(i, worldProps.getProperty("rsa_exponent"));*/
+            WORLD_FILE_PATHS.put(i, worldFile.getAbsolutePath());
+            WORLD_NAMES.put(i, worldProps.getProperty("name"));
+            WORLD_URLS.put(i, worldProps.getProperty("url"));
+            WORLD_PORTS.put(i, Integer.parseInt(worldProps.getProperty("port")));
+            // TODO?
+            /*WORLD_SERVER_TYPES.put(
+                i, Integer.parseInt((String) worldProps.getOrDefault("servertype", "1")));
+            WORLD_RSA_PUB_KEYS.put(i, worldProps.getProperty("rsa_pub_key"));
+            WORLD_RSA_EXPONENTS.put(i, worldProps.getProperty("rsa_exponent"));*/
 
-	            i++;
-	          } catch (Exception e) {
-	            Logger.Warn("Error loading World config for " + worldFile.getAbsolutePath());
-	          }
-	        }
-	      }
-	    }
+            i++;
+          } catch (Exception e) {
+            Logger.Warn("Error loading World config for " + worldFile.getAbsolutePath());
+          }
+        }
+      }
+    }
 
-	    if (i > 1) {
-	      noWorldsConfigured = false;
-	      WORLDS_TO_DISPLAY = i - 1;
-	    } else {
-	      createNewWorld(1);
-	      WORLDS_TO_DISPLAY = 1;
-	    }
-	  }
+    if (i > 1) {
+      noWorldsConfigured = false;
+      WORLDS_TO_DISPLAY = i - 1;
+    } else {
+      createNewWorld(1);
+      WORLDS_TO_DISPLAY = 1;
+    }
+  }
 
   public static void saveWorlds() {
     // TODO: it would be nice if we only saved a new file if information is different
     for (int i = 1; i <= WORLD_NAMES.size(); i++) {
       String worldFileName =
-              String.format("%s%d_%s%s", i < 10 ? "0" : "", i, WORLD_NAMES.get(i), ".ini");
+          String.format("%s%d_%s%s", i < 10 ? "0" : "", i, WORLD_NAMES.get(i), ".ini");
       Properties worldProps = new Properties();
 
       worldProps.setProperty("name", WORLD_NAMES.get(i));
@@ -1678,7 +1764,7 @@ public class Settings {
         if (!worldFileName.equals(oldFile.getName())) {
           if (!oldFile.delete()) {
             Logger.Warn(
-                    String.format("Error deleting old file %d: %s", i, oldFile.getAbsolutePath()));
+                String.format("Error deleting old file %d: %s", i, oldFile.getAbsolutePath()));
           }
           WORLD_FILE_PATHS.put(i, new File(Dir.WORLDS, worldFileName).getAbsolutePath());
         }
@@ -1687,7 +1773,6 @@ public class Settings {
       }
     }
   }
-
 
   /** Contains variables which store folder paths. */
   public static class Dir {
@@ -1698,15 +1783,15 @@ public class Settings {
     public static String REPLAY;
     public static String WORLDS;
   }
-  
+
   public static void updateInjectedVariables() {
-	    // TODO: get rid of these variables and this function if possible
-	    /*COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
-	    HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
-	    COMBAT_MENU_SHOWN_BOOL = COMBAT_MENU_SHOWN.get(currentProfile);
-	    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);*/
-	    CAMERA_ZOOMABLE_BOOL = CAMERA_ZOOMABLE.get(currentProfile);
-	    CAMERA_ROTATABLE_BOOL = CAMERA_ROTATABLE.get(currentProfile);
-	    CAMERA_MOVABLE_BOOL = CAMERA_MOVABLE.get(currentProfile);
-	  }
+    // TODO: get rid of these variables and this function if possible
+    /*COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
+    HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
+    COMBAT_MENU_SHOWN_BOOL = COMBAT_MENU_SHOWN.get(currentProfile);
+    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);*/
+    CAMERA_ZOOMABLE_BOOL = CAMERA_ZOOMABLE.get(currentProfile);
+    CAMERA_ROTATABLE_BOOL = CAMERA_ROTATABLE.get(currentProfile);
+    CAMERA_MOVABLE_BOOL = CAMERA_MOVABLE.get(currentProfile);
+  }
 }

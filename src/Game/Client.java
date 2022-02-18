@@ -18,35 +18,35 @@
  */
 package Game;
 
+import Client.KeybindSet;
+import Client.Logger;
+import Client.NotificationsHandler;
+import Client.NotificationsHandler.NotifType;
+import Client.Settings;
+import Client.TwitchIRC;
+import Client.Util;
+import Client.WorldMapWindow;
 import java.applet.Applet;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import javax.swing.JOptionPane;
-
-import Client.Settings;
-import Client.JConfig;
-import Client.Launcher;
-import Client.Logger;
-import Client.NotificationsHandler;
-import Client.Util;
-import Client.WorldMapWindow;
-import Client.NotificationsHandler.NotifType;
 
 public class Client {
 
   // Game's client instance
   public static Object instance;
-  
+
   public static List<NPC> npc_list = new ArrayList<>();
+  public static List<NPC> npc_list_retained = new ArrayList<>();
   public static List<Item> item_list = new ArrayList<>();
-  
+  public static List<Item> item_list_retained = new ArrayList<>();
+
   public static final int SKILL_ATTACK = 0;
   public static final int SKILL_DEFENSE = 1;
   public static final int SKILL_STRENGTH = 2;
@@ -66,7 +66,7 @@ public class Client {
   public static final int SKILL_SMITHING = 16;
   public static final int SKILL_MINING = 17;
   public static final int SKILL_HERBLAW = 18;
-  
+
   public static Object player_object;
   public static String player_name = "";
   public static int player_posX = -1;
@@ -74,11 +74,13 @@ public class Client {
   public static int player_height = -1;
   public static int player_width = -1;
 
+  private static TwitchIRC twitch = new TwitchIRC();
+
   public static MouseHandler handler_mouse;
   public static KeyboardHandler handler_keyboard;
-  
+
   public static boolean is_hover;
-  
+
   private static long updateTimer = 0;
   private static long last_time = 0;
 
@@ -87,15 +89,15 @@ public class Client {
   public static long update_timer;
   public static long updates;
   public static long updatesPerSecond;
-  
+
   public static final int STATE_LOGIN = 1;
   public static final int STATE_GAME = 2;
-  
+
   public static final int SCREEN_CLICK_TO_LOGIN = 0; // also is this value while logged in
   public static final int SCREEN_TERMS_CONDITIONS = 1;
   public static final int SCREEN_USERNAME_PASSWORD_LOGIN = 2;
   public static final int SCREEN_REGISTER_NEW_ACCOUNT = 3;
-  
+
   public static int state = STATE_LOGIN;
 
   public static int max_inventory = 30;
@@ -106,7 +108,7 @@ public class Client {
   public static boolean is_poisoned = false; // compat in case player was in newer rsc world
   public static boolean is_displaying_fps;
   public static int connection_port = 43594;
-  
+
   public static String[] menuOptions;
 
   public static int[] current_equipment_stats;
@@ -114,9 +116,9 @@ public class Client {
   public static int[] base_level;
   public static int[] xp; // cannot be known from client
   public static String[] skill_name;
-  
+
   public static int login_screen;
-  
+
   public static int combat_timer;
   public static boolean isGameLoaded;
 
@@ -174,8 +176,6 @@ public class Client {
 
   private static float[] xpGain = new float[18];
 
-
-
   public static final int MENU_NONE = 0;
   public static final int MENU_INVENTORY = 1;
   public static final int MENU_MINIMAP = 2;
@@ -208,14 +208,14 @@ public class Client {
   public static final int COMBAT_AGGRESSIVE = 1;
   public static final int COMBAT_ACCURATE = 2;
   public static final int COMBAT_DEFENSIVE = 3;
-  
+
   public static int friends_count;
   public static long[] friends_hash;
   public static int[] friends_online;
 
   public static int ignores_count;
   public static long[] ignores_hash;
-  
+
   public static int tileSize;
   public static long menu_timer;
   public static String lastAction;
@@ -232,6 +232,30 @@ public class Client {
   public static int planeIndex = -1;
   public static boolean loadingArea = false;
 
+  public static boolean justLoggedIn = false;
+
+  public static final String[] colorDict = {
+    // less common colors should go at the bottom b/c we can break search loop early
+    // several of the orange & green colours are basically the same colour, even in-game
+    "(?i)@cya@", "|@@|cyan ",
+    "(?i)@whi@", "|@@|white ",
+    "(?i)@red@", "|@@|red ",
+    "(?i)@gre@", "|@@|green ",
+    "(?i)@lre@", "|@@|red,intensity_faint ",
+    "(?i)@dre@", "|@@|red,intensity_bold ",
+    "(?i)@ran@", "|@@|red,blink_fast ", // TODO: consider handling this specially
+    "(?i)@yel@", "|@@|yellow ",
+    "(?i)@mag@", "|@@|magenta,intensity_bold ",
+    "(?i)@gr1@", "|@@|green ",
+    "(?i)@gr2@", "|@@|green ",
+    "(?i)@gr3@", "|@@|green ",
+    "(?i)@ora@", "|@@|red,intensity_faint ",
+    "(?i)@or1@", "|@@|red,intensity_faint ",
+    "(?i)@or2@", "|@@|red,intensity_faint ",
+    "(?i)@or3@", "|@@|red ",
+    "(?i)@blu@", "|@@|blue ",
+    "(?i)@bla@", "|@@|black "
+  };
 
   public static void init() {
 
@@ -244,11 +268,11 @@ public class Client {
     applet.addMouseWheelListener(handler_mouse);
     applet.addKeyListener(handler_keyboard);
     applet.setFocusTraversalKeysEnabled(false);
-    
+
     // Initialize login
     init_login();
   }
-  
+
   /**
    * An updater that runs frequently to update calculations for XP/fatigue drops, the XP bar, etc.
    *
@@ -264,7 +288,7 @@ public class Client {
     Camera.setLookatTile(getPlayerWaypointX(), getPlayerWaypointY());
     Camera.update(delta_time);
 
-    //Replay.update();
+    // Replay.update();
 
     /*if (Settings.RECORD_AUTOMATICALLY_FIRST_TIME.get(Settings.currentProfile)
         && showRecordAlwaysDialogue) {
@@ -297,7 +321,7 @@ public class Client {
 
     if (state == STATE_GAME) {
       Client.getPlayerName();
-      //Client.adaptLoginInfo();
+      // Client.adaptLoginInfo();
     }
 
     Game.getInstance().updateTitle();
@@ -361,8 +385,8 @@ public class Client {
     try {
       Double currentVersion = 0.0;
       URL updateURL =
-              new URL(
-                      "https://raw.githubusercontent.com/RSCPlus/rsctimes/master/src/Client/Settings.java");
+          new URL(
+              "https://raw.githubusercontent.com/RSCPlus/rsctimes/master/src/Client/Settings.java");
 
       // Open connection
       URLConnection connection = updateURL.openConnection();
@@ -375,7 +399,7 @@ public class Client {
       while ((line = in.readLine()) != null) {
         if (line.contains("VERSION_NUMBER")) {
           currentVersion =
-                  Double.parseDouble(line.substring(line.indexOf('=') + 1, line.indexOf(';')));
+              Double.parseDouble(line.substring(line.indexOf('=') + 1, line.indexOf(';')));
           Logger.Info(String.format("@|green Current Version: %f|@", currentVersion));
           break;
         }
@@ -404,55 +428,142 @@ public class Client {
       displayMessage("@gre@A new version of RSCx is available!", MESSAGE_QUEST);
       // TODO: before Y10K update this to %9.6f
       displayMessage(
-              "The latest version is @gre@" + String.format("%8.6f", latestVersion), MESSAGE_QUEST);
+          "The latest version is @gre@" + String.format("%8.6f", latestVersion), MESSAGE_QUEST);
       displayMessage(
-              "~034~ Your version is @red@" + String.format("%8.6f", Settings.VERSION_NUMBER),
-              MESSAGE_QUEST);
+          "~034~ Your version is @red@" + String.format("%8.6f", Settings.VERSION_NUMBER),
+          MESSAGE_QUEST);
       if (Settings.CHECK_UPDATES.get(Settings.currentProfile)) {
         displayMessage(
-                "~034~ You will receive the update next time you restart rsctimes", MESSAGE_QUEST);
+            "~034~ You will receive the update next time you restart rsctimes", MESSAGE_QUEST);
       }
     } else if (announceIfUpToDate) {
       displayMessage(
-              "You're up to date: @gre@" + String.format("%8.6f", latestVersion), MESSAGE_QUEST);
+          "You're up to date: @gre@" + String.format("%8.6f", latestVersion), MESSAGE_QUEST);
     }
   }
-  
+
   public static void init_login() {
-	    Camera.init();
-	    state = STATE_LOGIN;
-	    isGameLoaded = false;
-	    Renderer.replayOption = 0;
+    Camera.init();
+    state = STATE_LOGIN;
+    isGameLoaded = false;
+    Renderer.replayOption = 0;
 
-	    //twitch.disconnect();
+    twitch.disconnect();
 
-	    /*if (skipToLogin()) {
-	      login_screen = SCREEN_USERNAME_PASSWORD_LOGIN;
-	    }*/
+    if (skipToLogin()) {
+      login_screen = SCREEN_USERNAME_PASSWORD_LOGIN;
+    }
 
-	    //resetLoginMessage();
-	    //Replay.closeReplayPlayback();
-	    //Replay.closeReplayRecording();
-	    //adaptStrings();
-	    player_name = "";
-	  }
-  
+    resetLoginMessage();
+    // Replay.closeReplayPlayback();
+    // Replay.closeReplayRecording();
+    // adaptStrings();
+    player_name = "";
+  }
+
   public static void init_game() {
-	    //Camera.init();
-	    //combat_style = Settings.COMBAT_STYLE.get(Settings.currentProfile);
-	    state = STATE_GAME;
-	    // bank_active_page = 0; // TODO: config option? don't think this is very important.
-	    // combat_timer = 0;
-	  }
-  
-  
+    Camera.init();
+    // combat_style = Settings.COMBAT_STYLE.get(Settings.currentProfile);
+    state = STATE_GAME;
+    // bank_active_page = 0; // TODO: config option? don't think this is very important.
+    // combat_timer = 0;
+    allTheWayLoggedIn();
+  }
+
+  public static boolean skipToLogin() {
+    if (firstTimeRunningRSCTimes) {
+      return false;
+    }
+
+    boolean skipToLogin = false;
+
+    if (Settings.noWorldsConfigured
+        || (Settings.WORLDS_TO_DISPLAY == 1 && Settings.WORLD.get(Settings.currentProfile) != 0)) {
+      String curWorldURL = Settings.WORLD_URLS.get(1);
+      try {
+        String address = InetAddress.getByName(curWorldURL).toString();
+        if (address.contains("localhost") || address.contains("127.0.0.1")) {
+          // no configured world or localhost only
+          skipToLogin = true;
+        }
+      } catch (UnknownHostException e) {
+        skipToLogin = true;
+      }
+    }
+
+    return skipToLogin || Settings.START_LOGINSCREEN.get(Settings.currentProfile);
+  }
+
+  /**
+   * Method that gets called when starting game, normally would go to Welcome screen but if no world
+   * configured (using RSC× for replay mode) skip directly to login for replays
+   */
+  public static void resetLoginHook() {
+    if (skipToLogin()) {
+      login_screen = SCREEN_USERNAME_PASSWORD_LOGIN;
+    }
+    resetLoginMessage();
+  }
+
+  // triggered after resetGame() completes on mudclient
+  // since resetGame() also is called on reconnect has to be filtered out
+  public static void allTheWayLoggedIn() {
+    if (new Exception().getStackTrace()[3].getClassName().contains("jagex.client.e")) {
+      justLoggedIn = true;
+    }
+  }
+
+  public static void check_init() {
+    if (justLoggedIn) {
+      // triggered on receiving Welcome screen; opcode 182
+      if (Settings.FIRST_TIME.get(Settings.currentProfile)) {
+        Settings.FIRST_TIME.put(Settings.currentProfile, false);
+        Settings.save();
+      }
+
+      // Get keybind to open the config window so that we can tell the player how to open it
+      if (Settings.REMIND_HOW_TO_OPEN_SETTINGS.get(Settings.currentProfile)) {
+        String configWindowShortcut = "";
+        for (KeybindSet kbs : KeyboardHandler.keybindSetList) {
+          if ("show_config_window".equals(kbs.getCommandName())) {
+            configWindowShortcut = kbs.getFormattedKeybindText();
+            break;
+          }
+        }
+        if ("".equals(configWindowShortcut)) {
+          Logger.Error("Could not find the keybind for the config window!");
+          configWindowShortcut = "<Keybind error>";
+        }
+
+        displayMessage("@mag@Type @yel@::help@mag@ for a list of commands", CHAT_QUEST);
+        displayMessage(
+            "@mag@Open the settings by @yel@clicking the wrench icon@mag@, pressing @yel@"
+                + configWindowShortcut
+                + "@mag@, or from the @yel@tray icon",
+            CHAT_QUEST);
+      }
+
+      if (TwitchIRC.isUsing()) twitch.connect();
+
+      // Check for updates every login at most once per hour,
+      // so users are notified when an update is available
+      long currentTime = System.currentTimeMillis();
+      if (Settings.CHECK_UPDATES.get(Settings.currentProfile) && currentTime >= updateTimer) {
+        checkForUpdate(false);
+        updateTimer = currentTime + (60 * 60 * 1000);
+      }
+
+      justLoggedIn = false;
+    }
+  }
+
   /**
    * Tells the client that the adjacent region is loading, so not to do spikes in position printing
-   * 
+   *
    * @param loaded - the flag for loaded
    */
   public static void isLoadingHook(boolean loaded) {
-	boolean doLoad = !loaded;
+    boolean doLoad = !loaded;
     if (worldX == -1 && worldY == -1) {
       worldX = coordX;
       worldY = coordY;
@@ -465,18 +576,29 @@ public class Client {
       }
     }
   }
-  
-  public static boolean shouldHideFPS() {
-	  return Settings.HIDE_FPS.get(Settings.currentProfile);
+
+  public static void resetLoginMessage() {
+    setResponseMessage("Please enter your", "username and password");
   }
-  
+
+  public static boolean shouldHideFPS() {
+    return Settings.HIDE_FPS.get(Settings.currentProfile);
+  }
+
+  /** Called if Profile SAVE_LOGIN_INFO set, to not clear login info when selecting existing user */
+  public static void keep_login_info_hook() {
+    Client.login_screen = SCREEN_USERNAME_PASSWORD_LOGIN;
+    setResponseMessage("Please enter your", "username and password");
+    // Panel.setFocus(Client.panelLogin, Client.loginUserInput);
+  }
+
   /**
    * Hooks the message that hovering over X thing gives in the client
    *
    * @param tooltipMessage - the message in raw color format
    */
   public static String mouse_action_hook(String tooltipMessage) {
-	  MouseText.mouseText = tooltipMessage;
+    MouseText.mouseText = tooltipMessage;
     MouseText.regenerateCleanedMouseTexts();
 
     // Remove top-left action text in extended mode
@@ -485,86 +607,91 @@ public class Client {
 
     return tooltipMessage;
   }
-  
+
   public static void getPlayerName() {
-	    try {
-	      String name = (String) Reflection.characterName.get(player_object);
-	      if (name != null) {
-	        if (!name.equals(player_name)) {
-	          player_name = name;
-	          Camera.reset_lookat();
-	        }
-	      }
-	    } catch (IllegalArgumentException | IllegalAccessException e1) {
-	      e1.printStackTrace();
-	    }
-	  }
-  
+    try {
+      String name = (String) Reflection.characterName.get(player_object);
+      if (name != null) {
+        if (!name.equals(player_name)) {
+          player_name = name;
+          Camera.reset_lookat();
+        }
+      }
+    } catch (IllegalArgumentException | IllegalAccessException e1) {
+      e1.printStackTrace();
+    }
+  }
+
   public static int getPlayerWaypointX() {
-	    int x = 0;
-	    try {
-	      x = (int) Reflection.characterWaypointX.get(player_object);
-	    } catch (Exception e) {
-	    }
-	    return x;
+    int x = 0;
+    try {
+      x = (int) Reflection.characterWaypointX.get(player_object);
+    } catch (Exception e) {
+    }
+    return x;
   }
 
   public static int getPlayerWaypointY() {
-	    int y = 0;
-	    try {
-	      y = (int) Reflection.characterWaypointY.get(player_object);
-	    } catch (Exception e) {
-	    }
-	    return y;
+    int y = 0;
+    try {
+      y = (int) Reflection.characterWaypointY.get(player_object);
+    } catch (Exception e) {
+    }
+    return y;
   }
-  
+
   /** Returns the coordinates of the player */
   public static String getCoords() {
     return "(" + worldX + "," + worldY + ")";
   }
-  
-  
+
   public static int check_draw_string(String inputString, int position, int n, boolean isPos) {
-	  int ret = !isPos ? n : 0;
-	  if (inputString.charAt(position) == '~' && position + 5 < inputString.length() && inputString.charAt(position + 5) == '~') {
-          char c = inputString.charAt(position + 1);
-          char c1 = inputString.charAt(position + 2);
-          char c2 = inputString.charAt(position + 3);
-          char c3 = inputString.charAt(position + 4);
-          if (isPos) {
-        	  ret = 1;
-          } else if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' && c2 <= '9'
-          		&& c3 >= '0' && c3 <= '9') {
-              ret = Integer.parseInt(inputString.substring(position + 1, position + 5));
-          }
-	  }
-	  return ret;
+    int ret = !isPos ? n : 0;
+    if (inputString.charAt(position) == '~'
+        && position + 5 < inputString.length()
+        && inputString.charAt(position + 5) == '~') {
+      char c = inputString.charAt(position + 1);
+      char c1 = inputString.charAt(position + 2);
+      char c2 = inputString.charAt(position + 3);
+      char c3 = inputString.charAt(position + 4);
+      if (isPos) {
+        ret = 1;
+      } else if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' && c2 <= '9'
+          && c3 >= '0' && c3 <= '9') {
+        ret = Integer.parseInt(inputString.substring(position + 1, position + 5));
+      }
+    }
+    return ret;
   }
-  
+
   /**
    * This method hooks all chat messages.
    *
    * @param inMessage the content of the message
    * @param messageType the type of message being displayed
    */
-  public static void messageHook(
-      String inMessage, int messageType) {
-	  
-	  String username = null; //TODO: decide if extraction of username should be done
-	  // since message is (optionally username) + message
-	  String message = inMessage;
-	  int type = CHAT_NONE;
-	  
-	  if (messageType == 2 || messageType == 4 || messageType == 6) {
-          for (; message.length() > 5 && message.charAt(0) == '@' && message.charAt(4) == '@'; message = message.substring(5)) ;
-      } else if (messageType == 5) {
-    	  if (message.length() > 5 && message.startsWith("@que@")) {
-    		  for (; message.length() > 5 && message.charAt(0) == '@' && message.charAt(4) == '@'; message = message.substring(5)) ;
-    	  } else if (message.length() > 7 && !message.startsWith("@que@")
-    			  && message.contains("@que@")) {
-    		  message = message.replaceFirst("@que@", "");
-    	  }
+  public static void messageHook(String inMessage, int messageType) {
+
+    String username = null; // TODO: decide if extraction of username should be done
+    // since message is (optionally username) + message
+    String message = inMessage;
+    int type = CHAT_NONE;
+
+    if (messageType == 2 || messageType == 4 || messageType == 6) {
+      for (;
+          message.length() > 5 && message.charAt(0) == '@' && message.charAt(4) == '@';
+          message = message.substring(5)) ;
+    } else if (messageType == 5) {
+      if (message.length() > 5 && message.startsWith("@que@")) {
+        for (;
+            message.length() > 5 && message.charAt(0) == '@' && message.charAt(4) == '@';
+            message = message.substring(5)) ;
+      } else if (message.length() > 7
+          && !message.startsWith("@que@")
+          && message.contains("@que@")) {
+        message = message.replaceFirst("@que@", "");
       }
+    }
 
     // Close dialogues when player says something in-game in quest chat
     /*if (Replay.isPlaying) {
@@ -585,54 +712,53 @@ public class Client {
     }*/
 
     if (messageType == MESSAGE_GAME) {
-    	username = null;
-    	type = CHAT_NONE;
-    	if (message.contains("The spell fails! You may try again in 20 seconds"))
-            magic_timer = Renderer.time + 21000L;
-          else if (Settings.TRAY_NOTIFS.get(Settings.currentProfile)
-              && message.contains(
-                  "You have been standing here for 5 mins! Please move to a new area")) {
-            NotificationsHandler.notify(
-                NotifType.LOGOUT, "Logout Notification", "You're about to log out");
-          }
-          // while the message is really You @gr2@are @gr1@poisioned! @gr2@You @gr3@lose @gr2@3
-          // @gr1@health.
-          // it can be known looking for "poisioned!"
-          else if (message.contains("poisioned!")) {
-            is_poisoned = true;
-            poison_timer = Renderer.time + 21000L;
-          } else if (message.contains("You drink") && message.contains("poison")) {
-            is_poisoned = false;
-            poison_timer = Renderer.time;
-          } else if (message.contains("You retain your skills. Your objects land where you died")
-              && is_poisoned) {
-            is_poisoned = false;
-            poison_timer = Renderer.time;
-          }
+      username = null;
+      type = CHAT_NONE;
+      if (message.contains("The spell fails! You may try again in 20 seconds"))
+        magic_timer = Renderer.time + 21000L;
+      else if (Settings.TRAY_NOTIFS.get(Settings.currentProfile)
+          && message.contains(
+              "You have been standing here for 5 mins! Please move to a new area")) {
+        NotificationsHandler.notify(
+            NotifType.LOGOUT, "Logout Notification", "You're about to log out");
+      }
+      // while the message is really You @gr2@are @gr1@poisioned! @gr2@You @gr3@lose @gr2@3
+      // @gr1@health.
+      // it can be known looking for "poisioned!"
+      else if (message.contains("poisioned!")) {
+        is_poisoned = true;
+        poison_timer = Renderer.time + 21000L;
+      } else if (message.contains("You drink") && message.contains("poison")) {
+        is_poisoned = false;
+        poison_timer = Renderer.time;
+      } else if (message.contains("You retain your skills. Your objects land where you died")
+          && is_poisoned) {
+        is_poisoned = false;
+        poison_timer = Renderer.time;
+      }
     } else if (messageType == MESSAGE_PRIVATE) {
-    	// should extract sender/receiver here
-    	if (message.matches("^(?:@pri@|)You tell.*$")) {
-    		type = CHAT_PRIVATE_OUTGOING;
-    		NotificationsHandler.notify(NotifType.PM, "PM sent", message);
-    	} else {
-    		type = CHAT_PRIVATE;
-    		NotificationsHandler.notify(NotifType.PM, "PM received", message);
-    	}
+      // should extract sender/receiver here
+      if (message.matches("^(?:@pri@|)You tell.*$")) {
+        type = CHAT_PRIVATE_OUTGOING;
+        NotificationsHandler.notify(NotifType.PM, "PM sent", message);
+      } else {
+        type = CHAT_PRIVATE;
+        NotificationsHandler.notify(NotifType.PM, "PM received", message);
+      }
     } else if (messageType == MESSAGE_INVENTORY) {
-    	if (message.contains(" wishes to duel with you")) {
-            type = CHAT_OTHER;
-    		NotificationsHandler.notify(
-                NotifType.DUEL, "Duel Request", message.replaceAll("@...@", ""));
-    	}
-    	else if (message.contains(" wishes to trade with you")) {
-    		type = CHAT_TRADE_REQUEST_RECEIVED;
-            NotificationsHandler.notify(
-                    NotifType.TRADE, "Trade Request", message.replaceAll("@...@", ""));
-    	}
+      if (message.contains(" wishes to duel with you")) {
+        type = CHAT_OTHER;
+        NotificationsHandler.notify(
+            NotifType.DUEL, "Duel Request", message.replaceAll("@...@", ""));
+      } else if (message.contains(" wishes to trade with you")) {
+        type = CHAT_TRADE_REQUEST_RECEIVED;
+        NotificationsHandler.notify(
+            NotifType.TRADE, "Trade Request", message.replaceAll("@...@", ""));
+      }
     } else if (messageType == MESSAGE_QUEST) {
-    	type = CHAT_QUEST;
+      type = CHAT_QUEST;
     } else if (messageType == MESSAGE_CHAT) {
-    	type = CHAT_CHAT;
+      type = CHAT_CHAT;
     }
 
     // Don't output private messages if option is turned on and replaying
@@ -656,255 +782,521 @@ public class Client {
             + colorizeMessage(message, type);
     Logger.Chat(colorizedLog, originalLog);
   }
-  
+
   private static String formatChatType(int type) {
-	    String chatType = getChatTypeName(type).toUpperCase();
+    String chatType = getChatTypeName(type).toUpperCase();
 
-	    // Make text fixed width so it aligns properly
-	    final int fixedWidth = getChatTypeName(CHAT_INCOMING_OPTION).length();
-	    while (chatType.length() < fixedWidth) chatType = " " + chatType;
+    // Make text fixed width so it aligns properly
+    final int fixedWidth = getChatTypeName(CHAT_INCOMING_OPTION).length();
+    while (chatType.length() < fixedWidth) chatType = " " + chatType;
 
-	    return chatType;
-	  }
+    return chatType;
+  }
 
-	  private static String getChatTypeName(int type) {
-	    switch (type) {
-	      case CHAT_NONE:
-	        return "none";
-	      case CHAT_PRIVATE:
-	        return "pm_in";
-	      case CHAT_PRIVATE_OUTGOING:
-	        return "pm_out";
-	      case CHAT_QUEST:
-	        return "quest";
-	      case CHAT_CHAT:
-	        return "chat";
-	      case CHAT_PRIVATE_LOG_IN_OUT:
-	        return "pm_log";
-	      case CHAT_TRADE_REQUEST_RECEIVED:
-	        return "trade";
-	      case CHAT_OTHER:
-	        return "other";
-	      case CHAT_INCOMING_OPTION:
-	        return "option";
-	      case CHAT_CHOSEN_OPTION:
-	        return "select";
-	      case CHAT_WINDOWED_MSG:
-	        return "window";
-	      default:
-	        return Integer.toString(type);
-	    }
-	  }
+  private static String getChatTypeName(int type) {
+    switch (type) {
+      case CHAT_NONE:
+        return "none";
+      case CHAT_PRIVATE:
+        return "pm_in";
+      case CHAT_PRIVATE_OUTGOING:
+        return "pm_out";
+      case CHAT_QUEST:
+        return "quest";
+      case CHAT_CHAT:
+        return "chat";
+      case CHAT_PRIVATE_LOG_IN_OUT:
+        return "pm_log";
+      case CHAT_TRADE_REQUEST_RECEIVED:
+        return "trade";
+      case CHAT_OTHER:
+        return "other";
+      case CHAT_INCOMING_OPTION:
+        return "option";
+      case CHAT_CHOSEN_OPTION:
+        return "select";
+      case CHAT_WINDOWED_MSG:
+        return "window";
+      default:
+        return Integer.toString(type);
+    }
+  }
 
-	  /**
-	   * Formats the username clause preceding a chat message for use in the console.
-	   *
-	   * @param username the username associated with the message
-	   * @param type the type of message being displayed
-	   * @return the formatted username clause
-	   */
-	  private static String formatUsername(String username, int type) {
-	    switch (type) {
-	      case CHAT_PRIVATE:
-	        // Username tells you:
-	        username = username + " tells you: ";
-	        break;
-	      case CHAT_PRIVATE_OUTGOING:
-	        // You tell Username:
-	        username = "You tell " + username + ": ";
-	        break;
-	      case CHAT_QUEST:
-	        // If username != null during CHAT_QUEST, then this is your player name
-	        username = username + ": ";
-	        break;
-	      case CHAT_CHAT:
-	        username = username + ": ";
-	        break;
-	      case CHAT_TRADE_REQUEST_RECEIVED: // happens when player trades you
-	        username = username + " wishes to trade with you.";
-	        break;
-	        /* username will not appear in these chat types, but just to cover it I'm leaving code commented out here
-	        case CHAT_NONE:
-	        case CHAT_PRIVATE_LOG_IN_OUT:
-	        case CHAT_PLAYER_INTERRACT_OUT:
-	        */
-	      default:
-	        Logger.Info("Username specified for unhandled chat type, please report this: " + type);
-	        username = username + ": ";
-	    }
+  /**
+   * Formats the username clause preceding a chat message for use in the console.
+   *
+   * @param username the username associated with the message
+   * @param type the type of message being displayed
+   * @return the formatted username clause
+   */
+  private static String formatUsername(String username, int type) {
+    switch (type) {
+      case CHAT_PRIVATE:
+        // Username tells you:
+        username = username + " tells you: ";
+        break;
+      case CHAT_PRIVATE_OUTGOING:
+        // You tell Username:
+        username = "You tell " + username + ": ";
+        break;
+      case CHAT_QUEST:
+        // If username != null during CHAT_QUEST, then this is your player name
+        username = username + ": ";
+        break;
+      case CHAT_CHAT:
+        username = username + ": ";
+        break;
+      case CHAT_TRADE_REQUEST_RECEIVED: // happens when player trades you
+        username = username + " wishes to trade with you.";
+        break;
+        /* username will not appear in these chat types, but just to cover it I'm leaving code commented out here
+        case CHAT_NONE:
+        case CHAT_PRIVATE_LOG_IN_OUT:
+        case CHAT_PLAYER_INTERRACT_OUT:
+        */
+      default:
+        Logger.Info("Username specified for unhandled chat type, please report this: " + type);
+        username = username + ": ";
+    }
 
-	    return username;
-	  }
+    return username;
+  }
 
-	  /**
-	   * Adds color to the username clause preceding a chat message for use in the console.
-	   *
-	   * @param colorMessage the username clause to colorize
-	   * @param type the type of message being displayed
-	   * @return the colorized username clause
-	   */
-	  public static String colorizeUsername(String colorMessage, int type) {
-	    switch (type) {
-	      case CHAT_PRIVATE:
-	        // Username tells you:
-	        colorMessage = "@|cyan,intensity_bold " + colorMessage + "|@";
-	        break;
-	      case CHAT_PRIVATE_OUTGOING:
-	        // You tell Username:
-	        colorMessage = "@|cyan,intensity_bold " + colorMessage + "|@";
-	        break;
-	      case CHAT_QUEST:
-	        // If username != null during CHAT_QUEST, then this is your player name, which is usually
-	        // white
-	        colorMessage = "@|white,intensity_faint " + colorMessage + "|@";
-	        break;
-	      case CHAT_CHAT:
-	        // just bold username for chat
-	        colorMessage = "@|yellow,intensity_bold " + colorMessage + "|@";
-	        break;
-	      case CHAT_TRADE_REQUEST_RECEIVED: // happens when player trades you
-	        colorMessage = "@|white " + colorMessage + "|@";
-	        break;
-	        /* username will not appear in these chat types, but just to cover it I'm leaving code commented out here
-	        case CHAT_NONE:
-	        case CHAT_PRIVATE_LOG_IN_OUT:
-	        case CHAT_PLAYER_INTERRACT_OUT:
-	        */
+  /**
+   * Adds color to the username clause preceding a chat message for use in the console.
+   *
+   * @param colorMessage the username clause to colorize
+   * @param type the type of message being displayed
+   * @return the colorized username clause
+   */
+  public static String colorizeUsername(String colorMessage, int type) {
+    switch (type) {
+      case CHAT_PRIVATE:
+        // Username tells you:
+        colorMessage = "@|cyan,intensity_bold " + colorMessage + "|@";
+        break;
+      case CHAT_PRIVATE_OUTGOING:
+        // You tell Username:
+        colorMessage = "@|cyan,intensity_bold " + colorMessage + "|@";
+        break;
+      case CHAT_QUEST:
+        // If username != null during CHAT_QUEST, then this is your player name, which is usually
+        // white
+        colorMessage = "@|white,intensity_faint " + colorMessage + "|@";
+        break;
+      case CHAT_CHAT:
+        // just bold username for chat
+        colorMessage = "@|yellow,intensity_bold " + colorMessage + "|@";
+        break;
+      case CHAT_TRADE_REQUEST_RECEIVED: // happens when player trades you
+        colorMessage = "@|white " + colorMessage + "|@";
+        break;
+        /* username will not appear in these chat types, but just to cover it I'm leaving code commented out here
+        case CHAT_NONE:
+        case CHAT_PRIVATE_LOG_IN_OUT:
+        case CHAT_PLAYER_INTERRACT_OUT:
+        */
 
-	      default:
-	        Logger.Info("Username specified for unhandled chat type, please report this: " + type);
-	        colorMessage = "@|white,intensity_bold " + colorMessage + "|@";
-	    }
-	    return colorMessage;
-	  }
+      default:
+        Logger.Info("Username specified for unhandled chat type, please report this: " + type);
+        colorMessage = "@|white,intensity_bold " + colorMessage + "|@";
+    }
+    return colorMessage;
+  }
 
-	  /**
-	   * Adds color to the contents of a chat message for use in the console.
-	   *
-	   * @param colorMessage the message to colorize
-	   * @param type the type of message being displayed
-	   * @return the colorized message
-	   */
-	  public static String colorizeMessage(String colorMessage, int type) {
-	    boolean whiteMessage = colorMessage.contains("Welcome to RuneScape!"); // want this to be bold
-	    boolean blueMessage =
-	        (type == CHAT_NONE)
-	            && (colorMessage.contains(
-	                "You have been standing here for 5 mins! Please move to a new area"));
-	    boolean yellowMessage =
-	        (type == CHAT_NONE) && (colorMessage.contains("Well Done")); // tourist trap completion
-	    boolean screenshotMessage =
-	        (type == CHAT_NONE)
-	            && (colorMessage.contains("You just advanced ")
-	                || (colorMessage.contains("quest point") && colorMessage.endsWith("!"))
-	                || colorMessage.contains("ou have completed"));
-	    boolean greenMessage =
-	        screenshotMessage
-	            || (type == CHAT_NONE
-	                && (colorMessage.contains("poisioned!")
-	                    || colorMessage.contains("***"))); // "***" is for Tourist Trap completion
+  /**
+   * Adds color to the contents of a chat message for use in the console.
+   *
+   * @param colorMessage the message to colorize
+   * @param type the type of message being displayed
+   * @return the colorized message
+   */
+  public static String colorizeMessage(String colorMessage, int type) {
+    boolean whiteMessage = colorMessage.contains("Welcome to RuneScape!"); // want this to be bold
+    boolean blueMessage =
+        (type == CHAT_NONE)
+            && (colorMessage.contains(
+                "You have been standing here for 5 mins! Please move to a new area"));
+    boolean yellowMessage =
+        (type == CHAT_NONE) && (colorMessage.contains("Well Done")); // tourist trap completion
+    boolean screenshotMessage =
+        (type == CHAT_NONE)
+            && (colorMessage.contains("You just advanced ")
+                || (colorMessage.contains("quest point") && colorMessage.endsWith("!"))
+                || colorMessage.contains("ou have completed"));
+    boolean greenMessage =
+        screenshotMessage
+            || (type == CHAT_NONE
+                && (colorMessage.contains("poisioned!")
+                    || colorMessage.contains("***"))); // "***" is for Tourist Trap completion
 
-	    if (screenshotMessage
-	        && Settings.AUTO_SCREENSHOT.get(Settings.currentProfile)
-	        && !Replay.isPlaying) {
-	      Renderer.takeScreenshot(true);
-	    }
+    if (screenshotMessage
+        && Settings.AUTO_SCREENSHOT.get(Settings.currentProfile)
+        && !Replay.isPlaying) {
+      Renderer.takeScreenshot(true);
+    }
 
-	    if (blueMessage) { // this is one of the messages which we must overwrite expected color for
-	      return "@|cyan,intensity_faint " + colorReplace(colorMessage) + "|@";
-	    } else if (greenMessage) {
-	      return "@|green,intensity_bold " + colorReplace(colorMessage) + "|@";
-	    } else if (whiteMessage) {
-	      // if (colorMessage.contains("Welcome to RuneScape!")) {
-	      // this would be necessary if whiteMessage had more than one .contains()
-	      // }
+    if (blueMessage) { // this is one of the messages which we must overwrite expected color for
+      return "@|cyan,intensity_faint " + colorReplace(colorMessage) + "|@";
+    } else if (greenMessage) {
+      return "@|green,intensity_bold " + colorReplace(colorMessage) + "|@";
+    } else if (whiteMessage) {
+      // if (colorMessage.contains("Welcome to RuneScape!")) {
+      // this would be necessary if whiteMessage had more than one .contains()
+      // }
 
-	      return "@|white,intensity_bold " + colorMessage + "|@";
-	    } else if (yellowMessage) {
-	      return "@|yellow,intensity_bold " + colorMessage + "|@";
-	    }
+      return "@|white,intensity_bold " + colorMessage + "|@";
+    } else if (yellowMessage) {
+      return "@|yellow,intensity_bold " + colorMessage + "|@";
+    }
 
-	    switch (type) {
-	      case CHAT_PRIVATE:
-	      case CHAT_PRIVATE_OUTGOING:
-	        // message to/from PMs
-	        colorMessage = "@|cyan,intensity_faint " + colorReplace(colorMessage) + "|@";
-	        break;
-	      case CHAT_QUEST:
-	        if (colorMessage.contains(":") && !colorMessage.startsWith("***")) {
-	          // this will be like "banker: would you like to access your bank account?" which should be
-	          // yellow. Avoids yellow print the message of tourist trap
-	          colorMessage = "@|yellow,intensity_faint " + colorReplace(colorMessage) + "|@";
-	        } else {
-	          // this is usually skilling
-	          colorMessage = "@|white,intensity_faint " + colorReplace(colorMessage) + "|@";
-	        }
-	        break;
-	      case CHAT_CHAT:
-	        colorMessage = "@|yellow,intensity_faint " + colorReplace(colorMessage) + "|@";
-	        break;
-	      case CHAT_PRIVATE_LOG_IN_OUT:
-	        // don't need to colorReplace, this is just "username has logged in/out"
-	        colorMessage = "@|cyan,intensity_faint " + colorMessage + "|@";
-	        break;
-	      case CHAT_NONE: // have to replace b/c @cya@Screenshot saved...
-	      case CHAT_TRADE_REQUEST_RECEIVED:
-	      case CHAT_WINDOWED_MSG:
-	      case CHAT_OTHER:
-	        colorMessage = "@|white " + colorReplace(colorMessage) + "|@";
-	        break;
-	      case CHAT_INCOMING_OPTION:
-	        colorMessage = "@|cyan,intensity_faint " + colorReplace(colorMessage) + "|@";
-	        break;
-	        // faint red since it would have been a hover/selection over the item
-	      case CHAT_CHOSEN_OPTION:
-	        colorMessage = "@|red,intensity_faint " + colorReplace(colorMessage) + "|@";
-	        break;
-	      default: // this should never happen, only 10 Chat Types
-	        Logger.Info("Unhandled chat type in colourizeMessage, please report this:" + type);
-	        colorMessage = "@|white,intensity_faint " + colorReplace(colorMessage) + "|@";
-	    }
-	    return colorMessage;
-	  }
+    switch (type) {
+      case CHAT_PRIVATE:
+      case CHAT_PRIVATE_OUTGOING:
+        // message to/from PMs
+        colorMessage = "@|cyan,intensity_faint " + colorReplace(colorMessage) + "|@";
+        break;
+      case CHAT_QUEST:
+        if (colorMessage.contains(":") && !colorMessage.startsWith("***")) {
+          // this will be like "banker: would you like to access your bank account?" which should be
+          // yellow. Avoids yellow print the message of tourist trap
+          colorMessage = "@|yellow,intensity_faint " + colorReplace(colorMessage) + "|@";
+        } else {
+          // this is usually skilling
+          colorMessage = "@|white,intensity_faint " + colorReplace(colorMessage) + "|@";
+        }
+        break;
+      case CHAT_CHAT:
+        colorMessage = "@|yellow,intensity_faint " + colorReplace(colorMessage) + "|@";
+        break;
+      case CHAT_PRIVATE_LOG_IN_OUT:
+        // don't need to colorReplace, this is just "username has logged in/out"
+        colorMessage = "@|cyan,intensity_faint " + colorMessage + "|@";
+        break;
+      case CHAT_NONE: // have to replace b/c @cya@Screenshot saved...
+      case CHAT_TRADE_REQUEST_RECEIVED:
+      case CHAT_WINDOWED_MSG:
+      case CHAT_OTHER:
+        colorMessage = "@|white " + colorReplace(colorMessage) + "|@";
+        break;
+      case CHAT_INCOMING_OPTION:
+        colorMessage = "@|cyan,intensity_faint " + colorReplace(colorMessage) + "|@";
+        break;
+        // faint red since it would have been a hover/selection over the item
+      case CHAT_CHOSEN_OPTION:
+        colorMessage = "@|red,intensity_faint " + colorReplace(colorMessage) + "|@";
+        break;
+      default: // this should never happen, only 10 Chat Types
+        Logger.Info("Unhandled chat type in colourizeMessage, please report this:" + type);
+        colorMessage = "@|white,intensity_faint " + colorReplace(colorMessage) + "|@";
+    }
+    return colorMessage;
+  }
 
-	  public static String colorReplace(String colorMessage) {
-	    final String[] colorDict = { // TODO: Make this a class variable
-	      // less common colors should go at the bottom b/c we can break search loop early
-	      "(?i)@cya@", "|@@|cyan ",
-	      "(?i)@whi@", "|@@|white ",
-	      "(?i)@red@", "|@@|red ",
-	      "(?i)@gre@", "|@@|green ",
-	      "(?i)@lre@", "|@@|red,intensity_faint ",
-	      "(?i)@dre@", "|@@|red,intensity_bold ",
-	      "(?i)@ran@", "|@@|red,blink_fast ", // TODO: consider handling this specially
-	      "(?i)@yel@", "|@@|yellow ",
-	      "(?i)@mag@", "|@@|magenta,intensity_bold ",
-	      "(?i)@gr1@", "|@@|green ",
-	      "(?i)@gr2@", "|@@|green ",
-	      "(?i)@gr3@", "|@@|green ",
-	      "(?i)@ora@", "|@@|red,intensity_faint ",
-	      "(?i)@or1@", "|@@|red,intensity_faint ",
-	      "(?i)@or2@",
-	          "|@@|red,intensity_faint ", // these are all basically the same color, even in game
-	      "(?i)@or3@", "|@@|red ",
-	      "(?i)@blu@", "|@@|blue ",
-	      "(?i)@bla@", "|@@|black "
-	    };
-	    for (int i = 0; i + 1 < colorDict.length; i += 2) {
-	      if (!colorMessage.matches(".*@.{3}@.*")) { // if doesn't contain any color codes: break;
-	        break;
-	      }
-	      colorMessage = colorMessage.replaceAll(colorDict[i], colorDict[i + 1]);
-	    }
+  public static String colorReplace(String colorMessage) {
+    final String[] colorDict = { // TODO: Make this a class variable
+      // less common colors should go at the bottom b/c we can break search loop early
+      "(?i)@cya@", "|@@|cyan ",
+      "(?i)@whi@", "|@@|white ",
+      "(?i)@red@", "|@@|red ",
+      "(?i)@gre@", "|@@|green ",
+      "(?i)@lre@", "|@@|red,intensity_faint ",
+      "(?i)@dre@", "|@@|red,intensity_bold ",
+      "(?i)@ran@", "|@@|red,blink_fast ", // TODO: consider handling this specially
+      "(?i)@yel@", "|@@|yellow ",
+      "(?i)@mag@", "|@@|magenta,intensity_bold ",
+      "(?i)@gr1@", "|@@|green ",
+      "(?i)@gr2@", "|@@|green ",
+      "(?i)@gr3@", "|@@|green ",
+      "(?i)@ora@", "|@@|red,intensity_faint ",
+      "(?i)@or1@", "|@@|red,intensity_faint ",
+      "(?i)@or2@",
+          "|@@|red,intensity_faint ", // these are all basically the same color, even in game
+      "(?i)@or3@", "|@@|red ",
+      "(?i)@blu@", "|@@|blue ",
+      "(?i)@bla@", "|@@|black "
+    };
+    for (int i = 0; i + 1 < colorDict.length; i += 2) {
+      if (!colorMessage.matches(".*@.{3}@.*")) { // if doesn't contain any color codes: break;
+        break;
+      }
+      colorMessage = colorMessage.replaceAll(colorDict[i], colorDict[i + 1]);
+    }
 
-	    // we could replace @.{3}@ with "" to remove "@@@@@" or "@dne@" (i.e. color code which does not
-	    // exist) just like
-	    // in chat box, but I think it's more interesting to leave the misspelled stuff in terminal
+    // we could replace @.{3}@ with "" to remove "@@@@@" or "@dne@" (i.e. color code which does not
+    // exist) just like
+    // in chat box, but I think it's more interesting to leave the misspelled stuff in terminal
 
-	    // could also respect ~xxx~ but not really useful.
+    // could also respect ~xxx~ but not really useful.
 
-	    return colorMessage;
-	  }
+    return colorMessage;
+  }
+
+  /**
+   * Intercepts chat messages sent by the user and parses them for commands.
+   *
+   * @param line a chat message sent by the user
+   * @return a modified chat message
+   */
+  public static String processChatCommand(String line) {
+    // TODO: Move Twitch related checks to their own method to stay consistent
+    if (TwitchIRC.isUsing() && line.startsWith("/")) {
+      String message = line.substring(1, line.length());
+      String[] messageArray = message.split(" ");
+
+      message = processClientChatCommand(message);
+
+      if (messageArray.length > 1 && "me".equals(messageArray[0])) {
+        message = message.substring(3);
+        twitch.sendEmote(message, true);
+      } else {
+        twitch.sendMessage(message, true);
+      }
+      return "::null";
+    }
+
+    line = processClientChatCommand(line);
+    processClientCommand(line);
+
+    return line;
+  }
+
+  // TODO: Use processClientChatCommand instead of this method
+  public static String processPrivateCommand(String line) {
+    return processClientChatCommand(line);
+  }
+
+  /**
+   * Parses a chat message sent by the user for client related commands.
+   *
+   * @param line a chat message sent by the user
+   * @return a modified chat message
+   */
+  private static String processClientCommand(String line) {
+    if (line.startsWith("::")) {
+      String[] commandArray = line.substring(2, line.length()).toLowerCase().split(" ");
+
+      switch (commandArray[0]) {
+          /*case "togglebypassattack":
+            Settings.toggleAttackAlwaysLeftClick();
+            break;
+          case "toggleroofs":
+            Settings.toggleHideRoofs();
+            break;
+          case "togglecombat":
+            Settings.toggleCombatMenuShown();
+            break;
+          case "togglecolor":
+            Settings.toggleColorTerminal();
+            break;
+          case "togglehitbox":
+            Settings.toggleShowHitbox();
+            break;
+          case "toggletwitch":
+            Settings.toggleTwitchHide();
+            break;
+          case "toggleplayerinfo":
+            Settings.toggleShowPlayerNameOverlay();
+            break;
+          case "togglefriendinfo":
+            Settings.toggleShowFriendNameOverlay();
+            break;
+          case "togglenpcinfo":
+            Settings.toggleShowNPCNameOverlay();
+            break;
+          case "toggleidsinfo":
+            Settings.toggleExtendIdsOverlay();
+            break;
+          case "toggleiteminfo":
+            Settings.toggleShowItemGroundOverlay();
+            break;*/
+        case "screenshot":
+          Renderer.takeScreenshot(false);
+          break;
+          /*case "debug":
+            Settings.toggleDebug();
+            break;
+          case "fov":
+            if (commandArray.length > 1) {
+              Settings.setClientFoV(commandArray[1]);
+            }
+            break;
+          case "logout":
+            Client.logout();
+            break;
+          case "toggleposition":
+            Settings.togglePosition();
+            break;
+          case "toggleretrofps":
+            Settings.toggleRetroFPS();
+            break;
+          case "toggleinvcount":
+            Settings.toggleInvCount();
+            break;
+          case "togglebuffs":
+            Settings.toggleBuffs();
+            break;
+          case "togglestatusdisplay":
+            Settings.toggleHpPrayerFatigueOverlay();
+            break;*/
+        case "help":
+          try {
+            Help.help(Integer.parseInt(commandArray[2]), commandArray[1]);
+          } catch (Exception e) {
+            Help.help(0, "help");
+          }
+          break;
+          /*case "endrun":
+            Settings.endSpeedrun();
+            break;
+          case "set_pitch":
+            try {
+              Camera.pitch_rsctimes = Integer.parseInt(commandArray[1]);
+              if (Camera.pitch_rsctimes < 0) Camera.pitch_rsctimes = 0;
+              if (Camera.pitch_rsctimes > 1023) Camera.pitch_rsctimes = 1023;
+            } catch (ArrayIndexOutOfBoundsException ex) {
+              displayMessage(
+                  "You must specify a number to set the pitch to. 112 is default.", CHAT_QUEST);
+            } catch (NumberFormatException ex) {
+              displayMessage("That is not a number.", CHAT_QUEST);
+            }
+            break;
+          case "set_height":
+            try {
+              Camera.offset_height = Integer.parseInt(commandArray[1]);
+            } catch (ArrayIndexOutOfBoundsException ex) {
+              displayMessage(
+                  "You must specify a number to set the height offset to. 0 is default.", CHAT_QUEST);
+            } catch (NumberFormatException ex) {
+              displayMessage("That is not a number.", CHAT_QUEST);
+            }
+            break;*/
+        default:
+          if (commandArray[0] != null) {
+            return "::";
+          }
+          break;
+      }
+    }
+
+    return line;
+  }
+
+  /**
+   * Parses a chat message sent by the user for chat related commands.
+   *
+   * @param line a chat message sent by the user
+   * @return a modified chat message
+   */
+  private static String processClientChatCommand(String line) {
+    if (line.startsWith("::")) {
+      String command = line.substring(2, line.length()).toLowerCase();
+
+      if ("total".equals(command)) {
+        return "My Total Level is " + getTotalLevel() + ".";
+      } else if ("cmb".equals(command)) {
+        // this command breaks character limits and might be bannable... would not recommend sending
+        // this command over PM to rs2/rs3
+        return "@whi@My Combat is Level "
+            + "@gre@"
+            +
+            // melee stats
+            ((base_level[SKILL_ATTACK]
+                    + base_level[SKILL_STRENGTH]
+                    + base_level[SKILL_DEFENSE]
+                    + base_level[SKILL_HP])
+                * 0.25)
+            + " @lre@A:@whi@ "
+            + base_level[SKILL_ATTACK]
+            + " @lre@S:@whi@ "
+            + base_level[SKILL_STRENGTH]
+            + " @lre@D:@whi@ "
+            + base_level[SKILL_DEFENSE]
+            + " @lre@H:@whi@ "
+            + base_level[SKILL_HP]
+            + " @lre@R:@whi@ "
+            + base_level[SKILL_RANGED]
+            + " @lre@PG:@whi@ "
+            + base_level[SKILL_PRAYGOOD]
+            + " @lre@PE:@whi@ "
+            + base_level[SKILL_PRAYEVIL]
+            + " @lre@GM:@whi@ "
+            + base_level[SKILL_GOODMAGIC]
+            + " @lre@EM:@whi@ "
+            + base_level[SKILL_EVILMAGIC];
+      } else if ("cmbnocolor"
+          .equals(command)) { // this command stays within character limits and is safe.
+        return "My Combat is Level "
+            // basic melee stats
+            + ((base_level[SKILL_ATTACK]
+                    + base_level[SKILL_STRENGTH]
+                    + base_level[SKILL_DEFENSE]
+                    + base_level[SKILL_HP])
+                * 0.25)
+            + " A:"
+            + base_level[SKILL_ATTACK]
+            + " S:"
+            + base_level[SKILL_STRENGTH]
+            + " D:"
+            + base_level[SKILL_DEFENSE]
+            + " H:"
+            + base_level[SKILL_HP]
+            + " R:"
+            + base_level[SKILL_RANGED]
+            + " PG:"
+            + base_level[SKILL_PRAYGOOD]
+            + " PE:"
+            + base_level[SKILL_PRAYEVIL]
+            + " GM:"
+            + base_level[SKILL_GOODMAGIC]
+            + " EM:"
+            + base_level[SKILL_EVILMAGIC];
+      } else if ("bank".equals(command)) {
+        return "Hey, everyone, I just tried to do something very silly!";
+      } else if ("update".equals(command)) {
+        checkForUpdate(true);
+      } else if (command.startsWith("xmas ")) {
+        int randomStart = (int) System.currentTimeMillis();
+        if (randomStart < 0) {
+          randomStart *= -1; // casting to long to int sometimes results in a negative number
+        }
+        String subline = "";
+        String[] colours = {"@red@", "@whi@", "@gre@", "@whi@"};
+        int spaceCounter = 0;
+        for (int i = 0; i < line.length() - 7; i++) {
+          if (" ".equals(line.substring(7 + i, 8 + i))) {
+            spaceCounter += 1;
+          }
+          subline += colours[(i - spaceCounter + randomStart) % 4];
+          subline += line.substring(7 + i, 8 + i);
+        }
+        return subline;
+      } else if (command.startsWith("rainbow ")) { // @red@A@ora@B@yel@C etc
+        int randomStart = (int) System.currentTimeMillis();
+        if (randomStart < 0) {
+          randomStart *= -1; // casting to long to int sometimes results in a negative number
+        }
+        String subline = "";
+        String[] colours = {"@red@", "@ora@", "@yel@", "@gre@", "@cya@", "@mag@"};
+        int spaceCounter = 0;
+        for (int i = 0; i < line.length() - 10; i++) {
+          if (" ".equals(line.substring(10 + i, 11 + i))) {
+            spaceCounter += 1;
+          }
+          subline += colours[(i - spaceCounter + randomStart) % 6];
+          subline += line.substring(10 + i, 11 + i);
+        }
+        return subline;
+      }
+
+      for (int skill = 0; skill < NUM_SKILLS; skill++) {
+        if (command.equalsIgnoreCase(skill_name[skill]))
+          return "My " + skill_name[skill] + " level is " + base_level[skill];
+      }
+    }
+
+    return line;
+  }
 
   /**
    * Prints a client-side message in chat.
@@ -913,37 +1305,62 @@ public class Client {
    * @param chat_type the type of message to send
    */
   public static synchronized void displayMessage(String message, int chat_type) {
+    int messageType = MESSAGE_GAME;
     switch (chat_type) {
       case CHAT_QUEST:
         message = "@que@" + message;
+        messageType = MESSAGE_QUEST;
+        break;
+      case CHAT_CHAT:
+        messageType = MESSAGE_CHAT;
+        break;
+      case CHAT_PRIVATE:
+      case CHAT_PRIVATE_OUTGOING:
+        messageType = MESSAGE_PRIVATE;
         break;
     }
     if (Client.state != Client.STATE_GAME || Reflection.displayMessage == null) return;
 
     try {
-      Reflection.displayMessage.invoke(
-              Client.instance, message, 0);
+      Reflection.displayMessage.invoke(Client.instance, message, messageType);
     } catch (Exception e) {
     }
   }
-  
-  public static void setInterlace(boolean value) {
-	    if (Reflection.interlace == null) return;
 
-	    try {
-	      Reflection.interlace.set(Renderer.instance, value);
-	    } catch (Exception e) {
-	    }
+  /**
+   * Sets the client text response status. In the login screen this is the information shown above
+   * the login controls In the register and recover screens is the replacement of control text in
+   * the respective panels
+   *
+   * @param line1 the bottom line of text
+   * @param line2 the top part of text
+   */
+  public static void setResponseMessage(String line1, String line2) {
+    if (Reflection.setResponseMessage == null) return;
+
+    try {
+      Reflection.setResponseMessage.invoke(Client.instance, line1, line2);
+    } catch (Exception e) {
+    }
+  }
+
+  public static void setInterlace(boolean value) {
+    if (Reflection.interlace == null) return;
+
+    try {
+      Reflection.interlace.set(Renderer.instance, value);
+    } catch (Exception e) {
+    }
   }
 
   public static boolean getInterlace() {
-	    try {
-	      return (boolean) Reflection.interlace.get(Renderer.instance);
-	    } catch (Exception e) {
-	    }
-	    return false;
+    try {
+      return (boolean) Reflection.interlace.get(Renderer.instance);
+    } catch (Exception e) {
+    }
+    return false;
   }
-  
+
   /**
    * This method hooks all options received and adds them to console
    *
@@ -952,8 +1369,7 @@ public class Client {
    */
   public static void receivedOptionsHook(String[] menuOptions, int count) {
     /*if (Settings.PARSE_OPCODES.get(Settings.currentProfile)
-        && (Replay.isSeeking || Replay.isRestarting)) return;*/
-	  
+    && (Replay.isSeeking || Replay.isRestarting)) return;*/
 
     Client.printReceivedOptions(menuOptions, count);
   }
@@ -981,7 +1397,7 @@ public class Client {
    */
   public static void selectedOptionHook(String[] possibleOptions, int selection) {
     // Do not run anything below here while seeking or playing as is handled separately
-    //if (Replay.isPlaying || Replay.isSeeking || Replay.isRestarting) return;
+    // if (Replay.isPlaying || Replay.isSeeking || Replay.isRestarting) return;
 
     Client.printSelectedOption(possibleOptions, selection);
   }
@@ -999,38 +1415,60 @@ public class Client {
         "@|white (" + formatChatType(type) + ")|@ " + colorizeMessage(option, type);
     Logger.Chat(colorizedLog, originalLog);
   }
-  
+
   public static void printAndShowActionString(String actionString) {
-	    if (Settings.SHOW_LAST_MENU_ACTION.get(Settings.currentProfile)) {
-	      menu_timer = System.currentTimeMillis() + 3500L;
-	      lastAction = actionString;
-	      Logger.Info(actionString);
-	    }
+    if (Settings.SHOW_LAST_MENU_ACTION.get(Settings.currentProfile)) {
+      menu_timer = System.currentTimeMillis() + 3500L;
+      lastAction = actionString;
+      Logger.Info(actionString);
+    }
   }
-  
+
   public static void drawNPC(
-	      int x,
-	      int y,
-	      int width,
-	      int height,
-	      String name,
-	      int currentHits,
-	      int maxHits,
-	      int id,
-	      int id2) {
-	    // ILOAD 5 is index
-	    npc_list.add(new NPC(x, y + Renderer.GAME_RENDER_OFFSET, width, height, name, NPC.TYPE_MOB, currentHits, maxHits, id, id2));
-	  }
+      int x,
+      int y,
+      int width,
+      int height,
+      String name,
+      int currentHits,
+      int maxHits,
+      int id,
+      int id2) {
+    // ILOAD 5 is index
+    npc_list.add(
+        new NPC(
+            x,
+            y + Renderer.GAME_RENDER_OFFSET,
+            width,
+            height,
+            name,
+            NPC.TYPE_MOB,
+            currentHits,
+            maxHits,
+            id,
+            id2));
+  }
 
-	  public static void drawPlayer(
-	      int x, int y, int width, int height, String name, int currentHits, int maxHits, int id2) {
-	    npc_list.add(new NPC(x, y + Renderer.GAME_RENDER_OFFSET, width, height, name, NPC.TYPE_PLAYER, currentHits, maxHits, 0, id2));
-	  }
+  public static void drawPlayer(
+      int x, int y, int width, int height, String name, int currentHits, int maxHits, int id2) {
+    npc_list.add(
+        new NPC(
+            x,
+            y + Renderer.GAME_RENDER_OFFSET,
+            width,
+            height,
+            name,
+            NPC.TYPE_PLAYER,
+            currentHits,
+            maxHits,
+            0,
+            id2));
+  }
 
-	  public static void drawItem(int x, int y, int width, int height, String name, int id) {
-	    item_list.add(new Item(x, y + Renderer.GAME_RENDER_OFFSET, width, height, name, id));
-	  }
-  
+  public static void drawItem(int x, int y, int width, int height, String name, int id) {
+    item_list.add(new Item(x, y + Renderer.GAME_RENDER_OFFSET, width, height, name, id));
+  }
+
   public static float getXPforLevel(int level) {
     if (level < 2) {
       return 0;
@@ -1094,7 +1532,7 @@ public class Client {
   public static float getXP(int skill) {
     return (float) xp[skill] / 4.0f;
   }
-  
+
   /**
    * Returns the user's current level in a specified skill. This number is affected by skills boosts
    * and debuffs.
@@ -1108,6 +1546,17 @@ public class Client {
   }
 
   /**
+   * Returns the sum of the user's base skill levels.
+   *
+   * @return the user's total level
+   */
+  public static int getTotalLevel() {
+    int total = 0;
+    for (int skill = 0; skill < NUM_SKILLS; skill++) total += Client.base_level[skill];
+    return total;
+  }
+
+  /**
    * Returns the user's base level in a specified skill. This number is <b>not</b> affected by
    * skills boosts and debuffs.
    *
@@ -1117,7 +1566,6 @@ public class Client {
   public static int getBaseLevel(int skill) {
     return base_level[skill];
   }
-
 
   public static Boolean[] getShowXpPerHour() {
     return showXpPerHour.get(xpUsername);
@@ -1141,8 +1589,8 @@ public class Client {
       for (int skill = 0; skill < NUM_SKILLS; skill++) {
         lastXpGain.get(xpUsername)[skill][TOTAL_XP_GAIN] = new Double(0);
         lastXpGain.get(xpUsername)[skill][TIME_OF_FIRST_XP_DROP] =
-                lastXpGain.get(xpUsername)[skill][TIME_OF_LAST_XP_DROP] =
-                        new Double(System.currentTimeMillis());
+            lastXpGain.get(xpUsername)[skill][TIME_OF_LAST_XP_DROP] =
+                new Double(System.currentTimeMillis());
         lastXpGain.get(xpUsername)[skill][TOTAL_XP_DROPS] = new Double(0);
 
         showXpPerHour.get(xpUsername)[skill] = false;
@@ -1161,14 +1609,14 @@ public class Client {
 
         lastXpGain.get(xpUsername)[skill][TOTAL_XP_GAIN] = new Double(0);
         lastXpGain.get(xpUsername)[skill][TIME_OF_FIRST_XP_DROP] =
-                lastXpGain.get(xpUsername)[skill][TIME_OF_LAST_XP_DROP] =
-                        (double) System.currentTimeMillis();
+            lastXpGain.get(xpUsername)[skill][TIME_OF_LAST_XP_DROP] =
+                (double) System.currentTimeMillis();
         lastXpGain.get(xpUsername)[skill][TOTAL_XP_DROPS] = new Double(0);
         showXpPerHour.get(xpUsername)[skill] = false;
       }
     }
   }
-  
+
   /**
    * Checks if a specified player is on the user's friend list.
    *
@@ -1192,58 +1640,57 @@ public class Client {
   public static boolean isInCombat() {
     return combat_timer == 499;
   }
-  
+
   public static boolean isInCombatWithNPC(NPC npc) {
-	    if (npc == null) {
-	      return false;
-	    }
+    if (npc == null) {
+      return false;
+    }
 
-	    int bottom_posY_npc = npc.y + npc.height;
-	    int bottom_posY_player = player_posY + player_height;
+    int bottom_posY_npc = npc.y + npc.height;
+    int bottom_posY_player = player_posY + player_height;
 
-	    // NPC's in combat with the player are always on the same bottom y coord, however
-	    // when moving the screen around they can be slightly off for a moment. To prevent
-	    // flickering, just give them a very small buffer of difference.
-	    boolean inCombatCandidate = (Math.abs(bottom_posY_npc - bottom_posY_player) < 5);
+    // NPC's in combat with the player are always on the same bottom y coord, however
+    // when moving the screen around they can be slightly off for a moment. To prevent
+    // flickering, just give them a very small buffer of difference.
+    boolean inCombatCandidate = (Math.abs(bottom_posY_npc - bottom_posY_player) < 5);
 
-	    // Hitboxes will intersect on the X axis from what I've tested, giving this a small
-	    // buffer as well just in case there are edge cases with very small monsters that
-	    // don't follow this pattern exactly.
-	    boolean hitboxesIntersectOnXAxis = (player_posX - 10) < (npc.x + npc.width);
+    // Hitboxes will intersect on the X axis from what I've tested, giving this a small
+    // buffer as well just in case there are edge cases with very small monsters that
+    // don't follow this pattern exactly.
+    boolean hitboxesIntersectOnXAxis = (player_posX - 10) < (npc.x + npc.width);
 
-	    // The NPC you're fighting is always on the left side of the player.
-	    boolean isOnLeftOfPlayer = (player_posX + player_width) > npc.x;
-	    
-	    //TODO: verify why other conditions return false
-	    return isInCombat()
-		        && npc.currentHits != 0
-		        && npc.maxHits != 0
-		        && !player_name.equalsIgnoreCase(npc.name);
+    // The NPC you're fighting is always on the left side of the player.
+    boolean isOnLeftOfPlayer = (player_posX + player_width) > npc.x;
 
-	    /*return isInCombat()
-	        && npc.currentHits != 0
-	        && npc.maxHits != 0
-	        && !player_name.equals(npc.name)
-	        && inCombatCandidate
-	        && isOnLeftOfPlayer
-	        && hitboxesIntersectOnXAxis;*/
-	  }
-  
+    // TODO: verify why other conditions return false
+    return isInCombat()
+        && npc.currentHits != 0
+        && npc.maxHits != 0
+        && !player_name.equalsIgnoreCase(npc.name);
+
+    /*return isInCombat()
+    && npc.currentHits != 0
+    && npc.maxHits != 0
+    && !player_name.equals(npc.name)
+    && inCombatCandidate
+    && isOnLeftOfPlayer
+    && hitboxesIntersectOnXAxis;*/
+  }
+
   /**
    * Returns if an in-game interface, window, menu, etc. is currently displayed.
    *
    * @return if an interface is showing
    */
   public static boolean isInterfaceOpen() {
-    return show_shop
-        || show_trade
-        || show_friends != 0
-        || show_changepk == 1
-        || show_visitad;
+    return show_shop || show_trade || show_friends != 0 || show_changepk == 1 || show_visitad;
   }
 
-
-
-
-
+  public static void displayMotivationalQuote() {
+    // TODO: more motivational quotes
+    int colorIdx = ((int) (Math.random() * ((Client.colorDict.length / 2) - 1)) * 2);
+    String color = colorDict[colorIdx].substring(4);
+    // A coward dies a thousand deaths, but the valiant tastes death but once.
+    displayMessage(color + "You are beautiful today, " + player_name + ".", CHAT_QUEST);
+  }
 }

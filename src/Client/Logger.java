@@ -94,7 +94,7 @@ public class Logger {
       }
 
       if ((type.showLevel || Settings.LOG_FORCE_LEVEL.get(Settings.currentProfile))
-              && Settings.LOG_SHOW_LEVEL.get(Settings.currentProfile)) {
+          && Settings.LOG_SHOW_LEVEL.get(Settings.currentProfile)) {
         // Uppercase and pad level for monospace fonts
         String levelText = type.name.toUpperCase();
         while (levelText.length() < levelFixedWidth) levelText = " " + levelText;
@@ -102,7 +102,7 @@ public class Logger {
         extra += "[" + levelText + "]";
       }
       if ((type.showTimestamp || Settings.LOG_FORCE_TIMESTAMPS.get(Settings.currentProfile))
-              && Settings.LOG_SHOW_TIMESTAMPS.get(Settings.currentProfile)) {
+          && Settings.LOG_SHOW_TIMESTAMPS.get(Settings.currentProfile)) {
         extra += "[" + dateFormat.format(new Date()) + "]";
       }
 
@@ -161,5 +161,4 @@ public class Logger {
   public static void Debug(String message) {
     Log(Type.DEBUG, message);
   }
-
 }

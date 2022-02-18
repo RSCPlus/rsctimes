@@ -18,6 +18,8 @@
  */
 package Game;
 
+import Client.Settings;
+import Client.WikiURL;
 import java.awt.Event;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -28,9 +30,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
-
-import Client.Settings;
-import Client.WikiURL;
 
 /** Listens to mouse events and stores relevant information about them */
 public class MouseHandler implements MouseListener, MouseMotionListener, MouseWheelListener {
@@ -90,12 +89,12 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
     if (inConsumableButton()) {
       e.consume();
     }
-    
+
     if (e.getButton() == MouseEvent.BUTTON2) {
-        m_rotating = true;
-        m_rotatePosition = e.getPoint();
-        e.consume();
-      }
+      m_rotating = true;
+      m_rotatePosition = e.getPoint();
+      e.consume();
+    }
 
     if (!e.isConsumed()) {
       x = e.getX();
@@ -121,11 +120,11 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
     if (inConsumableButton()) {
       e.consume();
     }
-    
+
     if (e.getButton() == MouseEvent.BUTTON2) {
-        m_rotating = false;
-        e.consume();
-      }
+      m_rotating = false;
+      e.consume();
+    }
 
     if (!e.isConsumed()) {
       x = e.getX();
@@ -145,15 +144,15 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 
   @Override
   public void mouseDragged(MouseEvent e) {
-	  if (Settings.CAMERA_ROTATABLE.get(Settings.currentProfile) && m_rotating) {
-	      m_rotateX += (float) (e.getX() - m_rotatePosition.x) / 2.0f;
-	      int xDist = (int) m_rotateX;
+    if (Settings.CAMERA_ROTATABLE.get(Settings.currentProfile) && m_rotating) {
+      m_rotateX += (float) (e.getX() - m_rotatePosition.x) / 2.0f;
+      int xDist = (int) m_rotateX;
 
-	      Camera.addRotation(xDist);
-	      m_rotateX -= xDist;
+      Camera.addRotation(xDist);
+      m_rotateX -= xDist;
 
-	      m_rotatePosition = e.getPoint();
-	    }
+      m_rotatePosition = e.getPoint();
+    }
     if (!e.isConsumed()) {
       x = e.getX();
       y = e.getY();
@@ -189,8 +188,8 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
     x = e.getX();
     y = e.getY();
     if (e.getWhen() > lastWheelMovement + 10) {
-    	lastWheelMovement = e.getWhen();
-    	Camera.addZoom(e.getWheelRotation() * 16);
+      lastWheelMovement = e.getWhen();
+      Camera.addZoom(e.getWheelRotation() * 16);
     }
     e.consume();
   }

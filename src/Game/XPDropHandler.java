@@ -28,64 +28,64 @@ import java.util.List;
 /** Handles the rendering and behavior of XP drops */
 public class XPDropHandler {
 
-    private long m_timer;
-    private List<XPDrop> m_list = new ArrayList<>();
+  private long m_timer;
+  private List<XPDrop> m_list = new ArrayList<>();
 
-    public void add(String text, Color color) {
-        // No XP drops while seeking
-        // if (Replay.isSeeking) return;
+  public void add(String text, Color color) {
+    // No XP drops while seeking
+    // if (Replay.isSeeking) return;
 
-        XPDrop xpdrop = new XPDrop(text, color);
-        m_list.add(xpdrop);
+    XPDrop xpdrop = new XPDrop(text, color);
+    m_list.add(xpdrop);
+  }
+
+  public void draw(Graphics2D g) {
+    for (Iterator<XPDrop> iterator = m_list.iterator(); iterator.hasNext(); ) {
+      XPDrop xpdrop = iterator.next();
+      xpdrop.process(g);
+      if (xpdrop.y < 0
+          || xpdrop.y > Renderer.height
+          || (Settings.SHOW_XP_BAR.get(Settings.currentProfile)
+              && xpdrop.y <= XPBar.xp_bar_y + 5)) {
+        iterator.remove();
+      }
+    }
+  }
+
+  class XPDrop {
+
+    XPDrop(String text, Color color) {
+      this.text = text;
+      this.color = color;
+      y = (float) Renderer.height / 4.0f;
+      active = false;
     }
 
-    public void draw(Graphics2D g) {
-        for (Iterator<XPDrop> iterator = m_list.iterator(); iterator.hasNext(); ) {
-            XPDrop xpdrop = iterator.next();
-            xpdrop.process(g);
-            if (xpdrop.y < 0
-                    || xpdrop.y > Renderer.height
-                    || (Settings.SHOW_XP_BAR.get(Settings.currentProfile)
-                    && xpdrop.y <= XPBar.xp_bar_y + 5)) {
-                iterator.remove();
+    public void process(Graphics2D g) {
+      if (!active) {
+        if (Renderer.time > m_timer) {
+          if (Settings.SHOW_XP_BAR.get(Settings.currentProfile)) {
+            if (y > XPBar.xp_bar_y + 5) {
+              m_timer = Renderer.time + 400;
+              active = true;
             }
+          } else {
+            m_timer = Renderer.time + 400;
+            active = true;
+          }
+        } else {
+          return;
         }
+      }
+
+      Renderer.drawShadowText(
+          g, text, (XPBar.xp_bar_x + (XPBar.bounds.width / 2)), (int) y, this.color, true);
+      y -= (float) Renderer.height / 12.0f * Renderer.delta_time;
     }
 
-    class XPDrop {
-
-        XPDrop(String text, Color color) {
-            this.text = text;
-            this.color = color;
-            y = (float) Renderer.height / 4.0f;
-            active = false;
-        }
-
-        public void process(Graphics2D g) {
-            if (!active) {
-                if (Renderer.time > m_timer) {
-                    if (Settings.SHOW_XP_BAR.get(Settings.currentProfile)) {
-                        if (y > XPBar.xp_bar_y + 5) {
-                            m_timer = Renderer.time + 400;
-                            active = true;
-                        }
-                    } else {
-                        m_timer = Renderer.time + 400;
-                        active = true;
-                    }
-                } else {
-                    return;
-                }
-            }
-
-            Renderer.drawShadowText(
-                    g, text, (XPBar.xp_bar_x + (XPBar.bounds.width / 2)), (int) y, this.color, true);
-            y -= (float) Renderer.height / 12.0f * Renderer.delta_time;
-        }
-
-        private String text;
-        private Color color;
-        private boolean active;
-        public float y;
-    }
+    private String text;
+    private Color color;
+    private boolean active;
+    public float y;
+  }
 }

@@ -19,10 +19,8 @@
 package Game;
 
 import Client.KeybindSet;
-import Client.Launcher;
 import Client.Settings;
 import Client.WorldMapWindow;
-
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -48,13 +46,16 @@ public class KeyboardHandler implements KeyListener {
    * default keybinds method.
    */
   public static HashMap<String, KeybindSet> defaultKeybindSetList =
-          new HashMap<String, KeybindSet>();
+      new HashMap<String, KeybindSet>();
 
   @Override
   public void keyPressed(KeyEvent e) {
-    if (WorldMapWindow.hasFocus()) { // TODO: figure out why this is the only KeyboardHandler that works
+    if (WorldMapWindow
+        .hasFocus()) { // TODO: figure out why this is the only KeyboardHandler that works
       WorldMapWindow.keyPressed(e);
-      WorldMapWindow.keyTyped(e); // TODO: idk why keyTyped events aren't happening. just putting the functionality here.
+      WorldMapWindow.keyTyped(
+          e); // TODO: idk why keyTyped events aren't happening. just putting the functionality
+              // here.
       return;
     }
 
@@ -193,7 +194,6 @@ public class KeyboardHandler implements KeyListener {
       return;
     }
 
-
     /* TODO: implement replays
     if (Replay.isRecording) {
       Replay.dumpKeyboardInput(
@@ -229,7 +229,7 @@ public class KeyboardHandler implements KeyListener {
         if (Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile)) e.consume();
       }
 
-    keyShift = e.isShiftDown();
+      keyShift = e.isShiftDown();
     }
 
     // Translate modern java keycodes to ancient java keycodes

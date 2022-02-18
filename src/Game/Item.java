@@ -18,19 +18,9 @@
  */
 package Game;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLTimeoutException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import Client.Logger;
-import Client.NotificationsHandler;
 import Client.Settings;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class defines items and provides a static method to patch item names as needed according to
@@ -203,9 +193,9 @@ public class Item {
   }*/
 
   public String getName() {
-	  if (item_name == null) {
-		  return name;
-	  }
+    if (item_name == null) {
+      return name;
+    }
     return item_name[id];
   }
 

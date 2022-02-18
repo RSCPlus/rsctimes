@@ -145,16 +145,16 @@ public class Camera {
     if (Reflection.displayMessage == null || instance == null) return;
 
     try {
-        Reflection.setCameraSize.invoke(
-            Camera.instance,
-  					Renderer.width / 2,
-            Renderer.height_client / 2,
-            Renderer.width / 2,
-            Renderer.height_client / 2,
-  					Renderer.width,
-  					fov);
-      } catch (Exception e) {
-      }
+      Reflection.setCameraSize.invoke(
+          Camera.instance,
+          Renderer.width / 2,
+          Renderer.height_client / 2,
+          Renderer.width / 2,
+          Renderer.height_client / 2,
+          Renderer.width,
+          fov);
+    } catch (Exception e) {
+    }
   }
 
   public static void strafe(float speed) {
