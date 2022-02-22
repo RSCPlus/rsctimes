@@ -494,7 +494,7 @@ public class Renderer {
       }
 
       if (Settings.SHOW_HP_OVERLAY.get(Settings.currentProfile)) {
-        if (roomInHbarForHPOverlay()) {
+        if (!roomInHbarForHPOverlay()) {
           if (!Client.isInterfaceOpen() && !Client.show_questionmenu) {
             setAlpha(g2, alphaHP);
             drawShadowText(
@@ -1828,7 +1828,11 @@ public class Renderer {
   }
 
   private static boolean roomInHbarForHPOverlay() {
-    return width < 800 - 112;
+    if (Settings.WIKI_LOOKUP_ON_HBAR.get(Settings.currentProfile)) {
+      return width >= 608;
+    } else {
+      return true;
+    }
   }
 
   public static void drawBar(
