@@ -55,7 +55,7 @@ public class KeyboardHandler implements KeyListener {
       WorldMapWindow.keyPressed(e);
       WorldMapWindow.keyTyped(
           e); // TODO: idk why keyTyped events aren't happening. just putting the functionality
-              // here.
+      // here.
       return;
     }
 

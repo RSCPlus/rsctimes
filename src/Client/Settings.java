@@ -61,6 +61,8 @@ public class Settings {
   public static HashMap<String, Boolean> CHECK_UPDATES = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> REMIND_HOW_TO_OPEN_SETTINGS =
       new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> COMBAT_MENU_SHOWN = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> COMBAT_MENU_HIDDEN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ZOOMABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ROTATABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_MOVABLE = new HashMap<String, Boolean>();
@@ -159,6 +161,7 @@ public class Settings {
   public static boolean noWorldsConfigured = true;
 
   //// nogui
+  public static HashMap<String, Integer> COMBAT_STYLE = new HashMap<String, Integer>();
   public static HashMap<String, Integer> WORLD = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> FIRST_TIME = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> UPDATE_CONFIRMATION = new HashMap<String, Boolean>();
@@ -309,6 +312,24 @@ public class Settings {
     REMIND_HOW_TO_OPEN_SETTINGS.put(
         "custom",
         getPropBoolean(props, "welcome_enabled", REMIND_HOW_TO_OPEN_SETTINGS.get("default")));
+
+    COMBAT_MENU_SHOWN.put("vanilla", false);
+    COMBAT_MENU_SHOWN.put("vanilla_resizable", false);
+    COMBAT_MENU_SHOWN.put("lite", false);
+    COMBAT_MENU_SHOWN.put("default", false);
+    COMBAT_MENU_SHOWN.put("heavy", true);
+    COMBAT_MENU_SHOWN.put("all", true);
+    COMBAT_MENU_SHOWN.put(
+        "custom", getPropBoolean(props, "combat_menu", COMBAT_MENU_SHOWN.get("default")));
+
+    COMBAT_MENU_HIDDEN.put("vanilla", false);
+    COMBAT_MENU_HIDDEN.put("vanilla_resizable", false);
+    COMBAT_MENU_HIDDEN.put("lite", false);
+    COMBAT_MENU_HIDDEN.put("default", false);
+    COMBAT_MENU_HIDDEN.put("heavy", false);
+    COMBAT_MENU_HIDDEN.put("all", true);
+    COMBAT_MENU_HIDDEN.put(
+        "custom", getPropBoolean(props, "combat_menu_hidden", COMBAT_MENU_HIDDEN.get("default")));
 
     CAMERA_ZOOMABLE.put("vanilla", false);
     CAMERA_ZOOMABLE.put("vanilla_resizable", false);
@@ -985,6 +1006,14 @@ public class Settings {
     //// world list
     initWorlds();
 
+    COMBAT_STYLE.put("vanilla", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("vanilla_resizable", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("lite", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("default", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("heavy", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("all", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("custom", getPropInt(props, "combat_style", COMBAT_STYLE.get("default")));
+
     WORLD.put("vanilla", 1);
     WORLD.put("vanilla_resizable", 1);
     WORLD.put("lite", 1);
@@ -1035,14 +1064,13 @@ public class Settings {
       save("custom");
     }
 
-    /*if (COMBAT_STYLE.get("custom") < Client.COMBAT_CONTROLLED) {
+    if (COMBAT_STYLE.get("custom") < Client.COMBAT_CONTROLLED) {
       COMBAT_STYLE.put("custom", Client.COMBAT_CONTROLLED);
       save("custom");
     } else if (COMBAT_STYLE.get("custom") > Client.COMBAT_DEFENSIVE) {
       COMBAT_STYLE.put("custom", Client.COMBAT_DEFENSIVE);
       save("custom");
-    }*/
-
+    }
   }
 
   public static void initDir() { // TODO: Consider moving to a more relevant place
@@ -1438,9 +1466,9 @@ public class Settings {
       props.setProperty("check_updates", Boolean.toString(CHECK_UPDATES.get(preset)));
       props.setProperty(
           "welcome_enabled", Boolean.toString(REMIND_HOW_TO_OPEN_SETTINGS.get(preset)));
-      /*
       props.setProperty("combat_menu", Boolean.toString(COMBAT_MENU_SHOWN.get(preset)));
       props.setProperty("combat_menu_hidden", Boolean.toString(COMBAT_MENU_HIDDEN.get(preset)));
+      /*
       props.setProperty("inventory_full_alert", Boolean.toString(INVENTORY_FULL_ALERT.get(preset)));
       props.setProperty("name_patch_type", Integer.toString(NAME_PATCH_TYPE.get(preset)));
       props.setProperty("command_patch_quest", Boolean.toString(COMMAND_PATCH_QUEST.get(preset)));
@@ -1571,8 +1599,8 @@ public class Settings {
       props.setProperty("current_profile", currentProfile);
 
       //// no gui
-      /*
       props.setProperty("combat_style", Integer.toString(COMBAT_STYLE.get(preset)));
+      /*
       props.setProperty("world", Integer.toString(WORLD.get(preset)));
       */
       // This is set to false, as logically, saving the config would imply this is not a first-run.
@@ -1786,12 +1814,17 @@ public class Settings {
 
   public static void updateInjectedVariables() {
     // TODO: get rid of these variables and this function if possible
-    /*COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
-    HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
+    COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
+    // HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
     COMBAT_MENU_SHOWN_BOOL = COMBAT_MENU_SHOWN.get(currentProfile);
-    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);*/
+    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);
     CAMERA_ZOOMABLE_BOOL = CAMERA_ZOOMABLE.get(currentProfile);
     CAMERA_ROTATABLE_BOOL = CAMERA_ROTATABLE.get(currentProfile);
     CAMERA_MOVABLE_BOOL = CAMERA_MOVABLE.get(currentProfile);
+  }
+
+  public static void outputInjectedVariables() {
+    // TODO: get rid of these variables and this function if possible
+    COMBAT_STYLE.put(currentProfile, COMBAT_STYLE_INT);
   }
 }

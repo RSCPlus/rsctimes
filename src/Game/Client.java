@@ -208,6 +208,7 @@ public class Client {
   public static final int COMBAT_AGGRESSIVE = 1;
   public static final int COMBAT_ACCURATE = 2;
   public static final int COMBAT_DEFENSIVE = 3;
+  public static int combat_style;
 
   public static int friends_count;
   public static long[] friends_hash;
@@ -463,7 +464,7 @@ public class Client {
 
   public static void init_game() {
     Camera.init();
-    // combat_style = Settings.COMBAT_STYLE.get(Settings.currentProfile);
+    combat_style = Settings.COMBAT_STYLE.get(Settings.currentProfile);
     state = STATE_GAME;
     // bank_active_page = 0; // TODO: config option? don't think this is very important.
     // combat_timer = 0;

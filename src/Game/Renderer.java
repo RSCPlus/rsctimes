@@ -1609,8 +1609,10 @@ public class Renderer {
 
     // Draw software cursor
     if (screenshot || Settings.SOFTWARE_CURSOR.get(Settings.currentProfile)) {
-      setAlpha(g2, 1.0f);
-      g2.drawImage(image_cursor, MouseHandler.x, MouseHandler.y, null);
+      if (MouseHandler.y > GAME_RENDER_OFFSET + 1) {
+        setAlpha(g2, 1.0f);
+        g2.drawImage(image_cursor, MouseHandler.x, MouseHandler.y, null);
+      }
     }
 
     g2.dispose();

@@ -283,6 +283,9 @@ public class JClassPatcher {
       hookClassVariable(
           methodNode, "jagex/client/k", "ip", "I", "Game/Renderer", "height", "I", false, true);
 
+      hookClassVariable(
+          methodNode, "mudclient", "tz", "I", "Game/Client", "combat_style", "I", true, true);
+
       hookConditionalClassVariable(
           methodNode, "mudclient", "du", "I", "Game/Camera", "fov", "I", false, true, "FOV_BOOL");
 
@@ -549,22 +552,19 @@ public class JClassPatcher {
         AbstractInsnNode lastNode = methodNode.instructions.getLast().getPrevious();
 
         // Send combat style option
-        /*LabelNode label = new LabelNode();
+        LabelNode label = new LabelNode();
 
         methodNode.instructions.insert(lastNode, label);
 
         // Format
         methodNode.instructions.insert(
-            lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "da", "b", "(I)V", false));
-        methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.SIPUSH, 21294));
-        methodNode.instructions.insert(
-            lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+            lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "mudclient", "ll", "()V", false));
         methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
 
         // Write byte
         methodNode.instructions.insert(
-            lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "ja", "c", "(II)V", false));
-        methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.BIPUSH, -80));
+            lastNode,
+            new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "jagex/client/a", "n", "(I)V", false));
         methodNode.instructions.insert(
             lastNode,
             new FieldInsnNode(Opcodes.GETSTATIC, "Client/Settings", "COMBAT_STYLE_INT", "I"));
@@ -577,18 +577,18 @@ public class JClassPatcher {
                 "()V",
                 false)); // TODO Remove this line when COMBAT_STYLE_INT is eliminated
         methodNode.instructions.insert(
-            lastNode, new FieldInsnNode(Opcodes.GETFIELD, "da", "f", "Lja;"));
-        methodNode.instructions.insert(
-            lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+            lastNode,
+            new FieldInsnNode(Opcodes.GETFIELD, "jagex/client/e", "dd", "Ljagex/client/a;"));
         methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
 
         // Create Packet
         methodNode.instructions.insert(
-            lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "da", "b", "(II)V", false));
-        methodNode.instructions.insert(lastNode, new InsnNode(Opcodes.ICONST_0));
-        methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.BIPUSH, 29));
+            lastNode,
+            new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "jagex/client/a", "i", "(I)V", false));
+        methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.SIPUSH, 231));
         methodNode.instructions.insert(
-            lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+            lastNode,
+            new FieldInsnNode(Opcodes.GETFIELD, "jagex/client/e", "dd", "Ljagex/client/a;"));
         methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
 
         // Skip combat packet if style is already controlled
@@ -604,7 +604,7 @@ public class JClassPatcher {
                 "Client/Settings",
                 "updateInjectedVariables",
                 "()V",
-                false)); // TODO Remove this line when COMBAT_STYLE_INT is eliminated*/
+                false)); // TODO Remove this line when COMBAT_STYLE_INT is eliminated
 
         // Client init_game
         methodNode.instructions.insert(
@@ -829,6 +829,79 @@ public class JClassPatcher {
             first,
             new MethodInsnNode(
                 Opcodes.INVOKESTATIC, "Game/Client", "messageHook", "(Ljava/lang/String;I)V"));
+      }
+      if (methodNode.name.equals("jk") && methodNode.desc.equals("()V")) {
+        // Show combat menu
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+
+          if (insnNode.getOpcode() == Opcodes.GETFIELD) {
+            FieldInsnNode getfield = (FieldInsnNode) insnNode;
+
+            if (getfield.name.equals("ur")) {
+              AbstractInsnNode findNode = null;
+
+              // Hide combat menu patch
+              findNode = insnNode;
+              while (findNode.getOpcode() != Opcodes.ALOAD) findNode = findNode.getNext();
+              LabelNode label = new LabelNode();
+              LabelNode skipLabel = new LabelNode();
+              methodNode.instructions.insertBefore(
+                  findNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Client/Settings",
+                      "updateInjectedVariables",
+                      "()V",
+                      false));
+              methodNode.instructions.insertBefore(
+                  findNode,
+                  new FieldInsnNode(
+                      Opcodes.GETSTATIC, "Client/Settings", "COMBAT_MENU_HIDDEN_BOOL", "Z"));
+              methodNode.instructions.insertBefore(findNode, new JumpInsnNode(Opcodes.IFGT, label));
+              methodNode.instructions.insertBefore(findNode, skipLabel);
+              methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ICONST_1));
+              methodNode.instructions.insertBefore(
+                  findNode,
+                  new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Renderer", "combat_menu_shown", "Z"));
+              methodNode.instructions.insert(findNode.getNext().getNext(), label);
+
+              // Show combat menu patch
+              JumpInsnNode jumpNode = (JumpInsnNode) insnNode.getNext();
+              LabelNode exitLabel = jumpNode.label;
+              LabelNode runLabel = new LabelNode();
+              methodNode.instructions.insertBefore(jumpNode.getNext(), runLabel);
+              label = new LabelNode();
+              jumpNode.label = label;
+              methodNode.instructions.insert(jumpNode, new JumpInsnNode(Opcodes.GOTO, exitLabel));
+              methodNode.instructions.insert(jumpNode, new JumpInsnNode(Opcodes.IFGT, skipLabel));
+              methodNode.instructions.insert(
+                  jumpNode,
+                  new FieldInsnNode(
+                      Opcodes.GETSTATIC, "Client/Settings", "COMBAT_MENU_SHOWN_BOOL", "Z"));
+              methodNode.instructions.insert(
+                  jumpNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Client/Settings",
+                      "updateInjectedVariables",
+                      "()V",
+                      false));
+              methodNode.instructions.insert(jumpNode, label);
+              methodNode.instructions.insert(jumpNode, new JumpInsnNode(Opcodes.GOTO, runLabel));
+
+              findNode = insnNode.getPrevious();
+              while (findNode.getOpcode() != Opcodes.ALOAD) findNode = findNode.getPrevious();
+              methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ICONST_0));
+              methodNode.instructions.insertBefore(
+                  findNode,
+                  new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Renderer", "combat_menu_shown", "Z"));
+
+              break;
+            }
+          }
+        }
       }
       if (methodNode.name.equals("fm") && methodNode.desc.equals("()V")) {
 
@@ -1394,6 +1467,38 @@ public class JClassPatcher {
         methodNode.instructions.insert(
             lastNode,
             new FieldInsnNode(Opcodes.GETSTATIC, "Game/KeyboardHandler", "dialogue_option", "I"));
+      }
+      if (methodNode.name.equals("ql") && methodNode.desc.equals("()V")) {
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+
+          // Save settings from combat menu
+          if (insnNode.getOpcode() == Opcodes.PUTFIELD) {
+            FieldInsnNode field = (FieldInsnNode) insnNode;
+
+            if (field.owner.equals("mudclient") && field.name.equals("tz")) {
+              methodNode.instructions.insert(
+                  insnNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC, "Client/Settings", "save", "()V", false));
+              methodNode.instructions.insert(
+                  insnNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Client/Settings",
+                      "outputInjectedVariables",
+                      "()V",
+                      false));
+              methodNode.instructions.insert(
+                  insnNode,
+                  new FieldInsnNode(Opcodes.PUTSTATIC, "Client/Settings", "COMBAT_STYLE_INT", "I"));
+              methodNode.instructions.insert(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "tz", "I"));
+              methodNode.instructions.insert(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            }
+          }
+        }
       }
     }
   }
