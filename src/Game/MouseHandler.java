@@ -46,6 +46,10 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
   private float m_rotateX = 0.0f;
 
   public static boolean inBounds(Rectangle bounds) {
+    if (XPBar.hoveringOverMenu || XPBar.hoveringOverBar()) {
+      XPBar.hoveringOverMenu = false;
+      return true;
+    }
     if (bounds == null) return false;
     return false;
   }

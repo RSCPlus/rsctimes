@@ -179,6 +179,7 @@ public class ConfigWindow {
     private JCheckBox overlayPanelRscTimesButtonsFunctionalCheckbox;
     private JCheckBox overlayPanelWikiLookupOnMagicBookCheckbox;
     private JCheckBox overlayPanelWikiLookupOnHbarCheckbox;
+    private JCheckBox overlayPanelToggleXPBarOnStatsButtonCheckbox;
     private JCheckBox overlayPanelToggleMotivationalQuotesCheckbox;
     private JCheckBox overlayPanelPositionCheckbox;
     private JCheckBox overlayPanelHideFpsCheckbox;
@@ -189,6 +190,9 @@ public class ConfigWindow {
     private JCheckBox overlayPanelIDsCheckbox;
     private JCheckBox overlayPanelObjectInfoCheckbox;
     private JCheckBox overlayPanelHitboxCheckbox;
+    private JCheckBox overlayPanelXPBarCheckbox;
+    private JRadioButton overlayPanelXPCenterAlignFocusButton;
+    private JRadioButton overlayPanelXPRightAlignFocusButton;
     private JCheckBox overlayPanelShowCombatInfoCheckbox;
     private JCheckBox overlayPanelUsePercentageCheckbox;
     private JCheckBox overlayPanelFoodHealingCheckbox;
@@ -886,11 +890,35 @@ public class ConfigWindow {
         overlayPanelWikiLookupOnHbarCheckbox.setToolTipText(
                 "Click the button on the bottom bar, then click on anything else, and it will look it up on the RSC wiki.");
         
+        overlayPanelToggleXPBarOnStatsButtonCheckbox =
+                addCheckbox(
+                    "Add left and right click options to the Stats button to control the Goal bar",
+                    overlayPanel);
+            overlayPanelToggleXPBarOnStatsButtonCheckbox.setToolTipText(
+                "Left click pins/unpins the Goal Bar, Right click enables/disables the Goal Bar");
+        
         overlayPanelToggleMotivationalQuotesCheckbox =
                 addCheckbox(
                     "Right click on the Friends button to display a motivational quote", overlayPanel);
             overlayPanelToggleMotivationalQuotesCheckbox.setToolTipText(
                 "Motivational quotes are displayed when you need motivation.");
+            
+            /// XP Bar
+            addSettingsHeader(overlayPanel, "XP Bar");
+            overlayPanelXPBarCheckbox = addCheckbox("Show a Goal bar", overlayPanel);
+            overlayPanelXPBarCheckbox.setToolTipText("Show a Goal bar to the left of the wrench");
+            overlayPanelXPBarCheckbox.setBorder(new EmptyBorder(7, 0, 10, 0));
+
+            ButtonGroup XPAlignButtonGroup = new ButtonGroup();
+            overlayPanelXPRightAlignFocusButton = addRadioButton("Display on the right", overlayPanel, 20);
+            overlayPanelXPRightAlignFocusButton.setToolTipText(
+                "The Goal bar will be shown just left of the Settings menu.");
+            overlayPanelXPCenterAlignFocusButton =
+                addRadioButton("Display in the center", overlayPanel, 20);
+            overlayPanelXPCenterAlignFocusButton.setToolTipText(
+                "The Goal bar will be shown at the top-middle of the screen.");
+            XPAlignButtonGroup.add(overlayPanelXPRightAlignFocusButton);
+            XPAlignButtonGroup.add(overlayPanelXPCenterAlignFocusButton);
 
         overlayPanelPositionCheckbox = addCheckbox("Display position", overlayPanel);
         overlayPanelPositionCheckbox.setToolTipText("Shows the player's global position");
@@ -2087,6 +2115,8 @@ public class ConfigWindow {
                 Settings.WIKI_LOOKUP_ON_MAGIC_BOOK.get(Settings.currentProfile));
         overlayPanelWikiLookupOnHbarCheckbox.setSelected(
                 Settings.WIKI_LOOKUP_ON_HBAR.get(Settings.currentProfile));
+        overlayPanelToggleXPBarOnStatsButtonCheckbox.setSelected(
+                Settings.TOGGLE_XP_BAR_ON_STATS_BUTTON.get(Settings.currentProfile));
         overlayPanelToggleMotivationalQuotesCheckbox.setSelected(
                 Settings.MOTIVATIONAL_QUOTES_BUTTON.get(Settings.currentProfile));
         overlayPanelPositionCheckbox.setSelected(
@@ -2108,6 +2138,11 @@ public class ConfigWindow {
                 Settings.SHOW_COMBAT_INFO.get(Settings.currentProfile));
         overlayPanelUsePercentageCheckbox.setSelected(
                 Settings.NPC_HEALTH_SHOW_PERCENTAGE.get(Settings.currentProfile));
+        overlayPanelXPBarCheckbox.setSelected(Settings.SHOW_XP_BAR.get(Settings.currentProfile));
+        overlayPanelXPCenterAlignFocusButton.setSelected(
+            Settings.CENTER_XPDROPS.get(Settings.currentProfile));
+        overlayPanelXPRightAlignFocusButton.setSelected(
+            !Settings.CENTER_XPDROPS.get(Settings.currentProfile));
         overlayPanelLagIndicatorCheckbox.setSelected(
                 Settings.LAG_INDICATOR.get(Settings.currentProfile));
         overlayPanelFoodHealingCheckbox.setSelected(
@@ -2202,13 +2237,14 @@ public class ConfigWindow {
         /*
         Settings.SHOW_SECURITY_TIP_DAY.put(
                 Settings.currentProfile, generalPanelShowSecurityTipsAtLoginCheckbox.isSelected());
+        */
         Settings.COMBAT_MENU_SHOWN.put(
                 Settings.currentProfile, generalPanelCombatXPMenuCheckbox.isSelected());
         Settings.COMBAT_MENU_HIDDEN.put(
                 Settings.currentProfile, generalPanelCombatXPMenuHiddenCheckbox.isSelected());
-        Settings.SHOW_XPDROPS.put(Settings.currentProfile, overlayPanelXPDropsCheckbox.isSelected());
         Settings.CENTER_XPDROPS.put(
                 Settings.currentProfile, overlayPanelXPCenterAlignFocusButton.isSelected());
+        /*
         Settings.INVENTORY_FULL_ALERT.put(
                 Settings.currentProfile, generalPanelInventoryFullAlertCheckbox.isSelected());
         Settings.NAME_PATCH_TYPE.put(
@@ -2278,6 +2314,8 @@ public class ConfigWindow {
                 Settings.currentProfile, overlayPanelWikiLookupOnMagicBookCheckbox.isSelected());
         Settings.WIKI_LOOKUP_ON_HBAR.put(
                 Settings.currentProfile, overlayPanelWikiLookupOnHbarCheckbox.isSelected());
+        Settings.TOGGLE_XP_BAR_ON_STATS_BUTTON.put(
+                Settings.currentProfile, overlayPanelToggleXPBarOnStatsButtonCheckbox.isSelected());
         Settings.MOTIVATIONAL_QUOTES_BUTTON.put(
                 Settings.currentProfile, overlayPanelToggleMotivationalQuotesCheckbox.isSelected());
         Settings.SHOW_PLAYER_POSITION.put(
@@ -2299,6 +2337,7 @@ public class ConfigWindow {
                 Settings.currentProfile, overlayPanelShowCombatInfoCheckbox.isSelected());
         Settings.NPC_HEALTH_SHOW_PERCENTAGE.put(
                 Settings.currentProfile, overlayPanelUsePercentageCheckbox.isSelected());
+        Settings.SHOW_XP_BAR.put(Settings.currentProfile, overlayPanelXPBarCheckbox.isSelected());
         Settings.SHOW_FOOD_HEAL_OVERLAY.put(
                 Settings.currentProfile, overlayPanelFoodHealingCheckbox.isSelected());
         Settings.SHOW_TIME_UNTIL_HP_REGEN.put(

@@ -20,6 +20,7 @@ package Game;
 
 import Client.Logger;
 import Client.Settings;
+import Client.Util;
 import java.awt.*;
 import java.text.NumberFormat;
 
@@ -41,7 +42,7 @@ public class XPBar {
   // Don't need to set this more than once; we are always positioning the xp_bar to be vertically
   // center aligned with
   // the Settings wrench.
-  public static final int xp_bar_y = 20 - (bounds.height / 2);
+  public static final int xp_bar_y = 20 + Renderer.GAME_RENDER_OFFSET - (bounds.height / 2);
 
   public static final int TIMER_LENGTH = 5000;
   public static final long TIMER_FADEOUT = 2000;
@@ -70,11 +71,12 @@ public class XPBar {
    */
   void draw(Graphics2D g) {
 
-    if (Renderer.time > m_timer && !pinnedBar) {
+    // current_skill from skill not known
+    /*if (Renderer.time > m_timer && !pinnedBar) {
       current_skill = -1;
       return;
-    }
-    if (pinnedSkill > 0) {
+    }*/
+    if (pinnedSkill >= 0) {
       current_skill = pinnedSkill;
     }
 
@@ -93,12 +95,6 @@ public class XPBar {
       }
     }
 
-    int skill_current_xp = (int) Client.getXPforLevel(Client.getBaseLevel(current_skill));
-    int skill_next_xp = (int) Client.getXPforLevel(Client.getBaseLevel(current_skill) + 1);
-
-    int xp = (int) Client.getXP(current_skill) - skill_current_xp;
-    int xp_needed = skill_next_xp - skill_current_xp;
-
     // Draw bar
 
     // Check and set the appropriate display position
@@ -112,7 +108,25 @@ public class XPBar {
       return;
     }
 
-    int percent = xp * (bounds.width - 2) / xp_needed;
+    int currLvl = Client.base_level[current_skill];
+    String username = Util.formatString(Client.player_name, 50);
+    int goalLvl =
+        (int)
+            Math.floor(
+                Client.lvlGoals.containsKey(username)
+                    ? Client.lvlGoals.get(username)[current_skill]
+                    : currLvl + 1);
+
+    double estimatedPercent;
+    int levelsDifference;
+    if (goalLvl > Client.base_level[current_skill]) {
+      levelsDifference = goalLvl - Client.base_level[current_skill];
+      estimatedPercent = 1 / (Math.pow(2, (levelsDifference / 7.0)));
+    } else {
+      estimatedPercent = 1.0;
+    }
+
+    int percent = (int) (estimatedPercent * (bounds.width - 2));
 
     boolean post99xp = Client.base_level[current_skill] == 99;
 
@@ -122,6 +136,7 @@ public class XPBar {
 
     int x = xp_bar_x;
     int y = xp_bar_y;
+    alpha = 1.0f;
     Renderer.setAlpha(g, alpha);
     g.setColor(Renderer.color_gray);
     g.fillRect(x - 1, y - 1, bounds.width + 2, bounds.height + 2);
@@ -209,19 +224,7 @@ public class XPBar {
     if (MouseHandler.y > y + offset && MouseHandler.y < y + textHeight) {
       textColour = Renderer.color_yellow;
       if (MouseHandler.mouseClicked) {
-        resetXPGainStart();
-      }
-    } else {
-      textColour = Renderer.color_text;
-    }
-    y += 12;
-    Renderer.drawShadowText(g, "Reset XP period", x, y, textColour, false);
-
-    // Option 1
-    if (MouseHandler.y > y + offset && MouseHandler.y < y + textHeight) {
-      textColour = Renderer.color_yellow;
-      if (MouseHandler.mouseClicked) {
-        setXPGoal();
+        setLvlGoal();
       }
     } else {
       textColour = Renderer.color_text;
@@ -230,20 +233,7 @@ public class XPBar {
     Renderer.drawShadowText(
         g, hasGoalForSkill(current_skill) ? "Clear Goal" : "Set Goal", x, y, textColour, false);
 
-    // Option 2
-    if (MouseHandler.y > y + offset && MouseHandler.y < y + textHeight) {
-      textColour = Renderer.color_yellow;
-      if (MouseHandler.mouseClicked) {
-        pinSkill();
-      }
-    } else {
-      textColour = Renderer.color_text;
-    }
-    y += 12;
-    Renderer.drawShadowText(
-        g, pinnedSkill > 0 ? "Use recent skill" : "Keep this skill", x, y, textColour, false);
-
-    // Option 3
+    // Option 1
     if (MouseHandler.y > y + offset && MouseHandler.y < y + textHeight) {
       textColour = Renderer.color_yellow;
       if (MouseHandler.mouseClicked) {
@@ -264,13 +254,10 @@ public class XPBar {
     }
   }
 
-  private void resetXPGainStart() {
-    Client.resetXPDrops(true);
-  }
-
-  private void setXPGoal() {
+  private void setLvlGoal() {
     if (hasGoalForSkill(current_skill)) {
-      Client.xpGoals.get(Client.xpUsername)[current_skill] = 0;
+      String username = Util.formatString(Client.player_name, 50);
+      Client.lvlGoals.get(username)[current_skill] = (float) 1;
       Settings.save();
     } else {
       Client.modal_enteredText = "";
@@ -279,18 +266,13 @@ public class XPBar {
     }
   }
 
-  public void setXpGoal(int xpGoal) {
-    if (xpGoal <= 120) {
-      // assume it's a level, translate to XP
-      xpGoal = (int) Client.getXPforLevel(xpGoal);
-    }
-    try {
-      Client.xpGoals.get(Client.xpUsername)[current_skill] = xpGoal;
-      Client.lvlGoals.get(Client.xpUsername)[current_skill] = Client.getLevelFromXP(xpGoal);
-    } catch (ArrayIndexOutOfBoundsException e) {
-      e.printStackTrace();
-      Logger.Error("Could not set XP goal! Please report this.");
-      Logger.Error("username: " + Client.xpUsername + " current_skill: " + current_skill);
+  public void setLvlGoal(int lvlGoal) {
+    String username = Util.formatString(Client.player_name, 50);
+    if (lvlGoal >= 1 && lvlGoal <= 99) {
+      Client.lvlGoals.get(username)[current_skill] = (float) lvlGoal;
+    } else {
+      Logger.Error("Could not set LVL goal! Please report this.");
+      Logger.Error("username: " + username + " current_skill: " + current_skill);
     }
     Settings.save();
   }
@@ -311,20 +293,11 @@ public class XPBar {
 
     int height = 50;
 
-    if (Client.getShowXpPerHour()[current_skill]) {
-      height += 12;
-    }
     if (!post99xp) {
       height += 20;
-      if (Client.getShowXpPerHour()[current_skill]) {
-        height += 12;
-      }
     }
     if (hasGoalForSkill(current_skill)) {
       height += 32;
-      if (Client.getShowXpPerHour()[current_skill]) {
-        height += 12;
-      }
     }
 
     // Draw new rect
@@ -333,78 +306,17 @@ public class XPBar {
     Renderer.setAlpha(g, 1.0f);
     y += 12;
 
-    Renderer.drawColoredText(
-        g, labelColour + "XP: " + textColour + formatXP(Client.getXP(current_skill)), x, y, true);
-    y += 12;
-    if (Client.getShowXpPerHour()[current_skill]) {
-      Renderer.drawColoredText(
-          g,
-          labelColour + "XP/Hr: " + textColour + formatXP(Client.getXpPerHour()[current_skill]),
-          x,
-          y,
-          true);
-      y += 12;
-    }
-
     y += 8;
 
-    if (!post99xp) {
-      Renderer.drawColoredText(
-          g,
-          labelColour
-              + "XP until Level: "
-              + textColour
-              + formatXP(Client.getXPUntilLevel(current_skill)),
-          x,
-          y,
-          true);
-      y += 12;
-      if (Client.getShowXpPerHour()[current_skill]) {
-        Renderer.drawColoredText(
-            g,
-            labelColour
-                + "Actions until Level: "
-                + highlightColour
-                + formatXP(
-                    Client.getXPUntilLevel(current_skill) / Client.getLastXpGain(current_skill)),
-            x,
-            y,
-            true);
-        y += 12;
-      }
-      y += 8;
-    }
-
+    String username = Util.formatString(Client.player_name, 50);
     if (hasGoalForSkill(current_skill)) {
-      Renderer.drawColoredText(
-          g,
-          labelColour
-              + "XP until Goal: "
-              + textColour
-              + formatXP(Client.getXPUntilGoal(current_skill)),
-          x,
-          y,
-          true);
       y += 12;
-      if (Client.getShowXpPerHour()[current_skill]) {
-        Renderer.drawColoredText(
-            g,
-            labelColour
-                + "Actions until Goal: "
-                + highlightColour
-                + formatXP(
-                    Client.getXPUntilGoal(current_skill) / Client.getLastXpGain(current_skill)),
-            x,
-            y,
-            true);
-        y += 12;
-      }
       Renderer.drawColoredText(
           g,
           labelColour
               + "Current Goal Level: "
               + textColour
-              + Client.lvlGoals.get(Client.xpUsername)[current_skill],
+              + Client.lvlGoals.get(username)[current_skill],
           x,
           y,
           true);
@@ -415,8 +327,9 @@ public class XPBar {
   }
 
   public static boolean hasGoalForSkill(int skill) {
+    String username = Util.formatString(Client.player_name, 50);
     try {
-      return Client.xpGoals.get(Client.xpUsername)[skill] > 0;
+      return Client.lvlGoals.get(username)[skill] > 1;
     } catch (Exception e) {
       return false;
     }
@@ -450,8 +363,8 @@ public class XPBar {
     return (shouldConsumeKey() ? 1 : 0);
   }
 
-  public static void drawGoalXPInput(int mouseX, int mouseY, int mouseButtonClick) {
-    if (mouseButtonClick != 0) {
+  public static void drawGoalLvlInput(int mouseX, int mouseY, int mouseButtonClick) {
+    if (mouseButtonClick != 0 && !hoveringOverMenu) {
       mouseButtonClick = 0;
       if (mouseX < Renderer.width / 2 - 150
           || mouseY < Renderer.height / 2 - 32
@@ -468,7 +381,7 @@ public class XPBar {
 
     if (drawGoalInputState == 8) {
       Renderer.drawStringCenter(
-          "Please enter your XP or level goal", Renderer.width / 2, yPos, 4, 0xFFFFFF);
+          "Please enter your level goal", Renderer.width / 2, yPos, 4, 0xFFFFFF);
       yPos += 25;
 
       Renderer.drawStringCenter(
@@ -482,7 +395,7 @@ public class XPBar {
           return;
         }
 
-        Client.xpbar.setXpGoal(goal);
+        Client.xpbar.setLvlGoal(goal);
         Client.modal_enteredText = "";
         Client.modal_text = "";
         drawGoalInputState = 0;
@@ -504,7 +417,7 @@ public class XPBar {
           return;
         }
 
-        Client.xpbar.setXpGoal(goal);
+        Client.xpbar.setLvlGoal(goal);
         Client.modal_enteredText = "";
         Client.modal_text = "";
         drawGoalInputState = 0;

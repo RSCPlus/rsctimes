@@ -52,6 +52,11 @@ public class Reflection {
       "public void jagex.client.j.yh(int,int,int,int,int,int)";
   private static final String SETGAMEBOUNDS = "public void jagex.client.i.kf(int,int,int,int)";
 
+  private static final String DRAWBOX = "public void jagex.client.i.qf(int,int,int,int,int)";
+  private static final String DRAWBOXBORDER = "public void jagex.client.i.hf(int,int,int,int,int)";
+  private static final String DRAWSTRINGCENTER =
+      "public void jagex.client.i.mg(java.lang.String,int,int,int,int)";
+
   public static Method mouseMove = null;
   public static Method mouseDrag = null;
   public static Method mouseUp = null;
@@ -76,6 +81,10 @@ public class Reflection {
   public static Method setResponseMessage = null;
   public static Method setCameraSize = null;
   public static Method setGameBounds = null;
+
+  public static Method drawBox = null;
+  public static Method drawBoxBorder = null;
+  public static Method drawStringCenter = null;
 
   public static void Load() {
     try {
@@ -142,6 +151,18 @@ public class Reflection {
           setGameBounds = method;
           Logger.Info("Found setGameBounds");
         }
+        if (method.toGenericString().equals(DRAWBOX)) {
+          drawBox = method;
+          Logger.Info("Found drawBox");
+        }
+        if (method.toGenericString().equals(DRAWBOXBORDER)) {
+          drawBoxBorder = method;
+          Logger.Info("Found drawBoxBorder");
+        }
+        if (method.toGenericString().equals(DRAWSTRINGCENTER)) {
+          drawStringCenter = method;
+          Logger.Info("Found drawStringCenter");
+        }
       }
 
       // Character
@@ -180,6 +201,9 @@ public class Reflection {
       if (setResponseMessage != null) setResponseMessage.setAccessible(true);
       if (setCameraSize != null) setCameraSize.setAccessible(true);
       if (setGameBounds != null) setGameBounds.setAccessible(true);
+      if (drawBox != null) drawBox.setAccessible(true);
+      if (drawBoxBorder != null) drawBoxBorder.setAccessible(true);
+      if (drawStringCenter != null) drawStringCenter.setAccessible(true);
     } catch (Exception e) {
       e.printStackTrace();
     }

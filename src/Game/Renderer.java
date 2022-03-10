@@ -583,6 +583,8 @@ public class Renderer {
       Client.npc_list_retained = new ArrayList<NPC>(Client.npc_list);
       Client.npc_list.clear();
 
+      Client.xpbar.draw(g2);
+
       // World Map
       // Arrow marker for destination
       if (WorldMapWindow.getWaypointPosition() != null
@@ -790,6 +792,70 @@ public class Renderer {
               }
             }
           }
+        }
+
+        // Toggle XP bar
+        if (Settings.TOGGLE_XP_BAR_ON_STATS_BUTTON.get(Settings.currentProfile)) {
+          mapButtonBounds = new Rectangle(width - 68 - 33, 3 + GAME_RENDER_OFFSET, 32, 32);
+          if (Settings.SHOW_RSCTIMES_BUTTONS.get(Settings.currentProfile)) {
+            g2.setColor(Renderer.color_text);
+            g2.drawLine(
+                mapButtonBounds.x + 1,
+                mapButtonBounds.y + 1,
+                mapButtonBounds.x + 7,
+                mapButtonBounds.y + 7);
+            g2.drawLine(
+                mapButtonBounds.x + 7,
+                mapButtonBounds.y + 1,
+                mapButtonBounds.x + 1,
+                mapButtonBounds.y + 7);
+          }
+
+          // Handle replay play selection click
+          if (MouseHandler.x >= mapButtonBounds.x
+              && MouseHandler.x <= mapButtonBounds.x + mapButtonBounds.width
+              && MouseHandler.y >= mapButtonBounds.y
+              && MouseHandler.y <= mapButtonBounds.y + mapButtonBounds.height
+              && MouseHandler.mouseClicked) {
+            if (MouseHandler.rightClick) {
+              Settings.toggleGoalBar();
+            } else {
+              Settings.toggleGoalBarPin();
+            }
+          }
+        }
+      }
+
+      // Handle setting XP Bar stat from STATS menu
+      if (Client.show_menu == Client.MENU_STATS && MouseHandler.mouseClicked) {
+        int xOffset = width - 199;
+        int yOffset = 65;
+        boolean clickedSkill = false;
+        int selectedSkill = -1;
+        for (int skillIdx = 0; skillIdx < 10; ++skillIdx) {
+          // Column 1
+          if (skillIdx < 9
+              && MouseHandler.x > xOffset + 3
+              && MouseHandler.x < xOffset + 90
+              && MouseHandler.y >= yOffset - 6
+              && MouseHandler.y < yOffset + 6) {
+            selectedSkill = skillIdx;
+            clickedSkill = true;
+            break;
+          }
+          // Column 2
+          if (MouseHandler.x >= xOffset + 90
+              && MouseHandler.x < xOffset + 196
+              && MouseHandler.y >= yOffset - 18
+              && MouseHandler.y < yOffset - 6) {
+            selectedSkill = skillIdx + 9;
+            clickedSkill = true;
+            break;
+          }
+          yOffset += 12;
+        }
+        if (clickedSkill) {
+          XPBar.pinnedSkill = selectedSkill;
         }
       }
 
@@ -1935,46 +2001,30 @@ public class Renderer {
   }
 
   public static void drawStringCenter(String text, int x, int y, int font, int color) {
-    // TODO: find hook, reimplement
-    Logger.Info("Unimplemented drawStringCenter called with text: " + text);
-
-    /*
     if (Reflection.drawStringCenter == null) return;
 
-
     try {
-        Reflection.drawStringCenter.invoke(instance, x, text, color, 0, font, y);
+      Reflection.drawStringCenter.invoke(instance, text, x, y, font, color);
     } catch (Exception e) {
     }
-     */
   }
 
   public static void drawBox(int x, int y, int w, int h, int color) {
-    // TODO: find hook, reimplement
-    Logger.Debug("Unimplemented drawBox called");
-
-    /*
     if (Reflection.drawBox == null) return;
 
     try {
-        Reflection.drawBox.invoke(instance, x, (byte) -127, color, y, h, w);
+      Reflection.drawBox.invoke(instance, x, y, w, h, color);
     } catch (Exception e) {
     }
-     */
   }
 
   public static void drawBoxBorder(int x, int y, int w, int h, int color) {
-    // TODO: find hook, reimplement
-    Logger.Debug("Unimplemented drawBoxBorder called");
-
-    /*
     if (Reflection.drawBoxBorder == null) return;
 
     try {
-        Reflection.drawBoxBorder.invoke(instance, x, w, y, 27785, h, color);
+      Reflection.drawBoxBorder.invoke(instance, x, y, w, h, color);
     } catch (Exception e) {
     }
-     */
   }
 
   private static void drawNPCBar(Graphics2D g, int x, int y, NPC npc) {

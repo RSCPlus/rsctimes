@@ -274,6 +274,47 @@ public class JClassPatcher {
       hookClassVariable(methodNode, "m", "yj", "[I", "Game/Renderer", "pixels", "[I", true, true);
 
       hookClassVariable(
+          methodNode,
+          "jagex/client/k",
+          "tq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "modal_enteredText",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "tq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "modal_enteredText",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "jagex/client/k",
+          "uq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "modal_text",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "uq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "modal_text",
+          "Ljava/lang/String;",
+          true,
+          true);
+
+      hookClassVariable(
           methodNode, "mudclient", "bu", "I", "Game/Renderer", "width", "I", false, true);
       hookClassVariable(
           methodNode, "mudclient", "cu", "I", "Game/Renderer", "height_client", "I", false, true);
@@ -304,6 +345,9 @@ public class JClassPatcher {
           methodNode, "mudclient", "ux", "Z", "Game/Client", "show_trade", "Z", true, false);
       hookClassVariable(
           methodNode, "mudclient", "ft", "I", "Game/Client", "show_changepk", "I", true, false);
+
+      hookClassVariable(
+          methodNode, "mudclient", "mx", "I", "Game/Client", "mouse_click", "I", true, true);
 
       hookClassVariable(
           methodNode, "mudclient", "ox", "I", "Game/Client", "inventory_count", "I", true, false);
@@ -1497,6 +1541,144 @@ public class JClassPatcher {
                   insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "tz", "I"));
               methodNode.instructions.insert(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
             }
+          }
+        }
+      }
+      if (methodNode.name.equals("jk") && methodNode.desc.equals("()V")) {
+        // menu ui
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode findNode;
+          LabelNode targetNode;
+          LabelNode labelNode;
+
+          if (insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL
+              && ((MethodInsnNode) insnNode).name.equals("rk")
+              && ((MethodInsnNode) insnNode).desc.equals("()V")) {
+            findNode = insnNode.getNext();
+            targetNode = ((JumpInsnNode) findNode).label;
+
+            // find last else to insert else if
+            while (!(findNode.getOpcode() == Opcodes.GETFIELD
+                && ((FieldInsnNode) findNode).name.equals("wy"))) {
+              findNode = findNode.getNext();
+            }
+            findNode = findNode.getPrevious();
+
+            labelNode = new LabelNode();
+            methodNode.instructions.insertBefore(findNode, labelNode);
+
+            methodNode.instructions.insertBefore(
+                labelNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "shouldShowTextInputDialog", "()Z"));
+            methodNode.instructions.insertBefore(
+                labelNode, new JumpInsnNode(Opcodes.IFEQ, labelNode));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "mq", "I"));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "nq", "I"));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "mx", "I"));
+            methodNode.instructions.insertBefore(
+                labelNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "Game/Client",
+                    "drawTextInputDialogMouseHook",
+                    "(III)V",
+                    false));
+            methodNode.instructions.insertBefore(
+                labelNode, new JumpInsnNode(Opcodes.GOTO, targetNode));
+            break;
+          }
+        }
+
+        /*Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode findNode;
+          LabelNode labelNode;
+
+          if (insnNode.getOpcode() == Opcodes.PUTFIELD
+              && ((FieldInsnNode) insnNode).name.equals("mx")) {
+            findNode = insnNode.getPrevious().getPrevious();
+
+            labelNode = new LabelNode();
+            methodNode.instructions.insertBefore(findNode, labelNode);
+
+            methodNode.instructions.insertBefore(
+                labelNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "shouldShowTextInputDialog", "()Z"));
+            methodNode.instructions.insertBefore(
+                labelNode, new JumpInsnNode(Opcodes.IFEQ, labelNode));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "mq", "I"));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "nq", "I"));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "mx", "I"));
+            methodNode.instructions.insertBefore(
+                labelNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "Game/Client",
+                    "drawTextInputDialogMouseHook",
+                    "(III)V",
+                    false));
+            break;
+          }
+        }*/
+      }
+      if (methodNode.name.equals("rj") && methodNode.desc.equals("(I)V")) {
+        // Handle key press hook
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode nextNode = insnNode.getNext();
+          AbstractInsnNode twoNextNode = nextNode.getNext();
+          AbstractInsnNode findNode, nextFindNode, call;
+          LabelNode exitNode;
+
+          if (nextNode == null || twoNextNode == null) break;
+
+          if (insnNode.getOpcode() == Opcodes.ALOAD
+              && ((VarInsnNode) insnNode).var == 0
+              && nextNode.getOpcode() == Opcodes.GETFIELD
+              && ((FieldInsnNode) nextNode).name.equals("ut")
+              && twoNextNode.getOpcode() == Opcodes.ICONST_1) {
+
+            findNode = twoNextNode;
+            while (findNode.getOpcode() != Opcodes.IF_ICMPNE) {
+              // find part of checking is logged in
+              findNode = findNode.getNext();
+            }
+            nextFindNode = findNode;
+
+            exitNode = ((JumpInsnNode) nextFindNode).label;
+            call = insnNode;
+
+            methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                call, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "ut", "I"));
+            methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ILOAD, 1));
+            methodNode.instructions.insertBefore(
+                call,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "gameKeyPressHook", "(II)I"));
+            methodNode.instructions.insertBefore(
+                insnNode, new JumpInsnNode(Opcodes.IFNE, exitNode));
+
+            break;
           }
         }
       }
