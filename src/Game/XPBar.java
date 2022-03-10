@@ -110,12 +110,17 @@ public class XPBar {
 
     int currLvl = Client.base_level[current_skill];
     String username = Util.formatString(Client.player_name, 50);
-    int goalLvl =
-        (int)
-            Math.floor(
-                Client.lvlGoals.containsKey(username)
-                    ? Client.lvlGoals.get(username)[current_skill]
-                    : currLvl + 1);
+    int goalLvl;
+    try {
+      goalLvl =
+          (int)
+              Math.floor(
+                  Client.lvlGoals.containsKey(username)
+                      ? Client.lvlGoals.get(username)[current_skill]
+                      : currLvl + 1);
+    } catch (Exception e) {
+      goalLvl = currLvl + 1;
+    }
 
     double estimatedPercent;
     int levelsDifference;
