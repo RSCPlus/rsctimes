@@ -2494,7 +2494,7 @@ public class ConfigWindow {
             Game.getInstance().resizeFrameWithContents();
         // Tell the Renderer to update the FoV from its thread to avoid thread-safety issues.
         Settings.fovUpdateRequired = true;
-        Settings.checkSoftwareCursor();
+        Settings.checkSoftwareCursor(true);
         Camera.setDistance(Settings.VIEW_DISTANCE.get(Settings.currentProfile));
         synchronizeGuiValues();
         // QueueWindow.syncColumnsWithSettings();

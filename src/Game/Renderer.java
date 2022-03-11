@@ -134,6 +134,8 @@ public class Renderer {
 
   private static int sleepTimer = 0;
   private static boolean lastInterlace = false;
+  public static boolean displayingSoftwareCursor = false;
+  public static boolean lastDisplayingSoftwareCursor = false;
 
   public static void init() {
     // Resize game window
@@ -1674,12 +1676,16 @@ public class Renderer {
     }
 
     // Draw software cursor
+    lastDisplayingSoftwareCursor = displayingSoftwareCursor;
+    displayingSoftwareCursor = false;
     if (screenshot || Settings.SOFTWARE_CURSOR.get(Settings.currentProfile)) {
       if (MouseHandler.y > GAME_RENDER_OFFSET + 1) {
         setAlpha(g2, 1.0f);
         g2.drawImage(image_cursor, MouseHandler.x, MouseHandler.y, null);
+        displayingSoftwareCursor = true;
       }
     }
+    Settings.checkSoftwareCursor(false);
 
     g2.dispose();
 

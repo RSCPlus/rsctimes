@@ -80,7 +80,7 @@ public class Game extends JFrame
     pack();
 
     // Hide cursor if software cursor
-    // Settings.checkSoftwareCursor();
+    Settings.checkSoftwareCursor(true);
 
     // Position window and make it visible
     setLocationRelativeTo(null);
@@ -92,10 +92,9 @@ public class Game extends JFrame
     Game.getInstance().resizeFrameWithContents();
     Renderer.init();
 
-    /* TODO: uncomment when can resize
     if (!Util.isMacOS() && Settings.CUSTOM_CLIENT_SIZE.get(Settings.currentProfile)) {
       Game.getInstance().resizeFrameWithContents();
-    } */
+    }
   }
 
   public JConfig getJConfig() {

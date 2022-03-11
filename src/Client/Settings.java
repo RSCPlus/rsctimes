@@ -22,6 +22,7 @@ import Client.Settings.Dir;
 import Game.Client;
 import Game.Game;
 import Game.KeyboardHandler;
+import Game.Renderer;
 import Game.XPBar;
 import java.awt.Cursor;
 import java.awt.Point;
@@ -40,7 +41,7 @@ public class Settings {
   public static boolean fovUpdateRequired;
   public static boolean versionCheckRequired = true;
   public static int javaVersion = 0;
-  public static final double VERSION_NUMBER = 20220211.150444;
+  public static final double VERSION_NUMBER = 20220311.090000;
   public static boolean successfullyInitted = false;
   /**
    * A time stamp corresponding to the current version of this source code. Used as a sophisticated
@@ -760,7 +761,7 @@ public class Settings {
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("vanilla", false);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("vanilla_resizable", false);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("lite", false);
-    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("default", true);
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("default", false);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("heavy", true);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("all", true);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put(
@@ -871,7 +872,7 @@ public class Settings {
     SHOW_XP_BAR.put("vanilla", false);
     SHOW_XP_BAR.put("vanilla_resizable", false);
     SHOW_XP_BAR.put("lite", false);
-    SHOW_XP_BAR.put("default", true);
+    SHOW_XP_BAR.put("default", false);
     SHOW_XP_BAR.put("heavy", true);
     SHOW_XP_BAR.put("all", true);
     SHOW_XP_BAR.put("custom", getPropBoolean(props, "show_xp_bar", SHOW_XP_BAR.get("default")));
@@ -1308,18 +1309,20 @@ public class Settings {
     save();
   }
 
-  public static void checkSoftwareCursor() {
-    if (SOFTWARE_CURSOR.get(currentProfile)) {
-      Game.getInstance()
-          .setCursor(
-              Game.getInstance()
-                  .getToolkit()
-                  .createCustomCursor(
-                      new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB),
-                      new Point(0, 0),
-                      "null"));
-    } else {
-      Game.getInstance().setCursor(Cursor.getDefaultCursor());
+  public static void checkSoftwareCursor(boolean initial) {
+    if (Renderer.lastDisplayingSoftwareCursor != Renderer.displayingSoftwareCursor || initial) {
+      if (SOFTWARE_CURSOR.get(currentProfile) && Renderer.displayingSoftwareCursor) {
+        Game.getInstance()
+            .setCursor(
+                Game.getInstance()
+                    .getToolkit()
+                    .createCustomCursor(
+                        new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB),
+                        new Point(0, 0),
+                        "null"));
+      } else {
+        Game.getInstance().setCursor(Cursor.getDefaultCursor());
+      }
     }
   }
 
