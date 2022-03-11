@@ -61,6 +61,9 @@ public class Settings {
   public static HashMap<String, Boolean> CHECK_UPDATES = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> REMIND_HOW_TO_OPEN_SETTINGS =
       new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> COMBAT_MENU_SHOWN = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> COMBAT_MENU_HIDDEN = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> CENTER_XPDROPS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ZOOMABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ROTATABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_MOVABLE = new HashMap<String, Boolean>();
@@ -102,7 +105,6 @@ public class Settings {
       new HashMap<String, Integer>();
 
   public static HashMap<String, Boolean> SHOW_XP_BAR = new HashMap<String, Boolean>();
-  public static HashMap<String, Boolean> CENTER_XPDROPS = new HashMap<String, Boolean>();
 
   //// overlays
   public static HashMap<String, Boolean> SHOW_HP_OVERLAY = new HashMap<String, Boolean>();
@@ -116,6 +118,8 @@ public class Settings {
       new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> WIKI_LOOKUP_ON_MAGIC_BOOK = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> MOTIVATIONAL_QUOTES_BUTTON =
+      new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> TOGGLE_XP_BAR_ON_STATS_BUTTON =
       new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> WIKI_LOOKUP_ON_HBAR = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SHOW_ITEM_GROUND_OVERLAY = new HashMap<String, Boolean>();
@@ -159,6 +163,7 @@ public class Settings {
   public static boolean noWorldsConfigured = true;
 
   //// nogui
+  public static HashMap<String, Integer> COMBAT_STYLE = new HashMap<String, Integer>();
   public static HashMap<String, Integer> WORLD = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> FIRST_TIME = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> UPDATE_CONFIRMATION = new HashMap<String, Boolean>();
@@ -223,11 +228,8 @@ public class Settings {
       String[] goalerUsernames = new String[numberOfGoalers];
       for (int usernameID = 0; usernameID < numberOfGoalers; usernameID++) {
         goalerUsernames[usernameID] = getPropString(props, "username" + usernameID, "");
-        Client.xpGoals.put(goalerUsernames[usernameID], new Integer[Client.NUM_SKILLS]);
         Client.lvlGoals.put(goalerUsernames[usernameID], new Float[Client.NUM_SKILLS]);
         for (int skill = 0; skill < Client.NUM_SKILLS; skill++) {
-          Client.xpGoals.get(goalerUsernames[usernameID])[skill] =
-              getPropInt(props, String.format("xpGoal%02d%03d", skill, usernameID), 0);
           try {
             Client.lvlGoals.get(goalerUsernames[usernameID])[skill] =
                 Float.parseFloat(
@@ -309,6 +311,33 @@ public class Settings {
     REMIND_HOW_TO_OPEN_SETTINGS.put(
         "custom",
         getPropBoolean(props, "welcome_enabled", REMIND_HOW_TO_OPEN_SETTINGS.get("default")));
+
+    COMBAT_MENU_SHOWN.put("vanilla", false);
+    COMBAT_MENU_SHOWN.put("vanilla_resizable", false);
+    COMBAT_MENU_SHOWN.put("lite", false);
+    COMBAT_MENU_SHOWN.put("default", false);
+    COMBAT_MENU_SHOWN.put("heavy", true);
+    COMBAT_MENU_SHOWN.put("all", true);
+    COMBAT_MENU_SHOWN.put(
+        "custom", getPropBoolean(props, "combat_menu", COMBAT_MENU_SHOWN.get("default")));
+
+    COMBAT_MENU_HIDDEN.put("vanilla", false);
+    COMBAT_MENU_HIDDEN.put("vanilla_resizable", false);
+    COMBAT_MENU_HIDDEN.put("lite", false);
+    COMBAT_MENU_HIDDEN.put("default", false);
+    COMBAT_MENU_HIDDEN.put("heavy", false);
+    COMBAT_MENU_HIDDEN.put("all", true);
+    COMBAT_MENU_HIDDEN.put(
+        "custom", getPropBoolean(props, "combat_menu_hidden", COMBAT_MENU_HIDDEN.get("default")));
+
+    CENTER_XPDROPS.put("vanilla", false);
+    CENTER_XPDROPS.put("vanilla_resizable", false);
+    CENTER_XPDROPS.put("lite", false);
+    CENTER_XPDROPS.put("default", false);
+    CENTER_XPDROPS.put("heavy", true);
+    CENTER_XPDROPS.put("all", true);
+    CENTER_XPDROPS.put(
+        "custom", getPropBoolean(props, "center_xpdrops", CENTER_XPDROPS.get("default")));
 
     CAMERA_ZOOMABLE.put("vanilla", false);
     CAMERA_ZOOMABLE.put("vanilla_resizable", false);
@@ -728,6 +757,17 @@ public class Settings {
         getPropBoolean(
             props, "motivational_quotes_button", MOTIVATIONAL_QUOTES_BUTTON.get("default")));
 
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("vanilla", false);
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("vanilla_resizable", false);
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("lite", false);
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("default", true);
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("heavy", true);
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("all", true);
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put(
+        "custom",
+        getPropBoolean(
+            props, "toggle_xp_bar_on_stats_button", TOGGLE_XP_BAR_ON_STATS_BUTTON.get("default")));
+
     WIKI_LOOKUP_ON_HBAR.put("vanilla", false);
     WIKI_LOOKUP_ON_HBAR.put("vanilla_resizable", false);
     WIKI_LOOKUP_ON_HBAR.put("lite", false);
@@ -827,6 +867,14 @@ public class Settings {
     HIDE_FPS.put("heavy", true);
     HIDE_FPS.put("all", true);
     HIDE_FPS.put("custom", getPropBoolean(props, "hide_fps", HIDE_FPS.get("default")));
+
+    SHOW_XP_BAR.put("vanilla", false);
+    SHOW_XP_BAR.put("vanilla_resizable", false);
+    SHOW_XP_BAR.put("lite", false);
+    SHOW_XP_BAR.put("default", true);
+    SHOW_XP_BAR.put("heavy", true);
+    SHOW_XP_BAR.put("all", true);
+    SHOW_XP_BAR.put("custom", getPropBoolean(props, "show_xp_bar", SHOW_XP_BAR.get("default")));
 
     NPC_HEALTH_SHOW_PERCENTAGE.put("vanilla", false);
     NPC_HEALTH_SHOW_PERCENTAGE.put("vanilla_resizable", false);
@@ -985,6 +1033,14 @@ public class Settings {
     //// world list
     initWorlds();
 
+    COMBAT_STYLE.put("vanilla", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("vanilla_resizable", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("lite", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("default", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("heavy", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("all", Client.COMBAT_AGGRESSIVE);
+    COMBAT_STYLE.put("custom", getPropInt(props, "combat_style", COMBAT_STYLE.get("default")));
+
     WORLD.put("vanilla", 1);
     WORLD.put("vanilla_resizable", 1);
     WORLD.put("lite", 1);
@@ -1035,14 +1091,13 @@ public class Settings {
       save("custom");
     }
 
-    /*if (COMBAT_STYLE.get("custom") < Client.COMBAT_CONTROLLED) {
+    if (COMBAT_STYLE.get("custom") < Client.COMBAT_CONTROLLED) {
       COMBAT_STYLE.put("custom", Client.COMBAT_CONTROLLED);
       save("custom");
     } else if (COMBAT_STYLE.get("custom") > Client.COMBAT_DEFENSIVE) {
       COMBAT_STYLE.put("custom", Client.COMBAT_DEFENSIVE);
       save("custom");
-    }*/
-
+    }
   }
 
   public static void initDir() { // TODO: Consider moving to a more relevant place
@@ -1235,6 +1290,22 @@ public class Settings {
         break;
     }
     return false;
+  }
+
+  public static void toggleGoalBar() {
+    SHOW_XP_BAR.put(currentProfile, !SHOW_XP_BAR.get(currentProfile));
+    if (SHOW_XP_BAR.get(currentProfile))
+      Client.displayMessage("@cya@Goal Bar is now shown", Client.CHAT_NONE);
+    else Client.displayMessage("@cya@Goal Bar is now hidden", Client.CHAT_NONE);
+    save();
+  }
+
+  public static void toggleGoalBarPin() {
+    SHOW_XP_BAR.put(currentProfile, true);
+    if (!XPBar.pinnedBar) Client.displayMessage("@cya@Goal Bar is now pinned", Client.CHAT_NONE);
+    else Client.displayMessage("@cya@Goal Bar is now unpinned", Client.CHAT_NONE);
+    XPBar.pinnedBar = !XPBar.pinnedBar;
+    save();
   }
 
   public static void checkSoftwareCursor() {
@@ -1438,9 +1509,10 @@ public class Settings {
       props.setProperty("check_updates", Boolean.toString(CHECK_UPDATES.get(preset)));
       props.setProperty(
           "welcome_enabled", Boolean.toString(REMIND_HOW_TO_OPEN_SETTINGS.get(preset)));
-      /*
       props.setProperty("combat_menu", Boolean.toString(COMBAT_MENU_SHOWN.get(preset)));
       props.setProperty("combat_menu_hidden", Boolean.toString(COMBAT_MENU_HIDDEN.get(preset)));
+      props.setProperty("center_xpdrops", Boolean.toString(CENTER_XPDROPS.get(preset)));
+      /*
       props.setProperty("inventory_full_alert", Boolean.toString(INVENTORY_FULL_ALERT.get(preset)));
       props.setProperty("name_patch_type", Integer.toString(NAME_PATCH_TYPE.get(preset)));
       props.setProperty("command_patch_quest", Boolean.toString(COMMAND_PATCH_QUEST.get(preset)));
@@ -1504,6 +1576,7 @@ public class Settings {
       props.setProperty(
           "show_time_until_hp_regen", Boolean.toString(SHOW_TIME_UNTIL_HP_REGEN.get(preset)));
       props.setProperty("indicators", Boolean.toString(LAG_INDICATOR.get(preset)));
+      props.setProperty("show_xp_bar", Boolean.toString(SHOW_XP_BAR.get(preset)));
       props.setProperty("debug", Boolean.toString(DEBUG.get(preset)));
       props.setProperty("exception_handler", Boolean.toString(EXCEPTION_HANDLER.get(preset)));
       props.setProperty("highlighted_items", Util.joinAsString(",", HIGHLIGHTED_ITEMS.get(preset)));
@@ -1571,8 +1644,8 @@ public class Settings {
       props.setProperty("current_profile", currentProfile);
 
       //// no gui
-      /*
       props.setProperty("combat_style", Integer.toString(COMBAT_STYLE.get(preset)));
+      /*
       props.setProperty("world", Integer.toString(WORLD.get(preset)));
       */
       // This is set to false, as logically, saving the config would imply this is not a first-run.
@@ -1593,25 +1666,17 @@ public class Settings {
             Integer.toString(getPropIntForKeyModifier(kbs)) + "*" + kbs.key);
       }
 
-      // XP Goals
+      // Lvl Goals
       int usernameID = 0;
-      for (String username : Client.xpGoals.keySet()) {
+      for (String username : Client.lvlGoals.keySet()) {
         if (username.equals(XPBar.excludeUsername)) continue;
         for (int skill = 0; skill < Client.NUM_SKILLS; skill++) {
-          int skillgoal = 0;
-          try {
-            skillgoal = Client.xpGoals.get(username)[skill];
-          } catch (Exception noGoal) {
-          }
-
           float lvlgoal = (float) 0;
           try {
             lvlgoal = Client.lvlGoals.get(username)[skill];
           } catch (Exception noGoal) {
           }
 
-          props.setProperty(
-              String.format("xpGoal%02d%03d", skill, usernameID), Integer.toString(skillgoal));
           props.setProperty(
               String.format("lvlGoal%02d%03d", skill, usernameID), Float.toString(lvlgoal));
         }
@@ -1786,12 +1851,17 @@ public class Settings {
 
   public static void updateInjectedVariables() {
     // TODO: get rid of these variables and this function if possible
-    /*COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
-    HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
+    COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
+    // HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
     COMBAT_MENU_SHOWN_BOOL = COMBAT_MENU_SHOWN.get(currentProfile);
-    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);*/
+    COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);
     CAMERA_ZOOMABLE_BOOL = CAMERA_ZOOMABLE.get(currentProfile);
     CAMERA_ROTATABLE_BOOL = CAMERA_ROTATABLE.get(currentProfile);
     CAMERA_MOVABLE_BOOL = CAMERA_MOVABLE.get(currentProfile);
+  }
+
+  public static void outputInjectedVariables() {
+    // TODO: get rid of these variables and this function if possible
+    COMBAT_STYLE.put(currentProfile, COMBAT_STYLE_INT);
   }
 }

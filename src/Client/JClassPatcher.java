@@ -274,6 +274,47 @@ public class JClassPatcher {
       hookClassVariable(methodNode, "m", "yj", "[I", "Game/Renderer", "pixels", "[I", true, true);
 
       hookClassVariable(
+          methodNode,
+          "jagex/client/k",
+          "tq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "modal_enteredText",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "tq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "modal_enteredText",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "jagex/client/k",
+          "uq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "modal_text",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "uq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "modal_text",
+          "Ljava/lang/String;",
+          true,
+          true);
+
+      hookClassVariable(
           methodNode, "mudclient", "bu", "I", "Game/Renderer", "width", "I", false, true);
       hookClassVariable(
           methodNode, "mudclient", "cu", "I", "Game/Renderer", "height_client", "I", false, true);
@@ -282,6 +323,9 @@ public class JClassPatcher {
           methodNode, "jagex/client/k", "hp", "I", "Game/Renderer", "width", "I", false, true);
       hookClassVariable(
           methodNode, "jagex/client/k", "ip", "I", "Game/Renderer", "height", "I", false, true);
+
+      hookClassVariable(
+          methodNode, "mudclient", "tz", "I", "Game/Client", "combat_style", "I", true, true);
 
       hookConditionalClassVariable(
           methodNode, "mudclient", "du", "I", "Game/Camera", "fov", "I", false, true, "FOV_BOOL");
@@ -301,6 +345,9 @@ public class JClassPatcher {
           methodNode, "mudclient", "ux", "Z", "Game/Client", "show_trade", "Z", true, false);
       hookClassVariable(
           methodNode, "mudclient", "ft", "I", "Game/Client", "show_changepk", "I", true, false);
+
+      hookClassVariable(
+          methodNode, "mudclient", "mx", "I", "Game/Client", "mouse_click", "I", true, true);
 
       hookClassVariable(
           methodNode, "mudclient", "ox", "I", "Game/Client", "inventory_count", "I", true, false);
@@ -549,22 +596,19 @@ public class JClassPatcher {
         AbstractInsnNode lastNode = methodNode.instructions.getLast().getPrevious();
 
         // Send combat style option
-        /*LabelNode label = new LabelNode();
+        LabelNode label = new LabelNode();
 
         methodNode.instructions.insert(lastNode, label);
 
         // Format
         methodNode.instructions.insert(
-            lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "da", "b", "(I)V", false));
-        methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.SIPUSH, 21294));
-        methodNode.instructions.insert(
-            lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+            lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "mudclient", "ll", "()V", false));
         methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
 
         // Write byte
         methodNode.instructions.insert(
-            lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "ja", "c", "(II)V", false));
-        methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.BIPUSH, -80));
+            lastNode,
+            new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "jagex/client/a", "n", "(I)V", false));
         methodNode.instructions.insert(
             lastNode,
             new FieldInsnNode(Opcodes.GETSTATIC, "Client/Settings", "COMBAT_STYLE_INT", "I"));
@@ -577,18 +621,18 @@ public class JClassPatcher {
                 "()V",
                 false)); // TODO Remove this line when COMBAT_STYLE_INT is eliminated
         methodNode.instructions.insert(
-            lastNode, new FieldInsnNode(Opcodes.GETFIELD, "da", "f", "Lja;"));
-        methodNode.instructions.insert(
-            lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+            lastNode,
+            new FieldInsnNode(Opcodes.GETFIELD, "jagex/client/e", "dd", "Ljagex/client/a;"));
         methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
 
         // Create Packet
         methodNode.instructions.insert(
-            lastNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "da", "b", "(II)V", false));
-        methodNode.instructions.insert(lastNode, new InsnNode(Opcodes.ICONST_0));
-        methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.BIPUSH, 29));
+            lastNode,
+            new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "jagex/client/a", "i", "(I)V", false));
+        methodNode.instructions.insert(lastNode, new IntInsnNode(Opcodes.SIPUSH, 231));
         methodNode.instructions.insert(
-            lastNode, new FieldInsnNode(Opcodes.GETFIELD, "client", "Jh", "Lda;"));
+            lastNode,
+            new FieldInsnNode(Opcodes.GETFIELD, "jagex/client/e", "dd", "Ljagex/client/a;"));
         methodNode.instructions.insert(lastNode, new VarInsnNode(Opcodes.ALOAD, 0));
 
         // Skip combat packet if style is already controlled
@@ -604,7 +648,7 @@ public class JClassPatcher {
                 "Client/Settings",
                 "updateInjectedVariables",
                 "()V",
-                false)); // TODO Remove this line when COMBAT_STYLE_INT is eliminated*/
+                false)); // TODO Remove this line when COMBAT_STYLE_INT is eliminated
 
         // Client init_game
         methodNode.instructions.insert(
@@ -829,6 +873,79 @@ public class JClassPatcher {
             first,
             new MethodInsnNode(
                 Opcodes.INVOKESTATIC, "Game/Client", "messageHook", "(Ljava/lang/String;I)V"));
+      }
+      if (methodNode.name.equals("jk") && methodNode.desc.equals("()V")) {
+        // Show combat menu
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+
+          if (insnNode.getOpcode() == Opcodes.GETFIELD) {
+            FieldInsnNode getfield = (FieldInsnNode) insnNode;
+
+            if (getfield.name.equals("ur")) {
+              AbstractInsnNode findNode = null;
+
+              // Hide combat menu patch
+              findNode = insnNode;
+              while (findNode.getOpcode() != Opcodes.ALOAD) findNode = findNode.getNext();
+              LabelNode label = new LabelNode();
+              LabelNode skipLabel = new LabelNode();
+              methodNode.instructions.insertBefore(
+                  findNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Client/Settings",
+                      "updateInjectedVariables",
+                      "()V",
+                      false));
+              methodNode.instructions.insertBefore(
+                  findNode,
+                  new FieldInsnNode(
+                      Opcodes.GETSTATIC, "Client/Settings", "COMBAT_MENU_HIDDEN_BOOL", "Z"));
+              methodNode.instructions.insertBefore(findNode, new JumpInsnNode(Opcodes.IFGT, label));
+              methodNode.instructions.insertBefore(findNode, skipLabel);
+              methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ICONST_1));
+              methodNode.instructions.insertBefore(
+                  findNode,
+                  new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Renderer", "combat_menu_shown", "Z"));
+              methodNode.instructions.insert(findNode.getNext().getNext(), label);
+
+              // Show combat menu patch
+              JumpInsnNode jumpNode = (JumpInsnNode) insnNode.getNext();
+              LabelNode exitLabel = jumpNode.label;
+              LabelNode runLabel = new LabelNode();
+              methodNode.instructions.insertBefore(jumpNode.getNext(), runLabel);
+              label = new LabelNode();
+              jumpNode.label = label;
+              methodNode.instructions.insert(jumpNode, new JumpInsnNode(Opcodes.GOTO, exitLabel));
+              methodNode.instructions.insert(jumpNode, new JumpInsnNode(Opcodes.IFGT, skipLabel));
+              methodNode.instructions.insert(
+                  jumpNode,
+                  new FieldInsnNode(
+                      Opcodes.GETSTATIC, "Client/Settings", "COMBAT_MENU_SHOWN_BOOL", "Z"));
+              methodNode.instructions.insert(
+                  jumpNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Client/Settings",
+                      "updateInjectedVariables",
+                      "()V",
+                      false));
+              methodNode.instructions.insert(jumpNode, label);
+              methodNode.instructions.insert(jumpNode, new JumpInsnNode(Opcodes.GOTO, runLabel));
+
+              findNode = insnNode.getPrevious();
+              while (findNode.getOpcode() != Opcodes.ALOAD) findNode = findNode.getPrevious();
+              methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ICONST_0));
+              methodNode.instructions.insertBefore(
+                  findNode,
+                  new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Renderer", "combat_menu_shown", "Z"));
+
+              break;
+            }
+          }
+        }
       }
       if (methodNode.name.equals("fm") && methodNode.desc.equals("()V")) {
 
@@ -1394,6 +1511,176 @@ public class JClassPatcher {
         methodNode.instructions.insert(
             lastNode,
             new FieldInsnNode(Opcodes.GETSTATIC, "Game/KeyboardHandler", "dialogue_option", "I"));
+      }
+      if (methodNode.name.equals("ql") && methodNode.desc.equals("()V")) {
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+
+          // Save settings from combat menu
+          if (insnNode.getOpcode() == Opcodes.PUTFIELD) {
+            FieldInsnNode field = (FieldInsnNode) insnNode;
+
+            if (field.owner.equals("mudclient") && field.name.equals("tz")) {
+              methodNode.instructions.insert(
+                  insnNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC, "Client/Settings", "save", "()V", false));
+              methodNode.instructions.insert(
+                  insnNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Client/Settings",
+                      "outputInjectedVariables",
+                      "()V",
+                      false));
+              methodNode.instructions.insert(
+                  insnNode,
+                  new FieldInsnNode(Opcodes.PUTSTATIC, "Client/Settings", "COMBAT_STYLE_INT", "I"));
+              methodNode.instructions.insert(
+                  insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "tz", "I"));
+              methodNode.instructions.insert(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            }
+          }
+        }
+      }
+      if (methodNode.name.equals("jk") && methodNode.desc.equals("()V")) {
+        // menu ui
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode findNode;
+          LabelNode targetNode;
+          LabelNode labelNode;
+
+          if (insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL
+              && ((MethodInsnNode) insnNode).name.equals("rk")
+              && ((MethodInsnNode) insnNode).desc.equals("()V")) {
+            findNode = insnNode.getNext();
+            targetNode = ((JumpInsnNode) findNode).label;
+
+            // find last else to insert else if
+            while (!(findNode.getOpcode() == Opcodes.GETFIELD
+                && ((FieldInsnNode) findNode).name.equals("wy"))) {
+              findNode = findNode.getNext();
+            }
+            findNode = findNode.getPrevious();
+
+            labelNode = new LabelNode();
+            methodNode.instructions.insertBefore(findNode, labelNode);
+
+            methodNode.instructions.insertBefore(
+                labelNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "shouldShowTextInputDialog", "()Z"));
+            methodNode.instructions.insertBefore(
+                labelNode, new JumpInsnNode(Opcodes.IFEQ, labelNode));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "mq", "I"));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "nq", "I"));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "mx", "I"));
+            methodNode.instructions.insertBefore(
+                labelNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "Game/Client",
+                    "drawTextInputDialogMouseHook",
+                    "(III)V",
+                    false));
+            methodNode.instructions.insertBefore(
+                labelNode, new JumpInsnNode(Opcodes.GOTO, targetNode));
+            break;
+          }
+        }
+
+        /*Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode findNode;
+          LabelNode labelNode;
+
+          if (insnNode.getOpcode() == Opcodes.PUTFIELD
+              && ((FieldInsnNode) insnNode).name.equals("mx")) {
+            findNode = insnNode.getPrevious().getPrevious();
+
+            labelNode = new LabelNode();
+            methodNode.instructions.insertBefore(findNode, labelNode);
+
+            methodNode.instructions.insertBefore(
+                labelNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "shouldShowTextInputDialog", "()Z"));
+            methodNode.instructions.insertBefore(
+                labelNode, new JumpInsnNode(Opcodes.IFEQ, labelNode));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "mq", "I"));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "nq", "I"));
+            methodNode.instructions.insertBefore(labelNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                labelNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "mx", "I"));
+            methodNode.instructions.insertBefore(
+                labelNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "Game/Client",
+                    "drawTextInputDialogMouseHook",
+                    "(III)V",
+                    false));
+            break;
+          }
+        }*/
+      }
+      if (methodNode.name.equals("rj") && methodNode.desc.equals("(I)V")) {
+        // Handle key press hook
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode nextNode = insnNode.getNext();
+          AbstractInsnNode twoNextNode = nextNode.getNext();
+          AbstractInsnNode findNode, nextFindNode, call;
+          LabelNode exitNode;
+
+          if (nextNode == null || twoNextNode == null) break;
+
+          if (insnNode.getOpcode() == Opcodes.ALOAD
+              && ((VarInsnNode) insnNode).var == 0
+              && nextNode.getOpcode() == Opcodes.GETFIELD
+              && ((FieldInsnNode) nextNode).name.equals("ut")
+              && twoNextNode.getOpcode() == Opcodes.ICONST_1) {
+
+            findNode = twoNextNode;
+            while (findNode.getOpcode() != Opcodes.IF_ICMPNE) {
+              // find part of checking is logged in
+              findNode = findNode.getNext();
+            }
+            nextFindNode = findNode;
+
+            exitNode = ((JumpInsnNode) nextFindNode).label;
+            call = insnNode;
+
+            methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                call, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "ut", "I"));
+            methodNode.instructions.insertBefore(call, new VarInsnNode(Opcodes.ILOAD, 1));
+            methodNode.instructions.insertBefore(
+                call,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "gameKeyPressHook", "(II)I"));
+            methodNode.instructions.insertBefore(
+                insnNode, new JumpInsnNode(Opcodes.IFNE, exitNode));
+
+            break;
+          }
+        }
       }
     }
   }

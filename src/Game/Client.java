@@ -141,47 +141,17 @@ public class Client {
   public static final int NUM_SKILLS = 19; // TODO: ?
   public static boolean firstTimeRunningRSCTimes = false;
 
-  /**
-   * A boolean array that stores if the XP per hour should be shown for a given skill when hovering
-   * on the XP bar.
-   *
-   * <p>This should only be false for a skill if there has been less than 2 XP drops during the
-   * current tracking session, since there is not enough data to calculate the XP per hour.
-   */
-  private static HashMap<String, Boolean[]> showXpPerHour = new HashMap<String, Boolean[]>();
+  public static int mouse_click;
 
-  /** An array to store the XP per hour for a given skill */
-  private static HashMap<String, Double[]> xpPerHour = new HashMap<String, Double[]>();
-
-  // the total XP gained in a given skill within the sample period
-  private static final int TOTAL_XP_GAIN = 0;
-  // the time of the last XP drop in a given skill
-  private static final int TIME_OF_LAST_XP_DROP = 1;
-  // the time of the first XP drop in a given skill within the sample period
-  private static final int TIME_OF_FIRST_XP_DROP = 2;
-  // the total number of XP drops recorded within the sample period, plus 1
-  private static final int TOTAL_XP_DROPS = 3;
-  // the amount of XP gained since last processed
-  private static final int LAST_XP_GAIN = 4;
-
-  // first dimension of this array is skill ID.
-  // second dimension is the constants in block above.
-  private static HashMap<String, Double[][]> lastXpGain = new HashMap<String, Double[][]>();
-
-  // holds players XP since last processing xp drops
-  private static HashMap<String, Float[]> xpLast = new HashMap<String, Float[]>();
-
-  public static HashMap<String, Integer[]> xpGoals = new HashMap<String, Integer[]>();
   public static HashMap<String, Float[]> lvlGoals = new HashMap<String, Float[]>();
-
-  private static float[] xpGain = new float[18];
 
   public static final int MENU_NONE = 0;
   public static final int MENU_INVENTORY = 1;
   public static final int MENU_MINIMAP = 2;
   public static final int MENU_STATS = 3;
-  public static final int MENU_FRIENDS = 4;
-  public static final int MENU_SETTINGS = 5;
+  public static final int MENU_MAGIC = 4;
+  public static final int MENU_FRIENDS = 5;
+  public static final int MENU_SETTINGS = 6;
 
   public static final int MESSAGE_CHAT = 2;
   public static final int MESSAGE_GAME = 3;
@@ -208,6 +178,7 @@ public class Client {
   public static final int COMBAT_AGGRESSIVE = 1;
   public static final int COMBAT_ACCURATE = 2;
   public static final int COMBAT_DEFENSIVE = 3;
+  public static int combat_style;
 
   public static int friends_count;
   public static long[] friends_hash;
@@ -321,6 +292,9 @@ public class Client {
 
     if (state == STATE_GAME) {
       Client.getPlayerName();
+      if (Client.lvlGoals.get(Util.formatString(player_name, 50)) == null) {
+        resetXPDrops(false);
+      }
       // Client.adaptLoginInfo();
     }
 
@@ -463,7 +437,7 @@ public class Client {
 
   public static void init_game() {
     Camera.init();
-    // combat_style = Settings.COMBAT_STYLE.get(Settings.currentProfile);
+    combat_style = Settings.COMBAT_STYLE.get(Settings.currentProfile);
     state = STATE_GAME;
     // bank_active_page = 0; // TODO: config option? don't think this is very important.
     // combat_timer = 0;
@@ -553,6 +527,8 @@ public class Client {
         updateTimer = currentTime + (60 * 60 * 1000);
       }
 
+      resetXPDrops(false);
+
       justLoggedIn = false;
     }
   }
@@ -575,6 +551,34 @@ public class Client {
         worldY = coordY;
       }
     }
+  }
+
+  /**
+   * Extensible method hooking to draw other dialog boxes and consuming mouse method. Branching
+   * should match conditions inside showTextInputDialog()
+   */
+  public static void drawTextInputDialogMouseHook(int mouseX, int mouseY, int mouseButtonClick) {
+    if (XPBar.shouldShowGoalInput()) {
+      XPBar.drawGoalLvlInput(mouseX, mouseY, mouseButtonClick);
+    }
+  }
+
+  /**
+   * Extensible method hooking to consume key press for panel, should return non-zero if we need to
+   * stop doing future checks when returning
+   */
+  public static int gameKeyPressHook(int loggedIn, int key) {
+    if (loggedIn != 1) {
+      return 0;
+    } else if (XPBar.shouldConsumeKey()) {
+      return XPBar.keyHandler();
+    }
+    return 0;
+  }
+
+  /** Return true if there is pending render to show the text-input-box dialog */
+  public static boolean shouldShowTextInputDialog() {
+    return XPBar.shouldShowGoalInput();
   }
 
   public static void resetLoginMessage() {
@@ -1515,14 +1519,6 @@ public class Client {
     return xpNextLevel - getXP(skill);
   }
 
-  public static float getXPUntilGoal(int skill) {
-    return xpGoals.get(xpUsername)[skill] - getXP(skill);
-  }
-
-  public static Double getLastXpGain(int skill) {
-    return lastXpGain.get(xpUsername)[skill][LAST_XP_GAIN];
-  }
-
   /**
    * Returns the user's XP in a specified skill.
    *
@@ -1567,53 +1563,14 @@ public class Client {
     return base_level[skill];
   }
 
-  public static Boolean[] getShowXpPerHour() {
-    return showXpPerHour.get(xpUsername);
-  }
-
-  public static Double[] getXpPerHour() {
-    return xpPerHour.get(xpUsername);
-  }
-
   public static void resetXPDrops(boolean resetSession) {
-    if (username_login.equals("")) {
+    if (player_name.equals("")) {
       return;
     }
 
-    xpUsername = Util.formatString(username_login, 50);
-    if (lastXpGain.get(xpUsername) == null) {
-      lastXpGain.put(xpUsername, new Double[NUM_SKILLS][5]);
-      showXpPerHour.put(xpUsername, new Boolean[NUM_SKILLS]);
-      xpPerHour.put(xpUsername, new Double[NUM_SKILLS]);
-      xpLast.put(xpUsername, new Float[NUM_SKILLS]);
-      for (int skill = 0; skill < NUM_SKILLS; skill++) {
-        lastXpGain.get(xpUsername)[skill][TOTAL_XP_GAIN] = new Double(0);
-        lastXpGain.get(xpUsername)[skill][TIME_OF_FIRST_XP_DROP] =
-            lastXpGain.get(xpUsername)[skill][TIME_OF_LAST_XP_DROP] =
-                new Double(System.currentTimeMillis());
-        lastXpGain.get(xpUsername)[skill][TOTAL_XP_DROPS] = new Double(0);
-
-        showXpPerHour.get(xpUsername)[skill] = false;
-        xpPerHour.get(xpUsername)[skill] = new Double(0);
-      }
-    }
-    if (xpGoals.get(xpUsername) == null) {
-      xpGoals.put(xpUsername, new Integer[NUM_SKILLS]);
+    xpUsername = Util.formatString(player_name, 50);
+    if (lvlGoals.get(xpUsername) == null) {
       lvlGoals.put(xpUsername, new Float[NUM_SKILLS]);
-    }
-
-    for (int skill = 0; skill < NUM_SKILLS; skill++) {
-      xpLast.get(xpUsername)[skill] = getXP(skill);
-
-      if (resetSession) {
-
-        lastXpGain.get(xpUsername)[skill][TOTAL_XP_GAIN] = new Double(0);
-        lastXpGain.get(xpUsername)[skill][TIME_OF_FIRST_XP_DROP] =
-            lastXpGain.get(xpUsername)[skill][TIME_OF_LAST_XP_DROP] =
-                (double) System.currentTimeMillis();
-        lastXpGain.get(xpUsername)[skill][TOTAL_XP_DROPS] = new Double(0);
-        showXpPerHour.get(xpUsername)[skill] = false;
-      }
     }
   }
 
