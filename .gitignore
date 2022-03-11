@@ -20,3 +20,5 @@ org.sonarlint.eclipse.core.prefs
 /.idea/
 *.iml
 *.eml
+assets/launch4j.log
+rsctimes-windows/
