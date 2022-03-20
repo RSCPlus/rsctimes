@@ -65,6 +65,7 @@ public class Settings {
   public static HashMap<String, Boolean> COMBAT_MENU_SHOWN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> COMBAT_MENU_HIDDEN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CENTER_XPDROPS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> DISABLE_UNDERGROUND_LIGHTING = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ZOOMABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ROTATABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_MOVABLE = new HashMap<String, Boolean>();
@@ -172,6 +173,7 @@ public class Settings {
   // these are variables that are injected with JClassPatcher
   public static int COMBAT_STYLE_INT = Client.COMBAT_AGGRESSIVE;
   public static boolean HIDE_ROOFS_BOOL = false;
+  public static boolean DISABLE_UNDERGROUND_LIGHTING_BOOL = false;
   public static boolean COMBAT_MENU_SHOWN_BOOL = false;
   public static boolean COMBAT_MENU_HIDDEN_BOOL = false;
   public static boolean CAMERA_ZOOMABLE_BOOL = false;
@@ -339,6 +341,14 @@ public class Settings {
     CENTER_XPDROPS.put("all", true);
     CENTER_XPDROPS.put(
         "custom", getPropBoolean(props, "center_xpdrops", CENTER_XPDROPS.get("default")));
+
+    DISABLE_UNDERGROUND_LIGHTING.put("vanilla", false);
+    DISABLE_UNDERGROUND_LIGHTING.put("vanilla_resizable", false);
+    DISABLE_UNDERGROUND_LIGHTING.put("lite", false);
+    DISABLE_UNDERGROUND_LIGHTING.put("default", false);
+    DISABLE_UNDERGROUND_LIGHTING.put("heavy", true);
+    DISABLE_UNDERGROUND_LIGHTING.put("all", true);
+    DISABLE_UNDERGROUND_LIGHTING.put("custom", getPropBoolean(props, "disable_underground_lighting", DISABLE_UNDERGROUND_LIGHTING.get("default")));
 
     CAMERA_ZOOMABLE.put("vanilla", false);
     CAMERA_ZOOMABLE.put("vanilla_resizable", false);
@@ -1523,6 +1533,7 @@ public class Settings {
               "keep_scrollbar_pos_magic_prayer",
               Boolean.toString(KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(preset)));
       props.setProperty("hide_roofs", Boolean.toString(HIDE_ROOFS.get(preset)));*/
+      props.setProperty("disable_underground_lighting", Boolean.toString(DISABLE_UNDERGROUND_LIGHTING.get(preset)));
       props.setProperty("camera_zoomable", Boolean.toString(CAMERA_ZOOMABLE.get(preset)));
       props.setProperty("camera_rotatable", Boolean.toString(CAMERA_ROTATABLE.get(preset)));
       props.setProperty("camera_movable", Boolean.toString(CAMERA_MOVABLE.get(preset)));
@@ -1856,6 +1867,7 @@ public class Settings {
     // TODO: get rid of these variables and this function if possible
     COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
     // HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
+    DISABLE_UNDERGROUND_LIGHTING_BOOL = DISABLE_UNDERGROUND_LIGHTING.get(currentProfile);
     COMBAT_MENU_SHOWN_BOOL = COMBAT_MENU_SHOWN.get(currentProfile);
     COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);
     CAMERA_ZOOMABLE_BOOL = CAMERA_ZOOMABLE.get(currentProfile);
