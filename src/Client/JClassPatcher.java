@@ -566,6 +566,39 @@ public class JClassPatcher {
     while (methodNodeList.hasNext()) {
       MethodNode methodNode = methodNodeList.next();
 
+      // Makes the underground flickering toggleable
+      if (methodNode.name.equals("cl") && methodNode.desc.equals("()V")) {
+        AbstractInsnNode start = methodNode.instructions.getFirst();
+        while (start != null) {
+          if (start.getOpcode() == Opcodes.LDC) {
+            LdcInsnNode ldcNode = (LdcInsnNode)start;
+            if (ldcNode.cst instanceof Double && (double)ldcNode.cst == 3.0) {
+              JumpInsnNode insnNode = (JumpInsnNode) ldcNode.getPrevious().getPrevious().getPrevious();
+
+              methodNode.instructions.insert(insnNode, new JumpInsnNode(Opcodes.IFGT, insnNode.label));
+
+              methodNode.instructions.insert(
+                      insnNode,
+                      new FieldInsnNode(
+                              Opcodes.GETSTATIC, "Client/Settings", "DISABLE_UNDERGROUND_LIGHTING_BOOL", "Z"));
+
+              methodNode.instructions.insert(
+                      insnNode,
+                      new MethodInsnNode(
+                              Opcodes.INVOKESTATIC,
+                              "Client/Settings",
+                              "updateInjectedVariables",
+                              "()V",
+                              false));
+
+              break;
+            }
+          }
+
+          start = start.getNext();
+        }
+      }
+
       if (methodNode.name.equals("yi") && methodNode.desc.equals("()V")) {
         Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
         while (insnNodeList.hasNext()) {
