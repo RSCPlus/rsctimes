@@ -727,7 +727,7 @@ public class ConfigWindow {
         generalPanelRoofHidingCheckbox.setToolTipText("Always hide rooftops");
         generalPanelRoofHidingCheckbox.setEnabled(false);
 
-        generalPanelDisableUndergroundLightingCheckbox = addCheckbox("Disable underground lighting", generalPanel);
+        generalPanelDisableUndergroundLightingCheckbox = addCheckbox("Disable underground lighting flicker", generalPanel);
         generalPanelDisableUndergroundLightingCheckbox.setToolTipText("Underground will no longer flicker, basically");
 
         generalPanelCameraZoomableCheckbox = addCheckbox("Camera zoom enhancement", generalPanel);
