@@ -83,6 +83,8 @@ public class JClassPatcher {
       patchFrame(node);
     } else if (node.name.equals("jagex/o")) {
       patchUtility(node);
+    } else if (node.name.equals("jagex/client/j")) {
+      patchScene(node);
     }
 
     patchGeneric(node);
@@ -571,25 +573,30 @@ public class JClassPatcher {
         AbstractInsnNode start = methodNode.instructions.getFirst();
         while (start != null) {
           if (start.getOpcode() == Opcodes.LDC) {
-            LdcInsnNode ldcNode = (LdcInsnNode)start;
-            if (ldcNode.cst instanceof Double && (double)ldcNode.cst == 3.0) {
-              JumpInsnNode insnNode = (JumpInsnNode) ldcNode.getPrevious().getPrevious().getPrevious();
-
-              methodNode.instructions.insert(insnNode, new JumpInsnNode(Opcodes.IFGT, insnNode.label));
-
-              methodNode.instructions.insert(
-                      insnNode,
-                      new FieldInsnNode(
-                              Opcodes.GETSTATIC, "Client/Settings", "DISABLE_UNDERGROUND_LIGHTING_BOOL", "Z"));
+            LdcInsnNode ldcNode = (LdcInsnNode) start;
+            if (ldcNode.cst instanceof Double && (double) ldcNode.cst == 3.0) {
+              JumpInsnNode insnNode =
+                  (JumpInsnNode) ldcNode.getPrevious().getPrevious().getPrevious();
 
               methodNode.instructions.insert(
-                      insnNode,
-                      new MethodInsnNode(
-                              Opcodes.INVOKESTATIC,
-                              "Client/Settings",
-                              "updateInjectedVariables",
-                              "()V",
-                              false));
+                  insnNode, new JumpInsnNode(Opcodes.IFGT, insnNode.label));
+
+              methodNode.instructions.insert(
+                  insnNode,
+                  new FieldInsnNode(
+                      Opcodes.GETSTATIC,
+                      "Client/Settings",
+                      "DISABLE_UNDERGROUND_LIGHTING_BOOL",
+                      "Z"));
+
+              methodNode.instructions.insert(
+                  insnNode,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Client/Settings",
+                      "updateInjectedVariables",
+                      "()V",
+                      false));
 
               break;
             }
@@ -1866,6 +1873,108 @@ public class JClassPatcher {
         methodNode.instructions.insertBefore(first, new VarInsnNode(Opcodes.ASTORE, 1));
         methodNode.instructions.insertBefore(first, new VarInsnNode(Opcodes.ALOAD, 1));
         methodNode.instructions.insertBefore(first, new InsnNode(Opcodes.ARETURN));
+      }
+    }
+  }
+
+  private void patchScene(ClassNode node) {
+    Logger.Info("Patching scene (" + node.name + ".class)");
+
+    Iterator<MethodNode> methodNodeList = node.methods.iterator();
+    while (methodNodeList.hasNext()) {
+      MethodNode methodNode = methodNodeList.next();
+
+      // Patch crash due to exceeding max polygons
+      if (methodNode.name.equals("qi") && methodNode.desc.equals("()V")) {
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        int times = 0;
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode nextNode = insnNode.getNext();
+          AbstractInsnNode twoNextNode = nextNode.getNext();
+
+          if (insnNode.getPrevious() == null
+              || insnNode.getPrevious().getPrevious() == null
+              || insnNode.getPrevious().getPrevious().getPrevious() == null) continue;
+
+          AbstractInsnNode threePrevNode = insnNode.getPrevious().getPrevious().getPrevious();
+          AbstractInsnNode findNode;
+          LabelNode targetLabel;
+
+          if (nextNode == null || twoNextNode == null) break;
+
+          if (insnNode.getOpcode() == Opcodes.GETFIELD
+              && ((FieldInsnNode) insnNode).name.equals("kn")
+              && nextNode.getOpcode() == Opcodes.ICONST_1
+              && twoNextNode.getOpcode() == Opcodes.IADD
+              && threePrevNode.getOpcode() == Opcodes.PUTFIELD
+              && ((FieldInsnNode) threePrevNode).name.equals("ofb")
+              && times == 0) {
+            findNode = insnNode;
+
+            // rewind to find iload16
+            while (!(findNode.getOpcode() == Opcodes.LDC
+                && ((LdcInsnNode) findNode).cst.equals(12345678))) {
+              findNode = findNode.getPrevious();
+            }
+            targetLabel = ((JumpInsnNode) findNode.getNext()).label;
+            findNode = findNode.getPrevious();
+
+            // patch add this.kn < this.ln.length - 1
+            methodNode.instructions.insertBefore(findNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                findNode, new FieldInsnNode(Opcodes.GETFIELD, "jagex/client/j", "kn", "I"));
+            methodNode.instructions.insertBefore(findNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                findNode,
+                new FieldInsnNode(Opcodes.GETFIELD, "jagex/client/j", "ln", "[Ljagex/client/q;"));
+            methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ARRAYLENGTH));
+            methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ICONST_1));
+            methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ISUB));
+            methodNode.instructions.insertBefore(
+                findNode, new JumpInsnNode(Opcodes.IF_ICMPGE, targetLabel));
+            times++;
+          }
+
+          if (insnNode.getOpcode() == Opcodes.GETFIELD
+              && ((FieldInsnNode) insnNode).name.equals("kn")
+              && nextNode.getOpcode() == Opcodes.ICONST_1
+              && twoNextNode.getOpcode() == Opcodes.IADD
+              && threePrevNode.getOpcode() == Opcodes.PUTFIELD
+              && ((FieldInsnNode) threePrevNode).name.equals("jfb")
+              && times == 1) {
+            findNode = insnNode;
+
+            // rewind to find jump
+            while (!(findNode.getOpcode() == Opcodes.GETFIELD
+                && ((FieldInsnNode) findNode).name.equals("um")
+                && findNode.getNext().getOpcode() == Opcodes.IF_ICMPGT)) {
+              findNode = findNode.getPrevious();
+            }
+            targetLabel = ((JumpInsnNode) findNode.getNext()).label;
+
+            // rewind to find iload12
+            while (!(findNode.getOpcode() == Opcodes.ISTORE)) {
+              findNode = findNode.getPrevious();
+            }
+            findNode = findNode.getNext();
+
+            // patch add this.kn < this.ln.length - 1
+            methodNode.instructions.insertBefore(findNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                findNode, new FieldInsnNode(Opcodes.GETFIELD, "jagex/client/j", "kn", "I"));
+            methodNode.instructions.insertBefore(findNode, new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.insertBefore(
+                findNode,
+                new FieldInsnNode(Opcodes.GETFIELD, "jagex/client/j", "ln", "[Ljagex/client/q;"));
+            methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ARRAYLENGTH));
+            methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ICONST_1));
+            methodNode.instructions.insertBefore(findNode, new InsnNode(Opcodes.ISUB));
+            methodNode.instructions.insertBefore(
+                findNode, new JumpInsnNode(Opcodes.IF_ICMPGE, targetLabel));
+            times++;
+          }
+        }
       }
     }
   }

@@ -474,7 +474,7 @@ public class Renderer {
       int y = 28 + GAME_RENDER_OFFSET;
 
       // combat menu is showing, so move everything down
-      if (combat_menu_shown) y = 132;
+      if (combat_menu_shown) y = 132 + GAME_RENDER_OFFSET;
 
       // NPC Post-processing for ui
       if (Settings.SHOW_COMBAT_INFO.get(Settings.currentProfile) && !Client.isInterfaceOpen()) {
@@ -1679,7 +1679,7 @@ public class Renderer {
     lastDisplayingSoftwareCursor = displayingSoftwareCursor;
     displayingSoftwareCursor = false;
     if (screenshot || Settings.SOFTWARE_CURSOR.get(Settings.currentProfile)) {
-      if (MouseHandler.y > GAME_RENDER_OFFSET + 1) {
+      if (MouseHandler.y > GAME_RENDER_OFFSET) {
         setAlpha(g2, 1.0f);
         g2.drawImage(image_cursor, MouseHandler.x, MouseHandler.y, null);
         displayingSoftwareCursor = true;
