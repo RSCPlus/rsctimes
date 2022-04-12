@@ -346,7 +346,7 @@ public class ConfigWindow {
         frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
         frame.getContentPane().add(navigationPanel, BorderLayout.PAGE_END);
 
-        // tabbedPane.addTab("Presets", null, presetsScrollPane, null);
+        tabbedPane.addTab("Presets", null, presetsScrollPane, null);
         tabbedPane.addTab("General", null, generalScrollPane, null);
         tabbedPane.addTab("Overlays", null, overlayScrollPane, null);
         // tabbedPane.addTab("Notifications", null, notificationScrollPane, null);

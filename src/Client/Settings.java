@@ -65,7 +65,8 @@ public class Settings {
   public static HashMap<String, Boolean> COMBAT_MENU_SHOWN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> COMBAT_MENU_HIDDEN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CENTER_XPDROPS = new HashMap<String, Boolean>();
-  public static HashMap<String, Boolean> DISABLE_UNDERGROUND_LIGHTING = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> DISABLE_UNDERGROUND_LIGHTING =
+      new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ZOOMABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ROTATABLE = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_MOVABLE = new HashMap<String, Boolean>();
@@ -348,7 +349,10 @@ public class Settings {
     DISABLE_UNDERGROUND_LIGHTING.put("default", false);
     DISABLE_UNDERGROUND_LIGHTING.put("heavy", true);
     DISABLE_UNDERGROUND_LIGHTING.put("all", true);
-    DISABLE_UNDERGROUND_LIGHTING.put("custom", getPropBoolean(props, "disable_underground_lighting", DISABLE_UNDERGROUND_LIGHTING.get("default")));
+    DISABLE_UNDERGROUND_LIGHTING.put(
+        "custom",
+        getPropBoolean(
+            props, "disable_underground_lighting", DISABLE_UNDERGROUND_LIGHTING.get("default")));
 
     CAMERA_ZOOMABLE.put("vanilla", false);
     CAMERA_ZOOMABLE.put("vanilla_resizable", false);
@@ -1533,7 +1537,9 @@ public class Settings {
               "keep_scrollbar_pos_magic_prayer",
               Boolean.toString(KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(preset)));
       props.setProperty("hide_roofs", Boolean.toString(HIDE_ROOFS.get(preset)));*/
-      props.setProperty("disable_underground_lighting", Boolean.toString(DISABLE_UNDERGROUND_LIGHTING.get(preset)));
+      props.setProperty(
+          "disable_underground_lighting",
+          Boolean.toString(DISABLE_UNDERGROUND_LIGHTING.get(preset)));
       props.setProperty("camera_zoomable", Boolean.toString(CAMERA_ZOOMABLE.get(preset)));
       props.setProperty("camera_rotatable", Boolean.toString(CAMERA_ROTATABLE.get(preset)));
       props.setProperty("camera_movable", Boolean.toString(CAMERA_MOVABLE.get(preset)));
