@@ -553,6 +553,39 @@ public class Client {
     }
   }
 
+  public static void sortFriends() {
+    if (!Settings.SORT_FRIENDS.get(Settings.currentProfile)) {
+      return;
+    }
+
+    try {
+      int count = (int) Reflection.friendCount.get(Client.instance);
+      long[] hashes = (long[]) Reflection.friendHash.get(Client.instance);
+      int[] online = (int[]) Reflection.friendOnline.get(Client.instance);
+
+      int i = 1;
+      while (i != 0) {
+        i = 0;
+        for (int j = 0; j < count - 1; j++) {
+          if (online[j] < online[(j + 1)]) {
+            int k = online[j];
+            online[j] = online[(j + 1)];
+            online[(j + 1)] = k;
+            long l = hashes[j];
+            hashes[j] = hashes[(j + 1)];
+            hashes[(j + 1)] = l;
+            i = 1;
+          }
+        }
+      }
+
+      Reflection.friendHash.set(Client.instance, hashes);
+      Reflection.friendOnline.set(Client.instance, online);
+
+    } catch (IllegalArgumentException | IllegalAccessException e) {
+    }
+  }
+
   /**
    * Extensible method hooking to draw other dialog boxes and consuming mouse method. Branching
    * should match conditions inside showTextInputDialog()
