@@ -356,7 +356,7 @@ public class Settings {
     HIDE_ROOFS.put("vanilla", false);
     HIDE_ROOFS.put("vanilla_resizable", false);
     HIDE_ROOFS.put("lite", false);
-    HIDE_ROOFS.put("default", true);
+    HIDE_ROOFS.put("default", false);
     HIDE_ROOFS.put("heavy", true);
     HIDE_ROOFS.put("all", true);
     HIDE_ROOFS.put("custom", getPropBoolean(props, "hide_roofs", HIDE_ROOFS.get("default")));
