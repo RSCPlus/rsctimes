@@ -65,6 +65,8 @@ public class Settings {
   public static HashMap<String, Boolean> COMBAT_MENU_SHOWN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> COMBAT_MENU_HIDDEN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CENTER_XPDROPS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SORT_FRIENDS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> HIDE_ROOFS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> DISABLE_UNDERGROUND_LIGHTING =
       new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CAMERA_ZOOMABLE = new HashMap<String, Boolean>();
@@ -342,6 +344,22 @@ public class Settings {
     CENTER_XPDROPS.put("all", true);
     CENTER_XPDROPS.put(
         "custom", getPropBoolean(props, "center_xpdrops", CENTER_XPDROPS.get("default")));
+
+    SORT_FRIENDS.put("vanilla", false);
+    SORT_FRIENDS.put("vanilla_resizable", false);
+    SORT_FRIENDS.put("lite", true);
+    SORT_FRIENDS.put("default", true);
+    SORT_FRIENDS.put("heavy", true);
+    SORT_FRIENDS.put("all", true);
+    SORT_FRIENDS.put("custom", getPropBoolean(props, "sort_friends", SORT_FRIENDS.get("default")));
+
+    HIDE_ROOFS.put("vanilla", false);
+    HIDE_ROOFS.put("vanilla_resizable", false);
+    HIDE_ROOFS.put("lite", false);
+    HIDE_ROOFS.put("default", false);
+    HIDE_ROOFS.put("heavy", true);
+    HIDE_ROOFS.put("all", true);
+    HIDE_ROOFS.put("custom", getPropBoolean(props, "hide_roofs", HIDE_ROOFS.get("default")));
 
     DISABLE_UNDERGROUND_LIGHTING.put("vanilla", false);
     DISABLE_UNDERGROUND_LIGHTING.put("vanilla_resizable", false);
@@ -1535,8 +1553,9 @@ public class Settings {
       props.setProperty("command_patch_quest", Boolean.toString(COMMAND_PATCH_QUEST.get(preset)));
       props.setProperty(
               "keep_scrollbar_pos_magic_prayer",
-              Boolean.toString(KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(preset)));
-      props.setProperty("hide_roofs", Boolean.toString(HIDE_ROOFS.get(preset)));*/
+              Boolean.toString(KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(preset)));*/
+      props.setProperty("sort_friends", Boolean.toString(SORT_FRIENDS.get(preset)));
+      props.setProperty("hide_roofs", Boolean.toString(HIDE_ROOFS.get(preset)));
       props.setProperty(
           "disable_underground_lighting",
           Boolean.toString(DISABLE_UNDERGROUND_LIGHTING.get(preset)));
@@ -1872,7 +1891,7 @@ public class Settings {
   public static void updateInjectedVariables() {
     // TODO: get rid of these variables and this function if possible
     COMBAT_STYLE_INT = COMBAT_STYLE.get(currentProfile);
-    // HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
+    HIDE_ROOFS_BOOL = HIDE_ROOFS.get(currentProfile);
     DISABLE_UNDERGROUND_LIGHTING_BOOL = DISABLE_UNDERGROUND_LIGHTING.get(currentProfile);
     COMBAT_MENU_SHOWN_BOOL = COMBAT_MENU_SHOWN.get(currentProfile);
     COMBAT_MENU_HIDDEN_BOOL = COMBAT_MENU_HIDDEN.get(currentProfile);

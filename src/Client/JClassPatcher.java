@@ -85,6 +85,8 @@ public class JClassPatcher {
       patchUtility(node);
     } else if (node.name.equals("jagex/client/j")) {
       patchScene(node);
+    } else if (node.name.equals("jagex/client/e")) {
+      patchConnection(node);
     }
 
     patchGeneric(node);
@@ -744,6 +746,40 @@ public class JClassPatcher {
         boolean roofHidePatched = false;
         while (insnNodeList.hasNext()) {
           AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode findNode, findNode2;
+
+          // Hide Roof option
+          if (insnNode.getOpcode() == Opcodes.IAND) {
+            if (!roofHidePatched) {
+              findNode = insnNode;
+              // find aload0
+              while (!(findNode.getOpcode() == Opcodes.ALOAD
+                  && ((VarInsnNode) findNode).var == 0)) {
+                findNode = findNode.getNext();
+              }
+              findNode2 = findNode;
+              // find call to this.uu == 0
+              while (!(findNode2.getOpcode() == Opcodes.IFNE)) {
+                findNode2 = findNode2.getNext();
+              }
+              JumpInsnNode end = (JumpInsnNode) findNode2;
+              AbstractInsnNode ifStart = findNode;
+              methodNode.instructions.insertBefore(
+                  ifStart,
+                  new MethodInsnNode(
+                      Opcodes.INVOKESTATIC,
+                      "Client/Settings",
+                      "updateInjectedVariables",
+                      "()V",
+                      false));
+              methodNode.instructions.insertBefore(
+                  ifStart,
+                  new FieldInsnNode(Opcodes.GETSTATIC, "Client/Settings", "HIDE_ROOFS_BOOL", "Z"));
+              methodNode.instructions.insertBefore(
+                  ifStart, new JumpInsnNode(Opcodes.IFGT, end.label));
+              roofHidePatched = true;
+            }
+          }
 
           // Move FPS display
           if (insnNode.getOpcode() == Opcodes.SIPUSH) {
@@ -1973,6 +2009,51 @@ public class JClassPatcher {
             methodNode.instructions.insertBefore(
                 findNode, new JumpInsnNode(Opcodes.IF_ICMPGE, targetLabel));
             times++;
+          }
+        }
+      }
+    }
+  }
+
+  private void patchConnection(ClassNode node) {
+    Logger.Info("Patching connection (" + node.name + ".class)");
+
+    Iterator<MethodNode> methodNodeList = node.methods.iterator();
+    while (methodNodeList.hasNext()) {
+      MethodNode methodNode = methodNodeList.next();
+
+      // Place sorting of friends list
+      if (methodNode.name.equals("z") && methodNode.desc.equals("()V")) {
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode nextNode = insnNode.getNext();
+          AbstractInsnNode findNode;
+
+          if (nextNode == null) break;
+
+          if (insnNode.getOpcode() == Opcodes.PUTFIELD
+              && ((FieldInsnNode) insnNode).name.equals("ed")
+              && nextNode.getOpcode() == Opcodes.RETURN) {
+            methodNode.instructions.insertBefore(
+                nextNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "sortFriends", "()V", false));
+          }
+
+          if (insnNode.getOpcode() == Opcodes.LDC
+              && ((LdcInsnNode) insnNode).cst.equals(" has been added to your friends list")) {
+            findNode = insnNode;
+
+            // find goto
+            while (!(findNode.getOpcode() == Opcodes.GOTO)) {
+              findNode = findNode.getNext();
+            }
+            methodNode.instructions.insertBefore(
+                findNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "sortFriends", "()V", false));
           }
         }
       }

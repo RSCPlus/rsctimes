@@ -150,6 +150,7 @@ public class ConfigWindow {
     private JCheckBox generalPanelCommandPatchDiskOfReturningCheckbox;
     private JCheckBox generalPanelBypassAttackCheckbox;
     private JCheckBox generalPanelKeepScrollbarPosGoodMagicEvilMagicCheckbox;
+    private JCheckBox generalPanelSortFriendsCheckbox;
     private JCheckBox generalPanelRoofHidingCheckbox;
     private JCheckBox generalPanelDisableUndergroundLightingCheckbox;
     private JCheckBox generalPanelCameraZoomableCheckbox;
@@ -723,9 +724,11 @@ public class ConfigWindow {
                 "Keeps the GoodMagic & EvilMagic scrollbar position when switching between tabs");
         generalPanelKeepScrollbarPosGoodMagicEvilMagicCheckbox.setEnabled(false);
 
+        generalPanelSortFriendsCheckbox = addCheckbox("Friend online first", generalPanel);
+        generalPanelSortFriendsCheckbox.setToolTipText("Sort friends who are online to show at the top of the list");
+        
         generalPanelRoofHidingCheckbox = addCheckbox("Roof hiding", generalPanel);
         generalPanelRoofHidingCheckbox.setToolTipText("Always hide rooftops");
-        generalPanelRoofHidingCheckbox.setEnabled(false);
 
         generalPanelDisableUndergroundLightingCheckbox = addCheckbox("Disable underground lighting flicker", generalPanel);
         generalPanelDisableUndergroundLightingCheckbox.setToolTipText("Underground will no longer flicker, basically");
@@ -2043,8 +2046,9 @@ public class ConfigWindow {
                 Settings.COMMAND_PATCH_QUEST.get(Settings.currentProfile));
         generalPanelKeepScrollbarPosMagicPrayerCheckbox.setSelected(
                 Settings.KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(Settings.currentProfile));
+                */
+        generalPanelSortFriendsCheckbox.setSelected(Settings.SORT_FRIENDS.get(Settings.currentProfile));
         generalPanelRoofHidingCheckbox.setSelected(Settings.HIDE_ROOFS.get(Settings.currentProfile));
-        */
         generalPanelDisableUndergroundLightingCheckbox.setSelected(Settings.DISABLE_UNDERGROUND_LIGHTING.get(Settings.currentProfile));
         generalPanelCameraZoomableCheckbox.setSelected(
                 Settings.CAMERA_ZOOMABLE.get(Settings.currentProfile));
@@ -2270,8 +2274,9 @@ public class ConfigWindow {
                 Settings.currentProfile, generalPanelCommandPatchQuestCheckbox.isSelected());
         Settings.KEEP_SCROLLBAR_POS_MAGIC_PRAYER.put(
                 Settings.currentProfile, generalPanelKeepScrollbarPosMagicPrayerCheckbox.isSelected());
+                */
+        Settings.SORT_FRIENDS.put(Settings.currentProfile, generalPanelSortFriendsCheckbox.isSelected());
         Settings.HIDE_ROOFS.put(Settings.currentProfile, generalPanelRoofHidingCheckbox.isSelected());
-        */
         Settings.DISABLE_UNDERGROUND_LIGHTING.put(Settings.currentProfile, generalPanelDisableUndergroundLightingCheckbox.isSelected());
         Settings.CAMERA_ZOOMABLE.put(
                 Settings.currentProfile, generalPanelCameraZoomableCheckbox.isSelected());
@@ -2458,6 +2463,9 @@ public class ConfigWindow {
 
         if (Client.state == Client.STATE_LOGIN)
             Game.getInstance().getJConfig().changeWorld(Settings.WORLD.get(Settings.currentProfile));
+        
+        if (Client.state == Client.STATE_GAME)
+        	Client.sortFriends();
 
         // Save Settings
         Settings.save();

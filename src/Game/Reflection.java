@@ -77,6 +77,10 @@ public class Reflection {
   public static Field menuWidth = null;
   public static Field menuHeight = null;
 
+  public static Field friendCount = null;
+  public static Field friendHash = null;
+  public static Field friendOnline = null;
+
   public static Method displayMessage = null;
   public static Method setResponseMessage = null;
   public static Method setCameraSize = null;
@@ -183,6 +187,12 @@ public class Reflection {
       // this menu height for chats I believe
       menuHeight = c.getDeclaredField("df");
 
+      // Connection
+      c = classLoader.loadClass("jagex.client.e");
+      friendCount = c.getDeclaredField("jd");
+      friendHash = c.getDeclaredField("kd");
+      friendOnline = c.getDeclaredField("ld");
+
       // Set all accessible
       if (mouseMove != null) mouseMove.setAccessible(true);
       if (mouseDrag != null) mouseDrag.setAccessible(true);
@@ -197,6 +207,9 @@ public class Reflection {
       if (menuScroll != null) menuScroll.setAccessible(true);
       if (menuWidth != null) menuWidth.setAccessible(true);
       if (menuHeight != null) menuHeight.setAccessible(true);
+      if (friendCount != null) friendCount.setAccessible(true);
+      if (friendHash != null) friendHash.setAccessible(true);
+      if (friendOnline != null) friendOnline.setAccessible(true);
       if (displayMessage != null) displayMessage.setAccessible(true);
       if (setResponseMessage != null) setResponseMessage.setAccessible(true);
       if (setCameraSize != null) setCameraSize.setAccessible(true);
