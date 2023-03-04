@@ -22,6 +22,7 @@ import Client.KeybindSet;
 import Client.Logger;
 import Client.NotificationsHandler;
 import Client.NotificationsHandler.NotifType;
+import Client.ScaledWindow;
 import Client.Settings;
 import Client.TwitchIRC;
 import Client.Util;
@@ -245,7 +246,7 @@ public class Client {
   }
 
   /**
-   * An updater that runs frequently to update calculations for XP/fatigue drops, the XP bar, etc.
+   * An updater that runs frequently to update calculations for XP drops, the XP bar, etc.
    *
    * <p>This updater does not handle any rendering, for rendering see {@link Renderer#present}
    */
@@ -263,24 +264,30 @@ public class Client {
 
     /*if (Settings.RECORD_AUTOMATICALLY_FIRST_TIME.get(Settings.currentProfile)
         && showRecordAlwaysDialogue) {
+
+      String confirmDefaultRecordMessage =
+          "If you'd like, you can record your session every time you play by default.<br/>"
+              + "<br/>"
+              + "These recordings do not leave your computer unless you manually do it on purpose.<br/>"
+              + "They also take up negligible space. You could fit about a 6 hour session on a floppy disk, depending on what you do.<br/>"
+              + "<br/>"
+              + "Recordings can be played back later, even offline, and capture the data the server sends and that you send the server.<br/>"
+              + "Your password is not in the capture.<br/>"
+              + "<br/>"
+              + "Would you like to record all your play sessions by default?<br/>"
+              + "<br/>"
+              + "<b>NOTE:</b> This option can be toggled in the Settings interface (ctrl-o by default) under the Replay tab.";
+
+      JPanel confirmDefaultRecordPanel = Util.createOptionMessagePanel(confirmDefaultRecordMessage);
+
       int response =
           JOptionPane.showConfirmDialog(
               Game.getInstance().getApplet(),
-              "If you'd like, you can record your session every time you play by default.\n"
-                  + "\n"
-                  + "These recordings do not leave your computer unless you manually do it on purpose.\n"
-                  + "They also take up negligible space. You could fit about a 6 hour session on a floppy disk, depending on what you do.\n"
-                  + "\n"
-                  + "Recordings can be played back later, even offline, and capture the data the server sends and that you send the server.\n"
-                  + "Your password is not in the capture.\n"
-                  + "\n"
-                  + "Would you like to record all your play sessions by default?\n"
-                  + "\n"
-                  + "NOTE: This option can be toggled in the Settings interface (ctrl-o by default) under the Replay tab.",
+              confirmDefaultRecordPanel,
               "rscplus",
               JOptionPane.YES_NO_OPTION,
               JOptionPane.INFORMATION_MESSAGE,
-              Launcher.icon);
+              Launcher.scaled_option_icon);
       if (response == JOptionPane.YES_OPTION || response == JOptionPane.CLOSED_OPTION) {
         Settings.RECORD_AUTOMATICALLY.put(Settings.currentProfile, true);
       } else if (response == JOptionPane.NO_OPTION) {
@@ -408,7 +415,7 @@ public class Client {
           MESSAGE_QUEST);
       if (Settings.CHECK_UPDATES.get(Settings.currentProfile)) {
         displayMessage(
-            "~034~ You will receive the update next time you restart rsctimes", MESSAGE_QUEST);
+            "~034~ You will receive the update next time you restart RSCTimes", MESSAGE_QUEST);
       }
     } else if (announceIfUpToDate) {
       displayMessage(
@@ -528,6 +535,10 @@ public class Client {
       }
 
       resetXPDrops(false);
+
+      // Re-validate the current scaling upon logging in, in case something
+      // went wrong during the initial window creation and resizing.
+      ScaledWindow.getInstance().validateAppletSize();
 
       justLoggedIn = false;
     }
@@ -751,13 +762,8 @@ public class Client {
     if (messageType == MESSAGE_GAME) {
       username = null;
       type = CHAT_NONE;
-      if (message.contains("The spell fails! You may try again in 20 seconds"))
+      if (message.contains("The spell fails! You may try again in 20 seconds")) {
         magic_timer = Renderer.time + 21000L;
-      else if (Settings.TRAY_NOTIFS.get(Settings.currentProfile)
-          && message.contains(
-              "You have been standing here for 5 mins! Please move to a new area")) {
-        NotificationsHandler.notify(
-            NotifType.LOGOUT, "Logout Notification", "You're about to log out");
       }
       // while the message is really You @gr2@are @gr1@poisioned! @gr2@You @gr3@lose @gr2@3
       // @gr1@health.
@@ -772,26 +778,24 @@ public class Client {
           && is_poisoned) {
         is_poisoned = false;
         poison_timer = Renderer.time;
+      } else if (message.contains("You are under attack!")) {
+        NotificationsHandler.notify(NotifType.UNDER_ATTACK, "PVP", message);
+      } else if (message.contains(" wishes to trade with you")) {
+        type = CHAT_TRADE_REQUEST_RECEIVED;
+        NotificationsHandler.notify(
+            NotifType.TRADE, "Trade Request", message.replaceAll("@...@", ""));
       }
     } else if (messageType == MESSAGE_PRIVATE) {
       // should extract sender/receiver here
       if (message.matches("^(?:@pri@|)You tell.*$")) {
         type = CHAT_PRIVATE_OUTGOING;
         NotificationsHandler.notify(NotifType.PM, "PM sent", message);
-      } else {
+      } else if (message.matches("^(?:@pri@|).*tells you.*$")) {
         type = CHAT_PRIVATE;
         NotificationsHandler.notify(NotifType.PM, "PM received", message);
       }
     } else if (messageType == MESSAGE_INVENTORY) {
-      if (message.contains(" wishes to duel with you")) {
-        type = CHAT_OTHER;
-        NotificationsHandler.notify(
-            NotifType.DUEL, "Duel Request", message.replaceAll("@...@", ""));
-      } else if (message.contains(" wishes to trade with you")) {
-        type = CHAT_TRADE_REQUEST_RECEIVED;
-        NotificationsHandler.notify(
-            NotifType.TRADE, "Trade Request", message.replaceAll("@...@", ""));
-      }
+      // TODO: Nothing here at the moment
     } else if (messageType == MESSAGE_QUEST) {
       type = CHAT_QUEST;
     } else if (messageType == MESSAGE_CHAT) {
@@ -1114,6 +1118,15 @@ public class Client {
       String[] commandArray = line.substring(2, line.length()).toLowerCase().split(" ");
 
       switch (commandArray[0]) {
+        case "togglescaling":
+          Settings.toggleWindowScaling();
+          break;
+        case "scaleup":
+          Settings.increaseScale();
+          break;
+        case "scaledown":
+          Settings.decreaseScale();
+          break;
           /*case "togglebypassattack":
             Settings.toggleAttackAlwaysLeftClick();
             break;

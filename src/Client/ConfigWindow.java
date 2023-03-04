@@ -18,17 +18,24 @@
  */
 package Client;
 
+import static Client.Util.isDarkThemeFlatLAF;
+import static Client.Util.isUsingFlatLAFTheme;
+import static Client.Util.osScaleDiv;
+import static Client.Util.osScaleMul;
+
 import Client.KeybindSet.KeyModifier;
 import Game.Camera;
 import Game.Client;
 import Game.Game;
 import Game.KeyboardHandler;
+import Game.Renderer;
+import com.formdev.flatlaf.ui.FlatRoundBorder;
+import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -38,14 +45,23 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.SystemTray;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +75,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -74,13 +91,11 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.border.EmptyBorder;
+import javax.swing.ToolTipManager;
+import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 /**
  * GUI designed for the RSCPlus client that manages configuration options and keybind values from
@@ -123,6 +138,15 @@ public class ConfigWindow {
   ButtonFocusListener focusListener = new ButtonFocusListener();
   JTabbedPane tabbedPane;
 
+  // Tooltip-related components
+  private final AWTEventListener eventQueueListener;
+  private final String toolTipInitText =
+      "Click here to display additional information about settings";
+  private boolean isListeningForEventQueue = false;
+  private JPanel toolTipPanel;
+  private JLabel toolTipTextLabel;
+  private String toolTipTextString;
+
   /*
    * JComponent variables which hold configuration data
    */
@@ -131,6 +155,15 @@ public class ConfigWindow {
   private JCheckBox generalPanelClientSizeCheckbox;
   private JSpinner generalPanelClientSizeXSpinner;
   private JSpinner generalPanelClientSizeYSpinner;
+  private SpinnerNumberModel spinnerWinXModel;
+  private SpinnerNumberModel spinnerWinYModel;
+  private JCheckBox generalPanelScaleWindowCheckbox;
+  private JRadioButton generalPanelIntegerScalingFocusButton;
+  private JSpinner generalPanelIntegerScalingSpinner;
+  private JRadioButton generalPanelBilinearScalingFocusButton;
+  private JSpinner generalPanelBilinearScalingSpinner;
+  private JRadioButton generalPanelBicubicScalingFocusButton;
+  private JSpinner generalPanelBicubicScalingSpinner;
   private JCheckBox generalPanelCheckUpdates;
   private JCheckBox generalPanelWelcomeEnabled;
   // private JCheckBox generalPanelChatHistoryCheckbox;
@@ -159,12 +192,16 @@ public class ConfigWindow {
   private JCheckBox generalPanelColoredTextCheckbox;
   private JSlider generalPanelFoVSlider;
   private JCheckBox generalPanelCustomCursorCheckbox;
+  private JCheckBox generalPanelShiftScrollCameraRotationCheckbox;
+  private JSlider generalPanelTrackpadRotationSlider;
   private JSlider generalPanelViewDistanceSlider;
   private JCheckBox generalPanelLimitFPSCheckbox;
   private JSpinner generalPanelLimitFPSSpinner;
   private JCheckBox generalPanelAutoScreenshotCheckbox;
   private JCheckBox generalPanelPatchGenderCheckbox;
   private JCheckBox generalPanelPatchHbar512LastPixelCheckbox;
+  private JCheckBox generalPanelUseDarkModeCheckbox;
+  private JCheckBox generalPanelUseNimbusThemeCheckbox;
   private JCheckBox generalPanelDebugModeCheckbox;
   private JCheckBox generalPanelExceptionHandlerCheckbox;
   private JLabel generalPanelNamePatchModeDesc;
@@ -206,7 +243,6 @@ public class ConfigWindow {
   private JCheckBox notificationPanelPMNotifsCheckbox;
   private JCheckBox notificationPanelTradeNotifsCheckbox;
   private JCheckBox notificationPanelUnderAttackNotifsCheckbox;
-  private JCheckBox notificationPanelLogoutNotifsCheckbox;
   private JCheckBox notificationPanelLowHPNotifsCheckbox;
   private JSpinner notificationPanelLowHPNotifsSpinner;
   private JCheckBox notificationPanelHighlightedItemTimerCheckbox;
@@ -250,26 +286,8 @@ public class ConfigWindow {
   private JPanel worldListPanel = new JPanel();
 
   public ConfigWindow() {
-    try {
-      // Set System L&F as a fall-back option.
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-      for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-        if ("Nimbus".equals(info.getName())) {
-          UIManager.setLookAndFeel(info.getClassName());
-          NimbusLookAndFeel laf = (NimbusLookAndFeel) UIManager.getLookAndFeel();
-          laf.getDefaults().put("defaultFont", new Font(Font.SANS_SERIF, Font.PLAIN, 11));
-          break;
-        }
-      }
-    } catch (UnsupportedLookAndFeelException e) {
-      Logger.Error("Unable to set L&F: Unsupported look and feel");
-    } catch (ClassNotFoundException e) {
-      Logger.Error("Unable to set L&F: Class not found");
-    } catch (InstantiationException e) {
-      Logger.Error("Unable to set L&F: Class object cannot be instantiated");
-    } catch (IllegalAccessException e) {
-      Logger.Error("Unable to set L&F: Illegal access exception");
-    }
+    Util.setUITheme();
+    eventQueueListener = createConfigWindowEventQueueListener();
     initialize();
   }
 
@@ -279,7 +297,21 @@ public class ConfigWindow {
   }
 
   public void hideConfigWindow() {
+    resetToolTipListener();
+
     frame.setVisible(false);
+  }
+
+  public void toggleConfigWindow() {
+    if (this.isShown()) {
+      this.hideConfigWindow();
+    } else {
+      this.showConfigWindow();
+    }
+  }
+
+  public boolean isShown() {
+    return frame.isVisible();
   }
 
   /** Initialize the contents of the frame. */
@@ -307,18 +339,47 @@ public class ConfigWindow {
   private void runInit() {
     frame = new JFrame();
     frame.setTitle("Settings");
-    frame.setBounds(100, 100, 800, 650);
+    frame.setBounds(osScaleDiv(100), osScaleDiv(100), osScaleMul(800), osScaleMul(650));
     frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
     frame.getContentPane().setLayout(new BorderLayout(0, 0));
-    URL iconURL = Launcher.getResource("/assets/RSCX.logo.png");
+    URL iconURL = Launcher.getResource("/assets/icon.png");
     if (iconURL != null) {
       ImageIcon icon = new ImageIcon(iconURL);
       frame.setIconImage(icon.getImage());
     }
+    frame.addWindowListener(
+        new WindowAdapter() {
+          @Override
+          public void windowClosing(WindowEvent e) {
+            resetToolTipListener();
+            super.windowClosed(e);
+          }
+        });
 
     // Container declarations
     /** The tabbed pane holding the five configuration tabs */
     tabbedPane = new JTabbedPane();
+    if (isUsingFlatLAFTheme()) {
+      tabbedPane.putClientProperty("JTabbedPane.tabType", "card");
+    }
+    tabbedPane.addMouseListener(
+        new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            super.mouseClicked(e);
+            if (isListeningForEventQueue) {
+              toolTipTextString = "Waiting for mouse hover...";
+            } else {
+              toolTipTextString = toolTipInitText;
+            }
+            toolTipTextLabel.setText(toolTipTextString);
+          }
+        });
+
+    /* The JPanel containing the tooltip text components */
+    toolTipPanel = new JPanel();
+    resetToolTipBarPanelColors();
+
     /**
      * The JPanel containing the OK, Cancel, Apply, and Restore Defaults buttons at the bottom of
      * the window
@@ -334,22 +395,68 @@ public class ConfigWindow {
     JScrollPane worldListScrollPane = new JScrollPane();
     JScrollPane authorsScrollPane = new JScrollPane();
 
+    if (isUsingFlatLAFTheme()) {
+      Color navigationPanelBackgroundColor = null;
+
+      if (isDarkThemeFlatLAF()) {
+        navigationPanelBackgroundColor = new Color(60, 63, 65);
+      } else if (Util.isLightThemeFlatLAF()) {
+        navigationPanelBackgroundColor = new Color(225, 225, 225);
+      }
+
+      navigationPanel.setBackground(navigationPanelBackgroundColor);
+
+      Color scrollPaneBorderColor = null;
+
+      if (isDarkThemeFlatLAF()) {
+        scrollPaneBorderColor = new Color(82, 86, 87);
+      } else if (Util.isLightThemeFlatLAF()) {
+        scrollPaneBorderColor = new Color(194, 194, 194);
+      }
+
+      MatteBorder scrollPaneBorder =
+          BorderFactory.createMatteBorder(
+              0, osScaleMul(1), osScaleMul(1), osScaleMul(1), scrollPaneBorderColor);
+
+      presetsScrollPane.setBorder(scrollPaneBorder);
+      generalScrollPane.setBorder(scrollPaneBorder);
+      overlayScrollPane.setBorder(scrollPaneBorder);
+      notificationScrollPane.setBorder(scrollPaneBorder);
+      streamingScrollPane.setBorder(scrollPaneBorder);
+      keybindScrollPane.setBorder(scrollPaneBorder);
+      worldListScrollPane.setBorder(scrollPaneBorder);
+      authorsScrollPane.setBorder(scrollPaneBorder);
+    }
+
     JPanel presetsPanel = new JPanel();
+    presetsPanel.setName("presets");
     JPanel generalPanel = new JPanel();
+    generalPanel.setName("general");
     JPanel overlayPanel = new JPanel();
+    overlayPanel.setName("overlays");
     JPanel notificationPanel = new JPanel();
+    notificationPanel.setName("notifications");
     JPanel streamingPanel = new JPanel();
+    streamingPanel.setName("streaming_privacy");
     JPanel keybindPanel = new JPanel();
+    keybindPanel.setName("keybinds");
     worldListPanel = new JPanel();
+    worldListPanel.setName("world_list");
     JPanel authorsPanel = new JPanel();
+    authorsPanel.setName("authors");
 
     frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
-    frame.getContentPane().add(navigationPanel, BorderLayout.PAGE_END);
+
+    JPanel pageEndPanel = new JPanel();
+    pageEndPanel.setLayout(new BoxLayout(pageEndPanel, BoxLayout.Y_AXIS));
+    pageEndPanel.add(toolTipPanel);
+    pageEndPanel.add(navigationPanel);
+    frame.getContentPane().add(pageEndPanel, BorderLayout.PAGE_END);
 
     tabbedPane.addTab("Presets", null, presetsScrollPane, null);
     tabbedPane.addTab("General", null, generalScrollPane, null);
     tabbedPane.addTab("Overlays", null, overlayScrollPane, null);
-    // tabbedPane.addTab("Notifications", null, notificationScrollPane, null);
+    tabbedPane.addTab("Notifications", null, notificationScrollPane, null);
     tabbedPane.addTab("Streaming & Privacy", null, streamingScrollPane, null);
     tabbedPane.addTab("Keybinds", null, keybindScrollPane, null);
     tabbedPane.addTab("World List", null, worldListScrollPane, null);
@@ -365,24 +472,80 @@ public class ConfigWindow {
     authorsScrollPane.setViewportView(authorsPanel);
 
     // Adding padding for aesthetics
-    navigationPanel.setBorder(BorderFactory.createEmptyBorder(7, 10, 10, 10));
-    presetsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    generalPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    overlayPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    notificationPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    streamingPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    keybindPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    worldListPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    authorsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    int border10 = osScaleMul(10);
+    if (Util.isUsingFlatLAFTheme()) {
+      Color borderColor = isDarkThemeFlatLAF() ? new Color(82, 86, 87) : new Color(194, 194, 194);
+      toolTipPanel.setBorder(
+          BorderFactory.createMatteBorder(
+              0, osScaleMul(1), osScaleMul(1), osScaleMul(1), borderColor));
+    } else {
+      toolTipPanel.setBorder(
+          BorderFactory.createCompoundBorder(
+              BorderFactory.createEmptyBorder(0, osScaleMul(2), 0, osScaleMul(2)),
+              BorderFactory.createLineBorder(new Color(146, 151, 161))));
+    }
+    navigationPanel.setBorder(
+        BorderFactory.createEmptyBorder(osScaleMul(7), border10, border10, border10));
+    presetsPanel.setBorder(BorderFactory.createEmptyBorder(border10, border10, border10, border10));
+    generalPanel.setBorder(BorderFactory.createEmptyBorder(border10, border10, border10, border10));
+    overlayPanel.setBorder(BorderFactory.createEmptyBorder(border10, border10, border10, border10));
+    notificationPanel.setBorder(
+        BorderFactory.createEmptyBorder(border10, border10, border10, border10));
+    streamingPanel.setBorder(
+        BorderFactory.createEmptyBorder(border10, border10, border10, border10));
+    keybindPanel.setBorder(BorderFactory.createEmptyBorder(border10, border10, border10, border10));
+    worldListPanel.setBorder(
+        BorderFactory.createEmptyBorder(border10, border10, border10, border10));
+    authorsPanel.setBorder(BorderFactory.createEmptyBorder(border10, border10, border10, border10));
 
-    setScrollSpeed(presetsScrollPane, 20, 15);
-    setScrollSpeed(generalScrollPane, 20, 15);
-    setScrollSpeed(overlayScrollPane, 20, 15);
-    setScrollSpeed(notificationScrollPane, 20, 15);
-    setScrollSpeed(streamingScrollPane, 20, 15);
-    setScrollSpeed(keybindScrollPane, 20, 15);
-    setScrollSpeed(worldListScrollPane, 20, 15);
-    setScrollSpeed(authorsScrollPane, 20, 15);
+    int verticalSpeed = osScaleMul(20);
+    int horizontalSpeed = osScaleMul(15);
+
+    setScrollSpeed(presetsScrollPane, verticalSpeed, horizontalSpeed);
+    setScrollSpeed(generalScrollPane, verticalSpeed, horizontalSpeed);
+    setScrollSpeed(overlayScrollPane, verticalSpeed, horizontalSpeed);
+    setScrollSpeed(notificationScrollPane, verticalSpeed, horizontalSpeed);
+    setScrollSpeed(streamingScrollPane, verticalSpeed, horizontalSpeed);
+    setScrollSpeed(keybindScrollPane, verticalSpeed, horizontalSpeed);
+    setScrollSpeed(worldListScrollPane, verticalSpeed, horizontalSpeed);
+    setScrollSpeed(authorsScrollPane, verticalSpeed, horizontalSpeed);
+
+    /*
+     Tooltip panel
+    */
+    toolTipPanel.setLayout(new BoxLayout(toolTipPanel, BoxLayout.X_AXIS));
+    toolTipTextLabel = new JLabel(toolTipInitText);
+    toolTipTextLabel.setBorder(
+        BorderFactory.createEmptyBorder(osScaleMul(2), border10, osScaleMul(2), border10));
+    toolTipTextLabel.setText(toolTipInitText);
+    toolTipTextLabel.setMinimumSize(osScaleMul(new Dimension(100, 28)));
+    toolTipTextLabel.setMaximumSize(new Dimension(Short.MAX_VALUE, osScaleMul(28)));
+    toolTipTextLabel.setAlignmentY(0.75f);
+    toolTipPanel.add(toolTipTextLabel);
+
+    toolTipPanel.addMouseListener(
+        new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            if (isListeningForEventQueue) {
+              resetToolTipBarPanelColors();
+              toolTipTextLabel.setText(toolTipInitText);
+              removeConfigWindowEventQueueListener();
+            } else {
+              // Uses theme tooltip colors
+              if (Util.isDarkThemeFlatLAF()) {
+                toolTipPanel.setBackground(new Color(21, 23, 24));
+              } else if (Util.isLightThemeFlatLAF()) {
+                toolTipPanel.setBackground(new Color(250, 250, 250));
+              } else {
+                toolTipPanel.setBackground(new Color(242, 242, 189));
+              }
+              toolTipTextString = "Waiting for mouse hover...";
+              toolTipTextLabel.setText(toolTipTextString);
+              addConfigWindowEventQueueListener();
+            }
+          }
+        });
 
     /*
      * Navigation buttons
@@ -390,86 +553,116 @@ public class ConfigWindow {
 
     navigationPanel.setLayout(new BoxLayout(navigationPanel, BoxLayout.X_AXIS));
 
-    addButton("OK", navigationPanel, Component.LEFT_ALIGNMENT)
-        .addActionListener(
-            new ActionListener() {
+    JButton okButton = addButton("OK", navigationPanel, Component.LEFT_ALIGNMENT);
+    if (isDarkThemeFlatLAF()) {
+      okButton.setBackground(new Color(42, 46, 48));
+    }
+    okButton.addActionListener(
+        new ActionListener() {
 
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                Launcher.getConfigWindow().saveSettings();
-                Launcher.getConfigWindow().hideConfigWindow();
-              }
-            });
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            Launcher.getConfigWindow().applySettings();
+            Launcher.getConfigWindow().hideConfigWindow();
+          }
+        });
 
-    addButton("Cancel", navigationPanel, Component.LEFT_ALIGNMENT)
-        .addActionListener(
-            new ActionListener() {
+    if (isUsingFlatLAFTheme()) {
+      navigationPanel.add(Box.createRigidArea(osScaleMul(new Dimension(4, 0))));
+    }
 
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                Launcher.getConfigWindow().applySettings();
-                Launcher.getConfigWindow().hideConfigWindow();
-              }
-            });
+    JButton cancelButton = addButton("Cancel", navigationPanel, Component.LEFT_ALIGNMENT);
 
-    addButton("Apply", navigationPanel, Component.LEFT_ALIGNMENT)
-        .addActionListener(
-            new ActionListener() {
+    if (isDarkThemeFlatLAF()) {
+      cancelButton.setBackground(new Color(42, 46, 48));
+    }
 
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                Launcher.getConfigWindow().applySettings();
-              }
-            });
+    cancelButton.addActionListener(
+        new ActionListener() {
+
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            Launcher.getConfigWindow().hideConfigWindow();
+          }
+        });
+
+    if (isUsingFlatLAFTheme()) {
+      navigationPanel.add(Box.createRigidArea(osScaleMul(new Dimension(4, 0))));
+    }
+
+    JButton applyButton = addButton("Apply", navigationPanel, Component.LEFT_ALIGNMENT);
+
+    if (isDarkThemeFlatLAF()) {
+      applyButton.setBackground(new Color(42, 46, 48));
+    }
+
+    applyButton.addActionListener(
+        new ActionListener() {
+
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            Launcher.getConfigWindow().applySettings();
+          }
+        });
 
     navigationPanel.add(Box.createHorizontalGlue());
-    addButton("Restore Defaults", navigationPanel, Component.RIGHT_ALIGNMENT)
-        .addActionListener(
-            new ActionListener() {
 
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                int choice =
-                    JOptionPane.showConfirmDialog(
-                        Launcher.getConfigWindow().frame,
-                        "Are you sure you want to restore all settings to their defaults?",
-                        "Confirm",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE);
-                if (choice == JOptionPane.CLOSED_OPTION || choice == JOptionPane.NO_OPTION) {
-                  return;
-                }
+    JButton restoreDefaultsButton =
+        addButton("Restore Defaults", navigationPanel, Component.RIGHT_ALIGNMENT);
 
-                Settings.initSettings(); // make sure "default" is really default
-                Settings.save("default");
-                synchronizeGuiValues();
+    if (isDarkThemeFlatLAF()) {
+      restoreDefaultsButton.setBackground(new Color(42, 46, 48));
+    }
 
-                // Restore defaults
-                /* TODO: reimplement per-tab defaults?
-                switch (tabbedPane.getSelectedIndex()) {
-                case 0:
-                	Settings.restoreDefaultGeneral();
-                	Game.getInstance().resizeFrameWithContents();
-                	break;
-                case 1:
-                	Settings.restoreDefaultOverlays();
-                	break;
-                case 2:
-                	Settings.restoreDefaultNotifications();
-                	break;
-                case 3:
-                	Settings.restoreDefaultPrivacy();
-                	break;
-                case 4:
-                	Settings.restoreDefaultKeybinds();
-                	break;
-                            //TODO more pages
-                default:
-                	Logger.Error("Restore defaults attempted to operate on a non-existent tab!");
-                }
-                            */
-              }
-            });
+    restoreDefaultsButton.addActionListener(
+        new ActionListener() {
+
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            JPanel confirmDefaultPanel =
+                Util.createOptionMessagePanel(
+                    "Are you sure you want to restore all settings to their defaults?");
+            int choice =
+                JOptionPane.showConfirmDialog(
+                    Launcher.getConfigWindow().frame,
+                    confirmDefaultPanel,
+                    "Confirm",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+            if (choice == JOptionPane.CLOSED_OPTION || choice == JOptionPane.NO_OPTION) {
+              return;
+            }
+
+            Settings.initSettings(); // make sure "default" is really default
+            Settings.save("default");
+            synchronizeGuiValues();
+
+            // Restore defaults
+            /* TODO: reimplement per-tab defaults?
+            switch (tabbedPane.getSelectedIndex()) {
+            case 0:
+            	Settings.restoreDefaultGeneral();
+            	Game.getInstance().resizeFrameWithContents();
+            	break;
+            case 1:
+            	Settings.restoreDefaultOverlays();
+            	break;
+            case 2:
+            	Settings.restoreDefaultNotifications();
+            	break;
+            case 3:
+            	Settings.restoreDefaultPrivacy();
+            	break;
+            case 4:
+            	Settings.restoreDefaultKeybinds();
+            	break;
+                        //TODO more pages
+            default:
+            	Logger.Error("Restore defaults attempted to operate on a non-existent tab!");
+            }
+                        */
+          }
+        });
 
     /*
      * General tab
@@ -486,193 +679,388 @@ public class ConfigWindow {
     generalPanel.add(generalPanelClientSizePanel);
     generalPanelClientSizePanel.setLayout(
         new BoxLayout(generalPanelClientSizePanel, BoxLayout.X_AXIS));
-    generalPanelClientSizePanel.setPreferredSize(new Dimension(0, 37));
     generalPanelClientSizePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     // TODO: Perhaps change to "Save client size on close"?
     generalPanelClientSizeCheckbox =
-        addCheckbox("Default client size:", generalPanelClientSizePanel);
-    generalPanelClientSizeCheckbox.setToolTipText("Start the client with the supplied window size");
+        addCheckbox("Client window dimensions:", generalPanelClientSizePanel);
+    generalPanelClientSizeCheckbox.setToolTipText("Set the client size to the supplied dimensions");
 
     generalPanelClientSizeXSpinner = new JSpinner();
     generalPanelClientSizePanel.add(generalPanelClientSizeXSpinner);
-    generalPanelClientSizeXSpinner.setMaximumSize(new Dimension(58, 22));
-    generalPanelClientSizeXSpinner.setMinimumSize(new Dimension(58, 22));
-    generalPanelClientSizeXSpinner.setAlignmentY((float) 0.75);
-    generalPanelClientSizeXSpinner.setToolTipText("Default client width (512 minimum)");
+    generalPanelClientSizeXSpinner.setMaximumSize(osScaleMul(new Dimension(70, 23)));
+    generalPanelClientSizeXSpinner.setMinimumSize(osScaleMul(new Dimension(70, 23)));
+    generalPanelClientSizeXSpinner.setAlignmentY(0.7f);
+    generalPanelClientSizeXSpinner.setToolTipText("Default client width (512 minimum at 1x scale)");
     generalPanelClientSizeXSpinner.putClientProperty("JComponent.sizeVariant", "mini");
 
     JLabel generalPanelClientSizeByLabel = new JLabel("x");
     generalPanelClientSizePanel.add(generalPanelClientSizeByLabel);
-    generalPanelClientSizeByLabel.setAlignmentY((float) 0.9);
-    generalPanelClientSizeByLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
+    generalPanelClientSizeByLabel.setAlignmentY(0.8f);
+
+    int spinnerByMargin = isUsingFlatLAFTheme() ? 4 : 2;
+
+    generalPanelClientSizeByLabel.setBorder(
+        BorderFactory.createEmptyBorder(
+            0, osScaleMul(spinnerByMargin), 0, osScaleMul(spinnerByMargin)));
 
     generalPanelClientSizeYSpinner = new JSpinner();
     generalPanelClientSizePanel.add(generalPanelClientSizeYSpinner);
-    generalPanelClientSizeYSpinner.setMaximumSize(new Dimension(58, 22));
-    generalPanelClientSizeYSpinner.setMinimumSize(new Dimension(58, 22));
-    generalPanelClientSizeYSpinner.setAlignmentY((float) 0.75);
-    generalPanelClientSizeYSpinner.setToolTipText("Default client height (357 minimum)");
+    generalPanelClientSizeYSpinner.setMaximumSize(osScaleMul(new Dimension(70, 23)));
+    generalPanelClientSizeYSpinner.setMinimumSize(osScaleMul(new Dimension(70, 23)));
+    generalPanelClientSizeYSpinner.setAlignmentY(0.7f);
+    generalPanelClientSizeYSpinner.setToolTipText(
+        "Default client height (357 minimum at 1x scale)");
     generalPanelClientSizeYSpinner.putClientProperty("JComponent.sizeVariant", "mini");
 
     // Sanitize JSpinner values
-    SpinnerNumberModel spinnerWinXModel = new SpinnerNumberModel();
+    spinnerWinXModel = new SpinnerNumberModel();
     spinnerWinXModel.setMinimum(512);
     spinnerWinXModel.setValue(512);
     spinnerWinXModel.setStepSize(10);
     generalPanelClientSizeXSpinner.setModel(spinnerWinXModel);
-    SpinnerNumberModel spinnerWinYModel = new SpinnerNumberModel();
+    spinnerWinYModel = new SpinnerNumberModel();
     spinnerWinYModel.setMinimum(357);
     spinnerWinYModel.setValue(357);
     spinnerWinYModel.setStepSize(10);
     generalPanelClientSizeYSpinner.setModel(spinnerWinYModel);
 
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelClientSizePanel.add(Box.createRigidArea(osScaleMul(new Dimension(6, 0))));
+    }
+
+    JButton generalPanelClientSizeMaxButton =
+        addButton("Max", generalPanelClientSizePanel, Component.RIGHT_ALIGNMENT);
+    generalPanelClientSizeMaxButton.setAlignmentY(0.7f);
+    generalPanelClientSizeMaxButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            Dimension maximumWindowSize =
+                ScaledWindow.getInstance().getMaximumEffectiveWindowSize();
+
+            int windowWidth = maximumWindowSize.width;
+            int windowHeight = maximumWindowSize.height;
+
+            // This only changes the values in the boxes
+            spinnerWinXModel.setValue(windowWidth);
+            spinnerWinYModel.setValue(windowHeight);
+          }
+        });
+
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelClientSizePanel.add(Box.createRigidArea(osScaleMul(new Dimension(6, 0))));
+    }
+
+    JButton generalPanelClientSizeResetButton =
+        addButton("Reset", generalPanelClientSizePanel, Component.RIGHT_ALIGNMENT);
+    generalPanelClientSizeResetButton.setAlignmentY(0.7f);
+    generalPanelClientSizeResetButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            // This only changes the values in the boxes
+            Dimension scaledMinimumWindowSize =
+                ScaledWindow.getInstance().getMinimumViewportSizeForScalar();
+            spinnerWinXModel.setValue(scaledMinimumWindowSize.width);
+            spinnerWinYModel.setValue(scaledMinimumWindowSize.height);
+          }
+        });
+
+    JLabel generalPanelClientSizeScaleWarning =
+        new JLabel("(Will be reset if window scale changes)");
+    generalPanelClientSizeScaleWarning.setAlignmentY(0.8f);
+    generalPanelClientSizeScaleWarning.setBorder(
+        BorderFactory.createEmptyBorder(0, osScaleMul(6), 0, 0));
+    generalPanelClientSizePanel.add(generalPanelClientSizeScaleWarning);
+
+    // Scaling options
+    JPanel generalPanelScalePanel = new JPanel();
+    generalPanel.add(generalPanelScalePanel);
+    generalPanelScalePanel.setLayout(new BoxLayout(generalPanelScalePanel, BoxLayout.Y_AXIS));
+    generalPanelScalePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    generalPanelScaleWindowCheckbox = addCheckbox("Scale window:", generalPanelScalePanel);
+    generalPanelScaleWindowCheckbox.setToolTipText("Enable to scale the game client");
+    generalPanelScaleWindowCheckbox.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(5), 0));
+
+    ButtonGroup generalPanelScaleWindowTypeButtonGroup = new ButtonGroup();
+    String scaleLargerThanResolutionToolTip =
+        "This scale value will produce a window bigger than your screen resolution";
+
+    // Integer scaling
+    JPanel generalPanelIntegerScalingPanel = new JPanel();
+    generalPanelScalePanel.add(generalPanelIntegerScalingPanel);
+    generalPanelIntegerScalingPanel.setLayout(
+        new BoxLayout(generalPanelIntegerScalingPanel, BoxLayout.X_AXIS));
+    generalPanelIntegerScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    generalPanelIntegerScalingFocusButton =
+        addRadioButton("Integer scaling", generalPanelIntegerScalingPanel, osScaleMul(20));
+    generalPanelIntegerScalingFocusButton.setToolTipText(
+        "Uses the nearest neighbor algorithm for pixel-perfect client scaling");
+    generalPanelScaleWindowTypeButtonGroup.add(generalPanelIntegerScalingFocusButton);
+
+    generalPanelIntegerScalingSpinner = new JSpinner();
+    generalPanelIntegerScalingPanel.add(generalPanelIntegerScalingSpinner);
+    String integerScalingSpinnerToolTip =
+        "Integer scaling value " + (int) Renderer.minScalar + "-" + (int) Renderer.maxIntegerScalar;
+    generalPanelIntegerScalingSpinner.setMaximumSize(osScaleMul(new Dimension(55, 26)));
+    generalPanelIntegerScalingSpinner.setMinimumSize(osScaleMul(new Dimension(55, 26)));
+    generalPanelIntegerScalingSpinner.setAlignmentY(0.625f);
+    generalPanelIntegerScalingSpinner.setToolTipText(integerScalingSpinnerToolTip);
+    generalPanelIntegerScalingSpinner.putClientProperty("JComponent.sizeVariant", "mini");
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelIntegerScalingSpinner.setBorder(new FlatRoundBorder());
+    } else {
+      generalPanelIntegerScalingSpinner.setBorder(
+          BorderFactory.createEmptyBorder(
+              osScaleMul(2), osScaleMul(2), osScaleMul(2), osScaleMul(2)));
+    }
+    generalPanelIntegerScalingSpinner.addChangeListener(
+        new ChangeListener() {
+          @Override
+          public void stateChanged(ChangeEvent e) {
+            Dimension maximumWindowSize = ScaledWindow.getInstance().getMaximumWindowSize();
+            int scalar = (int) generalPanelIntegerScalingSpinner.getValue();
+
+            if (((512 * scalar) + ScaledWindow.getInstance().getWindowWidthInsets()
+                    > maximumWindowSize.getWidth())
+                || ((357 * scalar) + ScaledWindow.getInstance().getWindowHeightInsets()
+                    > maximumWindowSize.getHeight())) {
+              generalPanelIntegerScalingSpinner.setBorder(
+                  new LineBorder(Color.orange, osScaleMul(2)));
+              generalPanelIntegerScalingSpinner.setToolTipText(scaleLargerThanResolutionToolTip);
+            } else {
+              if (Util.isUsingFlatLAFTheme()) {
+                generalPanelIntegerScalingSpinner.setBorder(new FlatRoundBorder());
+              } else {
+                generalPanelIntegerScalingSpinner.setBorder(
+                    BorderFactory.createEmptyBorder(
+                        osScaleMul(2), osScaleMul(2), osScaleMul(2), osScaleMul(2)));
+              }
+              generalPanelIntegerScalingSpinner.setToolTipText(integerScalingSpinnerToolTip);
+            }
+          }
+        });
+
+    SpinnerNumberModel spinnerLimitIntegerScaling =
+        new SpinnerNumberModel(2, (int) Renderer.minScalar, (int) Renderer.maxIntegerScalar, 1);
+    generalPanelIntegerScalingSpinner.setModel(spinnerLimitIntegerScaling);
+
+    // Bilinear scaling
+    JPanel generalPanelBilinearScalingPanel = new JPanel();
+    generalPanelScalePanel.add(generalPanelBilinearScalingPanel);
+    generalPanelBilinearScalingPanel.setLayout(
+        new BoxLayout(generalPanelBilinearScalingPanel, BoxLayout.X_AXIS));
+    generalPanelBilinearScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    generalPanelBilinearScalingFocusButton =
+        addRadioButton("Bilinear interpolation", generalPanelBilinearScalingPanel, osScaleMul(20));
+    generalPanelBilinearScalingFocusButton.setToolTipText(
+        "Uses the bilinear interpolation algorithm for client scaling");
+    generalPanelScaleWindowTypeButtonGroup.add(generalPanelBilinearScalingFocusButton);
+
+    generalPanelBilinearScalingSpinner = new JSpinner();
+    generalPanelBilinearScalingPanel.add(generalPanelBilinearScalingSpinner);
+    String bilinearScalingSpinnerToolTip =
+        "Bilinear scaling value " + Renderer.minScalar + "-" + Renderer.maxInterpolationScalar;
+    generalPanelBilinearScalingSpinner.setMaximumSize(osScaleMul(new Dimension(55, 26)));
+    generalPanelBilinearScalingSpinner.setMinimumSize(osScaleMul(new Dimension(55, 26)));
+    generalPanelBilinearScalingSpinner.setAlignmentY(0.625f);
+    generalPanelBilinearScalingSpinner.setToolTipText(bilinearScalingSpinnerToolTip);
+    generalPanelBilinearScalingSpinner.putClientProperty("JComponent.sizeVariant", "mini");
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelBilinearScalingSpinner.setBorder(new FlatRoundBorder());
+    } else {
+      generalPanelBilinearScalingSpinner.setBorder(
+          BorderFactory.createEmptyBorder(
+              osScaleMul(2), osScaleMul(2), osScaleMul(2), osScaleMul(2)));
+    }
+    generalPanelBilinearScalingSpinner.addChangeListener(
+        new ChangeListener() {
+          @Override
+          public void stateChanged(ChangeEvent e) {
+            Dimension maximumWindowSize = ScaledWindow.getInstance().getMaximumWindowSize();
+            float scalar = (float) generalPanelBilinearScalingSpinner.getValue();
+
+            if (((512 * scalar) + ScaledWindow.getInstance().getWindowWidthInsets()
+                    > maximumWindowSize.getWidth())
+                || ((357 * scalar) + ScaledWindow.getInstance().getWindowHeightInsets()
+                    > maximumWindowSize.getHeight())) {
+              generalPanelBilinearScalingSpinner.setBorder(
+                  new LineBorder(Color.orange, osScaleMul(2)));
+              generalPanelBilinearScalingSpinner.setToolTipText(scaleLargerThanResolutionToolTip);
+            } else {
+              if (Util.isUsingFlatLAFTheme()) {
+                generalPanelBilinearScalingSpinner.setBorder(new FlatRoundBorder());
+              } else {
+                generalPanelBilinearScalingSpinner.setBorder(
+                    BorderFactory.createEmptyBorder(
+                        osScaleMul(2), osScaleMul(2), osScaleMul(2), osScaleMul(2)));
+              }
+              generalPanelBilinearScalingSpinner.setToolTipText(bilinearScalingSpinnerToolTip);
+            }
+          }
+        });
+
+    SpinnerNumberModel spinnerLimitBilinearScaling =
+        new SpinnerNumberModel(
+            new Float(1.5f),
+            new Float(Renderer.minScalar),
+            new Float(Renderer.maxInterpolationScalar),
+            new Float(0.1f));
+    generalPanelBilinearScalingSpinner.setModel(spinnerLimitBilinearScaling);
+
+    JLabel bilinearInterpolationScalingWarning =
+        new JLabel("(May affect performance at high scaling values)");
+    bilinearInterpolationScalingWarning.setAlignmentY(0.75f);
+    int bilinearInterpolationScalingMargin = isUsingFlatLAFTheme() ? 6 : 2;
+    bilinearInterpolationScalingWarning.setBorder(
+        BorderFactory.createEmptyBorder(0, osScaleMul(bilinearInterpolationScalingMargin), 0, 0));
+    generalPanelBilinearScalingPanel.add(bilinearInterpolationScalingWarning);
+
+    // Bicubic scaling
+    JPanel generalPanelBicubicScalingPanel = new JPanel();
+    generalPanelScalePanel.add(generalPanelBicubicScalingPanel);
+    generalPanelBicubicScalingPanel.setLayout(
+        new BoxLayout(generalPanelBicubicScalingPanel, BoxLayout.X_AXIS));
+    generalPanelBicubicScalingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    generalPanelBicubicScalingFocusButton =
+        addRadioButton("Bicubic interpolation", generalPanelBicubicScalingPanel, osScaleMul(20));
+    generalPanelBicubicScalingFocusButton.setToolTipText(
+        "Uses the bicubic interpolation algorithm for client scaling");
+    generalPanelScaleWindowTypeButtonGroup.add(generalPanelBicubicScalingFocusButton);
+
+    generalPanelBicubicScalingSpinner = new JSpinner();
+    generalPanelBicubicScalingPanel.add(generalPanelBicubicScalingSpinner);
+    String bicubicScalingSpinnerToolTip =
+        "Bicubic scaling value " + Renderer.minScalar + "-" + Renderer.maxInterpolationScalar;
+    generalPanelBicubicScalingSpinner.setMaximumSize(osScaleMul(new Dimension(55, 26)));
+    generalPanelBicubicScalingSpinner.setMinimumSize(osScaleMul(new Dimension(55, 26)));
+    generalPanelBicubicScalingSpinner.setAlignmentY(0.625f);
+    generalPanelBicubicScalingSpinner.setToolTipText(bicubicScalingSpinnerToolTip);
+    generalPanelBicubicScalingSpinner.putClientProperty("JComponent.sizeVariant", "mini");
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelBicubicScalingSpinner.setBorder(new FlatRoundBorder());
+    } else {
+      generalPanelBicubicScalingSpinner.setBorder(
+          BorderFactory.createEmptyBorder(
+              osScaleMul(2), osScaleMul(2), osScaleMul(2), osScaleMul(2)));
+    }
+    generalPanelBicubicScalingSpinner.addChangeListener(
+        new ChangeListener() {
+          @Override
+          public void stateChanged(ChangeEvent e) {
+            Dimension maximumWindowSize = ScaledWindow.getInstance().getMaximumWindowSize();
+            float scalar = (float) generalPanelBicubicScalingSpinner.getValue();
+
+            if (((512 * scalar) + ScaledWindow.getInstance().getWindowWidthInsets()
+                    > maximumWindowSize.getWidth())
+                || ((357 * scalar) + ScaledWindow.getInstance().getWindowHeightInsets()
+                    > maximumWindowSize.getHeight())) {
+              generalPanelBicubicScalingSpinner.setBorder(new LineBorder(Color.orange, 2));
+              generalPanelBicubicScalingSpinner.setToolTipText(scaleLargerThanResolutionToolTip);
+            } else {
+              if (Util.isUsingFlatLAFTheme()) {
+                generalPanelBicubicScalingSpinner.setBorder(new FlatRoundBorder());
+              } else {
+                generalPanelBicubicScalingSpinner.setBorder(
+                    BorderFactory.createEmptyBorder(
+                        osScaleMul(2), osScaleMul(2), osScaleMul(2), osScaleMul(2)));
+              }
+              generalPanelBicubicScalingSpinner.setToolTipText(bicubicScalingSpinnerToolTip);
+            }
+          }
+        });
+
+    SpinnerNumberModel spinnerLimitBicubicScaling =
+        new SpinnerNumberModel(
+            new Float(1.5f),
+            new Float(Renderer.minScalar),
+            new Float(Renderer.maxInterpolationScalar),
+            new Float(0.1f));
+    generalPanelBicubicScalingSpinner.setModel(spinnerLimitBicubicScaling);
+
+    JLabel bicubicInterpolationScalingWarning =
+        new JLabel("(May affect performance at high scaling values)");
+    bicubicInterpolationScalingWarning.setAlignmentY(0.75f);
+    int bicubicInterpolationScalingMargin = isUsingFlatLAFTheme() ? 6 : 2;
+    bicubicInterpolationScalingWarning.setBorder(
+        BorderFactory.createEmptyBorder(0, osScaleMul(bicubicInterpolationScalingMargin), 0, 0));
+    generalPanelBicubicScalingPanel.add(bicubicInterpolationScalingWarning);
+
+    if (isUsingFlatLAFTheme()) {
+      generalPanelScalePanel.add(Box.createRigidArea(osScaleMul(new Dimension(0, 5))));
+    }
+    // End scaling options
+
     generalPanelCheckUpdates =
-        addCheckbox("Check for rsctimes updates from GitHub at launch", generalPanel);
+        addCheckbox("Check for RSCTimes updates from GitHub at launch", generalPanel);
     generalPanelCheckUpdates.setToolTipText(
-        "When enabled, rsctimes will check for client updates before launching the game and install them when prompted");
+        "When enabled, RSCTimes will check for client updates before launching the game and install them when prompted");
 
     generalPanelWelcomeEnabled =
-        addCheckbox("Remind you how to open the Settings every time you log in", generalPanel);
+        addCheckbox(
+            "<html><head><style>span{color:red;}</style></head>Remind you how to open the Settings every time you log in <span>(!!! Disable this if you know how to open the settings)</span></html>",
+            generalPanel);
     generalPanelWelcomeEnabled.setToolTipText(
-        "When enabled, rsctimes will insert a message telling the current keybinding to open the settings menu and remind you about the tray icon");
+        "When enabled, RSCTimes will insert a message telling the current keybinding to open the settings menu and remind you about the tray icon");
 
     generalPanelCustomCursorCheckbox = addCheckbox("Use custom mouse cursor", generalPanel);
     generalPanelCustomCursorCheckbox.setToolTipText(
         "Switch to using a custom mouse cursor instead of the system default");
 
+    generalPanelShiftScrollCameraRotationCheckbox =
+        addCheckbox("Enable camera rotation with compatible trackpads", generalPanel);
+    generalPanelShiftScrollCameraRotationCheckbox.setToolTipText(
+        "Trackpads that send SHIFT-SCROLL WHEEL when swiping left or right with two fingers will be able to rotate the camera");
+
+    JPanel generalPanelTrackPadRotationPanel = new JPanel();
+    generalPanel.add(generalPanelTrackPadRotationPanel);
+    generalPanelTrackPadRotationPanel.setLayout(
+        new BoxLayout(generalPanelTrackPadRotationPanel, BoxLayout.Y_AXIS));
+    generalPanelTrackPadRotationPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    JLabel generalPanelTrackpadRotationLabel = new JLabel("Camera rotation trackpad sensitivity");
+    generalPanelTrackpadRotationLabel.setToolTipText(
+        "Sets the camera rotation trackpad sensitivity (Default: 8)");
+    generalPanelTrackPadRotationPanel.add(generalPanelTrackpadRotationLabel);
+    generalPanelTrackpadRotationLabel.setAlignmentY(1.0f);
+
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelTrackPadRotationPanel.add(Box.createRigidArea(osScaleMul(new Dimension(0, 10))));
+    }
+
+    generalPanelTrackpadRotationSlider = new JSlider();
+
+    generalPanelTrackPadRotationPanel.add(generalPanelTrackpadRotationSlider);
+    generalPanelTrackpadRotationSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
+    generalPanelTrackpadRotationSlider.setMaximumSize(osScaleMul(new Dimension(200, 55)));
+    generalPanelTrackpadRotationSlider.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(10), 0));
+    generalPanelTrackpadRotationSlider.setMajorTickSpacing(2);
+    generalPanelTrackpadRotationSlider.setMinorTickSpacing(1);
+    generalPanelTrackpadRotationSlider.setMinimum(0);
+    generalPanelTrackpadRotationSlider.setMaximum(16);
+    generalPanelTrackpadRotationSlider.setPaintTicks(true);
+
+    Hashtable<Integer, JLabel> generalPanelTrackpadRotationLabelTable =
+        new Hashtable<Integer, JLabel>();
+    generalPanelTrackpadRotationLabelTable.put(new Integer(0), new JLabel("0"));
+    generalPanelTrackpadRotationLabelTable.put(new Integer(4), new JLabel("4"));
+    generalPanelTrackpadRotationLabelTable.put(new Integer(8), new JLabel("8"));
+    generalPanelTrackpadRotationLabelTable.put(new Integer(12), new JLabel("12"));
+    generalPanelTrackpadRotationLabelTable.put(new Integer(16), new JLabel("16"));
+    generalPanelTrackpadRotationSlider.setLabelTable(generalPanelTrackpadRotationLabelTable);
+    generalPanelTrackpadRotationSlider.setPaintLabels(true);
+
     generalPanelAutoScreenshotCheckbox =
         addCheckbox("Take a screenshot when you level up or complete a quest", generalPanel);
     generalPanelAutoScreenshotCheckbox.setToolTipText(
         "Takes a screenshot for you for level ups and quest completion");
-
-    JLabel generalPanelFoVLabel = new JLabel("Field of view (Default 9)");
-    generalPanelFoVLabel.setToolTipText("Sets the field of view (not recommended past 10)");
-    generalPanel.add(generalPanelFoVLabel);
-    generalPanelFoVLabel.setAlignmentY((float) 0.9);
-
-    generalPanelFoVSlider = new JSlider();
-
-    generalPanel.add(generalPanelFoVSlider);
-    generalPanelFoVSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
-    generalPanelFoVSlider.setMaximumSize(new Dimension(200, 55));
-    generalPanelFoVSlider.setBorder(new EmptyBorder(0, 0, 5, 0));
-    generalPanelFoVSlider.setMinimum(7);
-    generalPanelFoVSlider.setMaximum(16);
-    generalPanelFoVSlider.setMajorTickSpacing(1);
-    generalPanelFoVSlider.setPaintTicks(true);
-    generalPanelFoVSlider.setPaintLabels(true);
-
-    JLabel generalPanelViewDistanceLabel = new JLabel("View distance");
-    generalPanelViewDistanceLabel.setToolTipText(
-        "Sets the max render distance of structures and landscape");
-    generalPanel.add(generalPanelViewDistanceLabel);
-    generalPanelViewDistanceLabel.setAlignmentY((float) 0.9);
-
-    generalPanelViewDistanceSlider = new JSlider();
-
-    generalPanel.add(generalPanelViewDistanceSlider);
-    generalPanelViewDistanceSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
-    generalPanelViewDistanceSlider.setMaximumSize(new Dimension(200, 55));
-    generalPanelViewDistanceSlider.setBorder(new EmptyBorder(0, 0, 5, 0));
-    generalPanelViewDistanceSlider.setMinorTickSpacing(500);
-    generalPanelViewDistanceSlider.setMajorTickSpacing(1000);
-    generalPanelViewDistanceSlider.setMinimum(2300);
-    generalPanelViewDistanceSlider.setMaximum(20000);
-    generalPanelViewDistanceSlider.setPaintTicks(true);
-
-    Hashtable<Integer, JLabel> generalPanelViewDistanceLabelTable =
-        new Hashtable<Integer, JLabel>();
-    generalPanelViewDistanceLabelTable.put(new Integer(2300), new JLabel("2,300"));
-    generalPanelViewDistanceLabelTable.put(new Integer(10000), new JLabel("10,000"));
-    generalPanelViewDistanceLabelTable.put(new Integer(20000), new JLabel("20,000"));
-    generalPanelViewDistanceSlider.setLabelTable(generalPanelViewDistanceLabelTable);
-    generalPanelViewDistanceSlider.setPaintLabels(true);
-
-    //////
-    JPanel generalPanelLimitFPSPanel = new JPanel();
-    generalPanel.add(generalPanelLimitFPSPanel);
-    generalPanelLimitFPSPanel.setLayout(new BoxLayout(generalPanelLimitFPSPanel, BoxLayout.X_AXIS));
-    generalPanelLimitFPSPanel.setPreferredSize(new Dimension(0, 37));
-    generalPanelLimitFPSPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-    generalPanelLimitFPSCheckbox =
-        addCheckbox("FPS limit (doubled while F1 interlaced):", generalPanelLimitFPSPanel);
-    generalPanelLimitFPSCheckbox.setToolTipText(
-        "Limit FPS for a more 2001 feeling (or to save battery)");
-
-    generalPanelLimitFPSSpinner = new JSpinner();
-    generalPanelLimitFPSPanel.add(generalPanelLimitFPSSpinner);
-    generalPanelLimitFPSSpinner.setMaximumSize(new Dimension(45, 22));
-    generalPanelLimitFPSSpinner.setMinimumSize(new Dimension(45, 22));
-    generalPanelLimitFPSSpinner.setAlignmentY((float) 0.75);
-    generalPanelLimitFPSSpinner.setToolTipText("Target FPS");
-    generalPanelLimitFPSSpinner.putClientProperty("JComponent.sizeVariant", "mini");
-    generalPanelLimitFPSSpinner.setEnabled(false);
-
-    // Sanitize JSpinner value
-    SpinnerNumberModel spinnerLimitFpsModel = new SpinnerNumberModel();
-    spinnerLimitFpsModel.setMinimum(1);
-    spinnerLimitFpsModel.setMaximum(50);
-    spinnerLimitFpsModel.setValue(10);
-    spinnerLimitFpsModel.setStepSize(1);
-    generalPanelLimitFPSSpinner.setModel(spinnerLimitFpsModel);
-    //////
-
-    JPanel generalPanelLogVerbosityPanel = new JPanel();
-    generalPanelLogVerbosityPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    generalPanelLogVerbosityPanel.setMaximumSize(new Dimension(350, 128));
-    generalPanelLogVerbosityPanel.setLayout(
-        new BoxLayout(generalPanelLogVerbosityPanel, BoxLayout.Y_AXIS));
-    generalPanel.add(generalPanelLogVerbosityPanel);
-
-    JLabel generalPanelLogVerbosityTitle = new JLabel("Log verbosity maximum");
-    generalPanelLogVerbosityTitle.setToolTipText(
-        "What max level of log text will be shown in the rsctimes log/console");
-    generalPanelLogVerbosityPanel.add(generalPanelLogVerbosityTitle);
-    generalPanelLogVerbosityTitle.setAlignmentY((float) 0.9);
-
-    Hashtable<Integer, JLabel> generalPanelLogVerbosityLabelTable =
-        new Hashtable<Integer, JLabel>();
-    generalPanelLogVerbosityLabelTable.put(new Integer(0), new JLabel("Error"));
-    generalPanelLogVerbosityLabelTable.put(new Integer(1), new JLabel("Warning"));
-    generalPanelLogVerbosityLabelTable.put(new Integer(2), new JLabel("Game"));
-    generalPanelLogVerbosityLabelTable.put(new Integer(3), new JLabel("Info"));
-    generalPanelLogVerbosityLabelTable.put(new Integer(4), new JLabel("Debug"));
-    generalPanelLogVerbosityLabelTable.put(new Integer(5), new JLabel("Opcode"));
-
-    generalPanelLogVerbositySlider = new JSlider();
-    generalPanelLogVerbositySlider.setMajorTickSpacing(1);
-    generalPanelLogVerbositySlider.setLabelTable(generalPanelLogVerbosityLabelTable);
-    generalPanelLogVerbositySlider.setPaintLabels(true);
-    generalPanelLogVerbositySlider.setPaintTicks(true);
-    generalPanelLogVerbositySlider.setSnapToTicks(true);
-    generalPanelLogVerbositySlider.setMinimum(0);
-    generalPanelLogVerbositySlider.setMaximum(5);
-    generalPanelLogVerbositySlider.setPreferredSize(new Dimension(200, 55));
-    generalPanelLogVerbositySlider.setAlignmentX(Component.LEFT_ALIGNMENT);
-    generalPanelLogVerbositySlider.setBorder(new EmptyBorder(0, 0, 5, 0));
-    generalPanelLogVerbositySlider.setOrientation(SwingConstants.HORIZONTAL);
-    generalPanelLogVerbosityPanel.add(generalPanelLogVerbositySlider);
-
-    generalPanelLogTimestampsCheckbox = addCheckbox("Show timestamps in log", generalPanel);
-    generalPanelLogTimestampsCheckbox.setToolTipText(
-        "Displays the time text was output to the log");
-
-    generalPanelLogLevelCheckbox = addCheckbox("Show log level in log", generalPanel);
-    generalPanelLogLevelCheckbox.setToolTipText("Displays the log level of output in the log");
-
-    generalPanelLogForceTimestampsCheckbox = addCheckbox("Force timestamps in log", generalPanel);
-    generalPanelLogForceTimestampsCheckbox.setToolTipText(
-        "Forces display of the time text was output to the log");
-
-    generalPanelLogForceLevelCheckbox = addCheckbox("Force log level in log", generalPanel);
-    generalPanelLogForceLevelCheckbox.setToolTipText(
-        "Forces display of the log level of output in the log");
-
-    generalPanelColoredTextCheckbox = addCheckbox("Colored console text", generalPanel);
-    generalPanelColoredTextCheckbox.setToolTipText(
-        "When running the client from a console, chat messages in the console will reflect the colors they are in game");
 
     generalPanelDebugModeCheckbox = addCheckbox("Enable debug mode", generalPanel);
     generalPanelDebugModeCheckbox.setToolTipText(
@@ -703,7 +1091,6 @@ public class ConfigWindow {
         addCheckbox("Combat style menu shown outside of combat", generalPanel);
     generalPanelCombatXPMenuCheckbox.setToolTipText(
         "Always show the combat style menu when out of combat");
-    generalPanelCombatXPMenuCheckbox.setBorder(new EmptyBorder(7, 0, 10, 0));
     generalPanelCombatXPMenuCheckbox.setEnabled(false);
 
     generalPanelCombatXPMenuHiddenCheckbox =
@@ -729,11 +1116,6 @@ public class ConfigWindow {
     generalPanelRoofHidingCheckbox = addCheckbox("Roof hiding", generalPanel);
     generalPanelRoofHidingCheckbox.setToolTipText("Always hide rooftops");
 
-    generalPanelDisableUndergroundLightingCheckbox =
-        addCheckbox("Disable underground lighting flicker", generalPanel);
-    generalPanelDisableUndergroundLightingCheckbox.setToolTipText(
-        "Underground will no longer flicker, basically");
-
     generalPanelCameraZoomableCheckbox = addCheckbox("Camera zoom enhancement", generalPanel);
     generalPanelCameraZoomableCheckbox.setToolTipText(
         "Zoom the camera in and out with the mouse wheel, and no longer zooms in inside buildings");
@@ -751,11 +1133,113 @@ public class ConfigWindow {
     generalPanelCameraMovableRelativeCheckbox.setToolTipText(
         "Camera movement will follow the player position");
 
+    addSettingsHeader(generalPanel, "Graphical effect changes");
+
+    JPanel generalPanelViewDistancePanel = new JPanel();
+    generalPanel.add(generalPanelViewDistancePanel);
+    generalPanelViewDistancePanel.setLayout(
+        new BoxLayout(generalPanelViewDistancePanel, BoxLayout.Y_AXIS));
+    generalPanelViewDistancePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    JLabel generalPanelViewDistanceLabel = new JLabel("View distance");
+    generalPanelViewDistanceLabel.setToolTipText(
+        "Sets the max render distance of structures and landscape");
+    generalPanelViewDistancePanel.add(generalPanelViewDistanceLabel);
+    generalPanelViewDistanceLabel.setAlignmentY(1.0f);
+
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelViewDistancePanel.add(Box.createRigidArea(osScaleMul(new Dimension(0, 5))));
+    }
+
+    generalPanelViewDistanceSlider = new JSlider();
+
+    generalPanelViewDistancePanel.add(generalPanelViewDistanceSlider);
+    generalPanelViewDistanceSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
+    generalPanelViewDistanceSlider.setMaximumSize(osScaleMul(new Dimension(350, 55)));
+    generalPanelViewDistanceSlider.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(10), 0));
+    generalPanelViewDistanceSlider.setMinorTickSpacing(500);
+    generalPanelViewDistanceSlider.setMajorTickSpacing(1000);
+    generalPanelViewDistanceSlider.setMinimum(2300);
+    generalPanelViewDistanceSlider.setMaximum(20000);
+    generalPanelViewDistanceSlider.setPaintTicks(true);
+
+    Hashtable<Integer, JLabel> generalPanelViewDistanceLabelTable =
+        new Hashtable<Integer, JLabel>();
+    generalPanelViewDistanceLabelTable.put(new Integer(2300), new JLabel("2,300"));
+    generalPanelViewDistanceLabelTable.put(new Integer(10000), new JLabel("10,000"));
+    generalPanelViewDistanceLabelTable.put(new Integer(20000), new JLabel("20,000"));
+    generalPanelViewDistanceSlider.setLabelTable(generalPanelViewDistanceLabelTable);
+    generalPanelViewDistanceSlider.setPaintLabels(true);
+    //////
+
+    // FOV slider
+    JPanel generalPanelFoVPanel = new JPanel();
+    generalPanel.add(generalPanelFoVPanel);
+    generalPanelFoVPanel.setLayout(new BoxLayout(generalPanelFoVPanel, BoxLayout.Y_AXIS));
+    generalPanelFoVPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    JLabel generalPanelFoVLabel = new JLabel("Field of view (Default 9)");
+    generalPanelFoVLabel.setToolTipText("Sets the field of view (not recommended past 10)");
+    generalPanelFoVPanel.add(generalPanelFoVLabel);
+    generalPanelFoVLabel.setAlignmentY(1.0f);
+
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelFoVPanel.add(Box.createRigidArea(osScaleMul(new Dimension(0, 5))));
+    }
+
+    generalPanelFoVSlider = new JSlider();
+
+    generalPanelFoVPanel.add(generalPanelFoVSlider);
+    generalPanelFoVSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
+    generalPanelFoVSlider.setMaximumSize(osScaleMul(new Dimension(300, 55)));
+    generalPanelFoVSlider.setBorder(BorderFactory.createEmptyBorder(0, 0, osScaleMul(10), 0));
+    generalPanelFoVSlider.setMinimum(7);
+    generalPanelFoVSlider.setMaximum(16);
+    generalPanelFoVSlider.setMajorTickSpacing(1);
+    generalPanelFoVSlider.setPaintTicks(true);
+    generalPanelFoVSlider.setPaintLabels(true);
+    //////
+
+    generalPanelDisableUndergroundLightingCheckbox =
+        addCheckbox("Disable underground lighting flicker", generalPanel);
+    generalPanelDisableUndergroundLightingCheckbox.setToolTipText(
+        "Underground will no longer flicker, basically");
+
+    // FPS limit
+    JPanel generalPanelLimitFPSPanel = new JPanel();
+    generalPanel.add(generalPanelLimitFPSPanel);
+    generalPanelLimitFPSPanel.setLayout(new BoxLayout(generalPanelLimitFPSPanel, BoxLayout.X_AXIS));
+    generalPanelLimitFPSPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    generalPanelLimitFPSCheckbox =
+        addCheckbox("FPS limit (doubled while F1 interlaced):", generalPanelLimitFPSPanel);
+    generalPanelLimitFPSCheckbox.setToolTipText(
+        "Limit FPS for a more 2001 feeling (or to save battery)");
+
+    generalPanelLimitFPSSpinner = new JSpinner();
+    generalPanelLimitFPSPanel.add(generalPanelLimitFPSSpinner);
+    generalPanelLimitFPSSpinner.setMaximumSize(osScaleMul(new Dimension(50, 22)));
+    generalPanelLimitFPSSpinner.setMinimumSize(osScaleMul(new Dimension(50, 22)));
+    generalPanelLimitFPSSpinner.setAlignmentY(0.75f);
+    generalPanelLimitFPSSpinner.setToolTipText("Target FPS");
+    generalPanelLimitFPSSpinner.putClientProperty("JComponent.sizeVariant", "mini");
+    generalPanelLimitFPSSpinner.setEnabled(false);
+
+    // Sanitize JSpinner value
+    SpinnerNumberModel spinnerLimitFpsModel = new SpinnerNumberModel();
+    spinnerLimitFpsModel.setMinimum(1);
+    spinnerLimitFpsModel.setMaximum(50);
+    spinnerLimitFpsModel.setValue(10);
+    spinnerLimitFpsModel.setStepSize(1);
+    generalPanelLimitFPSSpinner.setModel(spinnerLimitFpsModel);
+    //////
+
     addSettingsHeader(generalPanel, "Menu/Item patching");
 
     JPanel generalPanelNamePatchModePanel = new JPanel();
     generalPanelNamePatchModePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    generalPanelNamePatchModePanel.setMaximumSize(new Dimension(300, 60));
+    generalPanelNamePatchModePanel.setMaximumSize(osScaleMul(new Dimension(300, 85)));
     generalPanelNamePatchModePanel.setLayout(
         new BoxLayout(generalPanelNamePatchModePanel, BoxLayout.X_AXIS));
     generalPanel.add(generalPanelNamePatchModePanel);
@@ -767,17 +1251,19 @@ public class ConfigWindow {
     generalPanelNamePatchModeSlider.setSnapToTicks(true);
     generalPanelNamePatchModeSlider.setMinimum(0);
     generalPanelNamePatchModeSlider.setMaximum(3);
-    generalPanelNamePatchModeSlider.setPreferredSize(new Dimension(33, 0));
+    generalPanelNamePatchModeSlider.setPreferredSize(osScaleMul(new Dimension(40, 0)));
     generalPanelNamePatchModeSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
-    generalPanelNamePatchModeSlider.setBorder(new EmptyBorder(7, 0, 10, 0));
+    generalPanelNamePatchModeSlider.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(10), 0));
     generalPanelNamePatchModeSlider.setOrientation(SwingConstants.VERTICAL);
     generalPanelNamePatchModePanel.add(generalPanelNamePatchModeSlider);
     generalPanelNamePatchModeSlider.setEnabled(false);
 
     JPanel generalPanelNamePatchModeTextPanel = new JPanel();
-    generalPanelNamePatchModeTextPanel.setPreferredSize(new Dimension(255, 80));
+    generalPanelNamePatchModeTextPanel.setPreferredSize(osScaleMul(new Dimension(255, 80)));
     generalPanelNamePatchModeTextPanel.setLayout(new BorderLayout());
-    generalPanelNamePatchModeTextPanel.setBorder(new EmptyBorder(7, 10, 0, 0));
+    generalPanelNamePatchModeTextPanel.setBorder(
+        BorderFactory.createEmptyBorder(0, osScaleMul(10), 0, 0));
     generalPanelNamePatchModePanel.add(generalPanelNamePatchModeTextPanel);
 
     JLabel generalPanelNamePatchModeTitle =
@@ -832,6 +1318,91 @@ public class ConfigWindow {
         "Even in the very last versions of the client, the horizontal blue bar at the bottom was still misaligned so that 1 pixel shines through at the end");
     generalPanelPatchHbar512LastPixelCheckbox.setEnabled(false);
 
+    // Logger settings
+
+    addSettingsHeader(generalPanel, "Logging settings");
+
+    JPanel generalPanelLogVerbosityPanel = new JPanel();
+    generalPanelLogVerbosityPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    generalPanelLogVerbosityPanel.setMaximumSize(osScaleMul(new Dimension(350, 128)));
+    generalPanelLogVerbosityPanel.setLayout(
+        new BoxLayout(generalPanelLogVerbosityPanel, BoxLayout.Y_AXIS));
+    generalPanel.add(generalPanelLogVerbosityPanel);
+
+    JLabel generalPanelLogVerbosityTitle = new JLabel("Log verbosity maximum");
+    generalPanelLogVerbosityTitle.setToolTipText(
+        "What max level of log text will be shown in the RSCTimes log/console");
+    generalPanelLogVerbosityPanel.add(generalPanelLogVerbosityTitle);
+    generalPanelLogVerbosityTitle.setAlignmentY(1.0f);
+
+    Hashtable<Integer, JLabel> generalPanelLogVerbosityLabelTable =
+        new Hashtable<Integer, JLabel>();
+    generalPanelLogVerbosityLabelTable.put(new Integer(0), new JLabel("Error"));
+    generalPanelLogVerbosityLabelTable.put(new Integer(1), new JLabel("Warning"));
+    generalPanelLogVerbosityLabelTable.put(new Integer(2), new JLabel("Game"));
+    generalPanelLogVerbosityLabelTable.put(new Integer(3), new JLabel("Info"));
+    generalPanelLogVerbosityLabelTable.put(new Integer(4), new JLabel("Debug"));
+    generalPanelLogVerbosityLabelTable.put(new Integer(5), new JLabel("Opcode"));
+
+    if (Util.isUsingFlatLAFTheme()) {
+      generalPanelLogVerbosityPanel.add(Box.createRigidArea(osScaleMul(new Dimension(0, 5))));
+    }
+
+    generalPanelLogVerbositySlider = new JSlider();
+    generalPanelLogVerbositySlider.setMajorTickSpacing(1);
+    generalPanelLogVerbositySlider.setLabelTable(generalPanelLogVerbosityLabelTable);
+    generalPanelLogVerbositySlider.setPaintLabels(true);
+    generalPanelLogVerbositySlider.setPaintTicks(true);
+    generalPanelLogVerbositySlider.setSnapToTicks(true);
+    generalPanelLogVerbositySlider.setMinimum(0);
+    generalPanelLogVerbositySlider.setMaximum(5);
+    generalPanelLogVerbositySlider.setPreferredSize(osScaleMul(new Dimension(200, 55)));
+    generalPanelLogVerbositySlider.setAlignmentX(Component.LEFT_ALIGNMENT);
+    generalPanelLogVerbositySlider.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(5), 0));
+    generalPanelLogVerbositySlider.setOrientation(SwingConstants.HORIZONTAL);
+    generalPanelLogVerbosityPanel.add(generalPanelLogVerbositySlider);
+
+    generalPanelLogTimestampsCheckbox = addCheckbox("Show timestamps in log", generalPanel);
+    generalPanelLogTimestampsCheckbox.setToolTipText(
+        "Displays the time text was output to the log");
+
+    generalPanelLogLevelCheckbox = addCheckbox("Show log level in log", generalPanel);
+    generalPanelLogLevelCheckbox.setToolTipText("Displays the log level of output in the log");
+
+    generalPanelLogForceTimestampsCheckbox = addCheckbox("Force timestamps in log", generalPanel);
+    generalPanelLogForceTimestampsCheckbox.setToolTipText(
+        "Forces display of the time text was output to the log");
+
+    generalPanelLogForceLevelCheckbox = addCheckbox("Force log level in log", generalPanel);
+    generalPanelLogForceLevelCheckbox.setToolTipText(
+        "Forces display of the log level of output in the log");
+
+    generalPanelColoredTextCheckbox = addCheckbox("Coloured console text", generalPanel);
+    generalPanelColoredTextCheckbox.setToolTipText(
+        "When running the client from a console, chat messages in the console will reflect the colours they are in game");
+
+    // UI Settings
+    addSettingsHeader(generalPanel, "UI settings");
+
+    generalPanelUseDarkModeCheckbox =
+        addCheckbox(
+            "Use dark mode for the interface (Requires restart & modern UI theme)", generalPanel);
+    generalPanelUseDarkModeCheckbox.setToolTipText(
+        "Uses the darker UI theme, unless the legacy theme is enabled");
+
+    generalPanelUseNimbusThemeCheckbox =
+        addCheckbox("Use legacy RSCx UI theme (Requires restart)", generalPanel);
+    generalPanelUseNimbusThemeCheckbox.setToolTipText("Uses the legacy RSCx Nimbus look-and-feel");
+
+    if (Util.isModernWindowsOS() && Launcher.OSScalingFactor != 1.0) {
+      generalPanelUseNimbusThemeCheckbox.setEnabled(false);
+      generalPanelUseNimbusThemeCheckbox.setText(
+          "<html><strike>Use legacy RSCx UI theme</strike> You must disable OS level scaling in Windows to enable this option (Requires restart)</html>");
+    }
+
+    addPanelBottomGlue(generalPanel);
+
     /*
      * Overlays tab
      */
@@ -843,7 +1414,6 @@ public class ConfigWindow {
     addSettingsHeader(overlayPanel, "Interface Overlays");
     overlayPanelStatusDisplayCheckbox = addCheckbox("Show HP display", overlayPanel);
     overlayPanelStatusDisplayCheckbox.setToolTipText("Toggle hits display");
-    overlayPanelStatusDisplayCheckbox.setBorder(new EmptyBorder(0, 0, 10, 0));
 
     overlayPanelBuffsCheckbox =
         addCheckbox("Show combat (de)buffs and cooldowns display", overlayPanel);
@@ -875,11 +1445,10 @@ public class ConfigWindow {
     overlayPanel.add(overlayPanelRscTimesButtonsPanel);
     overlayPanelRscTimesButtonsPanel.setLayout(
         new BoxLayout(overlayPanelRscTimesButtonsPanel, BoxLayout.X_AXIS));
-    overlayPanelRscTimesButtonsPanel.setPreferredSize(new Dimension(0, 37));
     overlayPanelRscTimesButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    overlayPanelRscTimesButtonsPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+    overlayPanelRscTimesButtonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     JLabel rsctimesButtonsSpacingLabel = new JLabel("");
-    rsctimesButtonsSpacingLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+    rsctimesButtonsSpacingLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, osScaleMul(20)));
     overlayPanelRscTimesButtonsPanel.add(rsctimesButtonsSpacingLabel);
     overlayPanelRscTimesButtonsCheckbox =
         addCheckbox(
@@ -913,14 +1482,14 @@ public class ConfigWindow {
     addSettingsHeader(overlayPanel, "XP Bar");
     overlayPanelXPBarCheckbox = addCheckbox("Show a Goal bar", overlayPanel);
     overlayPanelXPBarCheckbox.setToolTipText("Show a Goal bar to the left of the wrench");
-    overlayPanelXPBarCheckbox.setBorder(new EmptyBorder(7, 0, 10, 0));
 
     ButtonGroup XPAlignButtonGroup = new ButtonGroup();
-    overlayPanelXPRightAlignFocusButton = addRadioButton("Display on the right", overlayPanel, 20);
+    overlayPanelXPRightAlignFocusButton =
+        addRadioButton("Display on the right", overlayPanel, osScaleMul(20));
     overlayPanelXPRightAlignFocusButton.setToolTipText(
         "The Goal bar will be shown just left of the Settings menu.");
     overlayPanelXPCenterAlignFocusButton =
-        addRadioButton("Display in the center", overlayPanel, 20);
+        addRadioButton("Display in the center", overlayPanel, osScaleMul(20));
     overlayPanelXPCenterAlignFocusButton.setToolTipText(
         "The Goal bar will be shown at the top-middle of the screen.");
     XPAlignButtonGroup.add(overlayPanelXPRightAlignFocusButton);
@@ -943,7 +1512,7 @@ public class ConfigWindow {
 
     overlayPanelLagIndicatorCheckbox = addCheckbox("Lag indicator", overlayPanel);
     overlayPanelLagIndicatorCheckbox.setToolTipText(
-        "When there's a problem with your connection, rsctimes will tell you in the bottom right");
+        "When there's a problem with your connection, RSCTimes will tell you in the bottom right");
 
     overlayPanelFoodHealingCheckbox =
         addCheckbox("Show food healing overlay (Not implemented yet)", overlayPanel);
@@ -966,7 +1535,6 @@ public class ConfigWindow {
         addCheckbox("Show hitboxes around NPCs, players, and items", overlayPanel);
     overlayPanelHitboxCheckbox.setToolTipText(
         "Shows the clickable areas on NPCs, players, and items");
-    overlayPanelHitboxCheckbox.setBorder(new EmptyBorder(0, 0, 10, 0));
 
     overlayPanelPlayerNamesCheckbox =
         addCheckbox("Show player names over their heads", overlayPanel);
@@ -995,41 +1563,45 @@ public class ConfigWindow {
         addCheckbox("Display the names of items on the ground", overlayPanel);
     overlayPanelItemNamesCheckbox.setToolTipText("Shows the names of dropped items");
 
+    int itemsTextHeight = isUsingFlatLAFTheme() ? 32 : 37;
+
     // Blocked Items
     JPanel blockedItemsPanel = new JPanel();
     overlayPanel.add(blockedItemsPanel);
     blockedItemsPanel.setLayout(new BoxLayout(blockedItemsPanel, BoxLayout.X_AXIS));
-    blockedItemsPanel.setPreferredSize(new Dimension(0, 37));
+    blockedItemsPanel.setPreferredSize(osScaleMul(new Dimension(0, itemsTextHeight)));
     blockedItemsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    blockedItemsPanel.setBorder(new EmptyBorder(0, 0, 9, 0));
+    blockedItemsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, osScaleMul(9), 0));
 
     JLabel blockedItemsPanelNameLabel = new JLabel("Blocked items: ");
     blockedItemsPanel.add(blockedItemsPanelNameLabel);
-    blockedItemsPanelNameLabel.setAlignmentY((float) 0.9);
+    blockedItemsPanelNameLabel.setAlignmentY(0.9f);
 
     blockedItemsTextField = new JTextField();
     blockedItemsPanel.add(blockedItemsTextField);
-    blockedItemsTextField.setMinimumSize(new Dimension(100, 28));
-    blockedItemsTextField.setMaximumSize(new Dimension(Short.MAX_VALUE, 28));
-    blockedItemsTextField.setAlignmentY((float) 0.75);
+    blockedItemsTextField.setMinimumSize(osScaleMul(new Dimension(100, 28)));
+    blockedItemsTextField.setMaximumSize(new Dimension(Short.MAX_VALUE, osScaleMul(28)));
+    blockedItemsTextField.setAlignmentY(0.75f);
 
     // Highlighted Items
     JPanel highlightedItemsPanel = new JPanel();
     overlayPanel.add(highlightedItemsPanel);
     highlightedItemsPanel.setLayout(new BoxLayout(highlightedItemsPanel, BoxLayout.X_AXIS));
-    highlightedItemsPanel.setPreferredSize(new Dimension(0, 37));
+    highlightedItemsPanel.setPreferredSize(osScaleMul(new Dimension(0, itemsTextHeight)));
     highlightedItemsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    highlightedItemsPanel.setBorder(new EmptyBorder(0, 0, 9, 0));
+    highlightedItemsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, osScaleMul(9), 0));
 
     JLabel highlightedItemsPanelNameLabel = new JLabel("Highlighted items: ");
     highlightedItemsPanel.add(highlightedItemsPanelNameLabel);
-    highlightedItemsPanelNameLabel.setAlignmentY((float) 0.9);
+    highlightedItemsPanelNameLabel.setAlignmentY(0.9f);
 
     highlightedItemsTextField = new JTextField();
     highlightedItemsPanel.add(highlightedItemsTextField);
-    highlightedItemsTextField.setMinimumSize(new Dimension(100, 28));
-    highlightedItemsTextField.setMaximumSize(new Dimension(Short.MAX_VALUE, 28));
-    highlightedItemsTextField.setAlignmentY((float) 0.75);
+    highlightedItemsTextField.setMinimumSize(osScaleMul(new Dimension(100, 28)));
+    highlightedItemsTextField.setMaximumSize(new Dimension(Short.MAX_VALUE, osScaleMul(28)));
+    highlightedItemsTextField.setAlignmentY(0.75f);
+
+    addPanelBottomGlue(overlayPanel);
 
     /*
      * Notifications tab
@@ -1041,29 +1613,31 @@ public class ConfigWindow {
 
     notificationPanelTrayPopupCheckbox =
         addCheckbox("Enable notification tray popups", notificationPanel);
-    notificationPanelTrayPopupCheckbox.setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
+    notificationPanelTrayPopupCheckbox.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(7), 0));
     notificationPanelTrayPopupCheckbox.setToolTipText(
         "Shows a system notification when a notification is triggered");
 
     ButtonGroup trayPopupButtonGroup = new ButtonGroup();
     notificationPanelTrayPopupClientFocusButton =
-        addRadioButton("Only when client is not focused", notificationPanel, 20);
+        addRadioButton("Only when client is not focused", notificationPanel, osScaleMul(20));
     notificationPanelTrayPopupAnyFocusButton =
-        addRadioButton("Regardless of client focus", notificationPanel, 20);
+        addRadioButton("Regardless of client focus", notificationPanel, osScaleMul(20));
     trayPopupButtonGroup.add(notificationPanelTrayPopupClientFocusButton);
     trayPopupButtonGroup.add(notificationPanelTrayPopupAnyFocusButton);
 
     notificationPanelNotifSoundsCheckbox =
         addCheckbox("Enable notification sounds", notificationPanel);
-    notificationPanelNotifSoundsCheckbox.setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
+    notificationPanelNotifSoundsCheckbox.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(7), 0));
     notificationPanelNotifSoundsCheckbox.setToolTipText(
         "Plays a sound when a notification is triggered");
 
     ButtonGroup notifSoundButtonGroup = new ButtonGroup();
     notificationPanelNotifSoundClientFocusButton =
-        addRadioButton("Only when client is not focused", notificationPanel, 20);
+        addRadioButton("Only when client is not focused", notificationPanel, osScaleMul(20));
     notificationPanelNotifSoundAnyFocusButton =
-        addRadioButton("Regardless of client focus", notificationPanel, 20);
+        addRadioButton("Regardless of client focus", notificationPanel, osScaleMul(20));
     notifSoundButtonGroup.add(notificationPanelNotifSoundClientFocusButton);
     notifSoundButtonGroup.add(notificationPanelNotifSoundAnyFocusButton);
 
@@ -1081,7 +1655,8 @@ public class ConfigWindow {
     addSettingsHeader(notificationPanel, "Notifications");
 
     notificationPanelPMNotifsCheckbox = addCheckbox("Enable PM notifications", notificationPanel);
-    notificationPanelPMNotifsCheckbox.setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
+    notificationPanelPMNotifsCheckbox.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(7), 0));
     notificationPanelPMNotifsCheckbox.setToolTipText(
         "Shows a system notification when a PM is received");
 
@@ -1095,16 +1670,11 @@ public class ConfigWindow {
     notificationPanelUnderAttackNotifsCheckbox.setToolTipText(
         "Shows a system notification when a player attacks you");
 
-    notificationPanelLogoutNotifsCheckbox =
-        addCheckbox("Enable logout notification", notificationPanel);
-    notificationPanelLogoutNotifsCheckbox.setToolTipText(
-        "Shows a system notification when about to idle out");
-
     JPanel notificationPanelLowHPNotifsPanel = new JPanel();
     notificationPanel.add(notificationPanelLowHPNotifsPanel);
     notificationPanelLowHPNotifsPanel.setLayout(
         new BoxLayout(notificationPanelLowHPNotifsPanel, BoxLayout.X_AXIS));
-    notificationPanelLowHPNotifsPanel.setPreferredSize(new Dimension(0, 37));
+    notificationPanelLowHPNotifsPanel.setPreferredSize(osScaleMul(new Dimension(0, 28)));
     notificationPanelLowHPNotifsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     notificationPanelLowHPNotifsCheckbox =
@@ -1113,16 +1683,17 @@ public class ConfigWindow {
         "Shows a system notification when your HP drops below the specified value");
 
     notificationPanelLowHPNotifsSpinner = new JSpinner();
-    notificationPanelLowHPNotifsSpinner.setMaximumSize(new Dimension(45, 22));
-    notificationPanelLowHPNotifsSpinner.setMinimumSize(new Dimension(45, 22));
-    notificationPanelLowHPNotifsSpinner.setAlignmentY((float) 0.75);
+    notificationPanelLowHPNotifsSpinner.setMaximumSize(osScaleMul(new Dimension(55, 22)));
+    notificationPanelLowHPNotifsSpinner.setMinimumSize(osScaleMul(new Dimension(55, 22)));
+    notificationPanelLowHPNotifsSpinner.setAlignmentY(0.75f);
     notificationPanelLowHPNotifsPanel.add(notificationPanelLowHPNotifsSpinner);
     notificationPanelLowHPNotifsSpinner.putClientProperty("JComponent.sizeVariant", "mini");
 
     JLabel notificationPanelLowHPNotifsEndLabel = new JLabel("% HP");
     notificationPanelLowHPNotifsPanel.add(notificationPanelLowHPNotifsEndLabel);
-    notificationPanelLowHPNotifsEndLabel.setAlignmentY((float) 0.9);
-    notificationPanelLowHPNotifsEndLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
+    notificationPanelLowHPNotifsEndLabel.setAlignmentY(0.8f);
+    notificationPanelLowHPNotifsEndLabel.setBorder(
+        BorderFactory.createEmptyBorder(0, osScaleMul(2), 0, 0));
 
     // Sanitize JSpinner values
     SpinnerNumberModel spinnerHPNumModel = new SpinnerNumberModel();
@@ -1136,15 +1707,17 @@ public class ConfigWindow {
     notificationPanel.add(warnHighlightedOnGroundPanel);
     warnHighlightedOnGroundPanel.setLayout(
         new BoxLayout(warnHighlightedOnGroundPanel, BoxLayout.X_AXIS));
-    warnHighlightedOnGroundPanel.setPreferredSize(new Dimension(0, 37));
+    warnHighlightedOnGroundPanel.setPreferredSize(osScaleMul(new Dimension(0, 28)));
     warnHighlightedOnGroundPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+    // TODO: implement feature, remove "setEnabled(false)" below
     notificationPanelHighlightedItemTimerCheckbox =
         addCheckbox(
             "Warn if one of your highlighted items has been on the ground for more than",
             warnHighlightedOnGroundPanel);
     notificationPanelHighlightedItemTimerCheckbox.setToolTipText(
         "Highlighted items can be configured in the Overlays tab");
+    notificationPanelHighlightedItemTimerCheckbox.setEnabled(false);
 
     JLabel highlightedItemsSuggestionJLabel =
         new JLabel(
@@ -1152,20 +1725,26 @@ public class ConfigWindow {
                 + "<strong>Note:</strong> Loot from kills despawns after about 2 minutes."
                 + "</p></html>");
     notificationPanel.add(highlightedItemsSuggestionJLabel);
-    highlightedItemsSuggestionJLabel.setBorder(new EmptyBorder(0, 0, 8, 0));
+    highlightedItemsSuggestionJLabel.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(8), 0));
+    highlightedItemsSuggestionJLabel.setEnabled(false);
 
     notificationPanelHighlightedItemTimerSpinner = new JSpinner();
-    notificationPanelHighlightedItemTimerSpinner.setMaximumSize(new Dimension(55, 22));
-    notificationPanelHighlightedItemTimerSpinner.setMinimumSize(new Dimension(55, 22));
-    notificationPanelHighlightedItemTimerSpinner.setAlignmentY((float) 0.75);
+    notificationPanelHighlightedItemTimerSpinner.setMaximumSize(osScaleMul(new Dimension(65, 22)));
+    notificationPanelHighlightedItemTimerSpinner.setMinimumSize(osScaleMul(new Dimension(65, 22)));
+    notificationPanelHighlightedItemTimerSpinner.setAlignmentY(0.75f);
     warnHighlightedOnGroundPanel.add(notificationPanelHighlightedItemTimerSpinner);
     notificationPanelHighlightedItemTimerSpinner.putClientProperty(
         "JComponent.sizeVariant", "mini");
+    notificationPanelHighlightedItemTimerSpinner.setEnabled(false);
 
     JLabel notificationPanelHighlightedItemEndLabel = new JLabel("seconds");
     warnHighlightedOnGroundPanel.add(notificationPanelHighlightedItemEndLabel);
-    notificationPanelHighlightedItemEndLabel.setAlignmentY((float) 0.9);
-    notificationPanelHighlightedItemEndLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
+    notificationPanelHighlightedItemEndLabel.setAlignmentY(0.8f);
+    int secondsMargin = isUsingFlatLAFTheme() ? 4 : 2;
+    notificationPanelHighlightedItemEndLabel.setBorder(
+        BorderFactory.createEmptyBorder(0, osScaleMul(secondsMargin), 0, 0));
+    notificationPanelHighlightedItemEndLabel.setEnabled(false);
 
     // Sanitize JSpinner values
     SpinnerNumberModel highlightedItemSecondsModel = new SpinnerNumberModel();
@@ -1173,6 +1752,8 @@ public class ConfigWindow {
     highlightedItemSecondsModel.setMaximum(630); // 10.5 minutes max
     highlightedItemSecondsModel.setValue(100);
     notificationPanelHighlightedItemTimerSpinner.setModel(highlightedItemSecondsModel);
+
+    addPanelBottomGlue(notificationPanel);
 
     /*
      * Streaming & Privacy tab
@@ -1186,69 +1767,77 @@ public class ConfigWindow {
         addCheckbox("Enable Twitch chat integration", streamingPanel);
     streamingPanelTwitchChatIntegrationEnabledCheckbox.setToolTipText(
         "If this box is checked, and the 3 relevant text fields are filled out, you will connect to a chat channel on login.");
-    streamingPanelTwitchChatIntegrationEnabledCheckbox.setBorder(new EmptyBorder(0, 0, 7, 0));
 
     streamingPanelTwitchChatCheckbox = addCheckbox("Hide incoming Twitch chat", streamingPanel);
     streamingPanelTwitchChatCheckbox.setToolTipText(
         "Don't show chat from other Twitch users, but still be able to send Twitch chat");
 
+    int twitchTextHeight = isUsingFlatLAFTheme() ? 32 : 37;
+
     JPanel streamingPanelTwitchChannelNamePanel = new JPanel();
     streamingPanel.add(streamingPanelTwitchChannelNamePanel);
     streamingPanelTwitchChannelNamePanel.setLayout(
         new BoxLayout(streamingPanelTwitchChannelNamePanel, BoxLayout.X_AXIS));
-    streamingPanelTwitchChannelNamePanel.setPreferredSize(new Dimension(0, 37));
+    streamingPanelTwitchChannelNamePanel.setPreferredSize(
+        osScaleMul(new Dimension(0, twitchTextHeight)));
     streamingPanelTwitchChannelNamePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    streamingPanelTwitchChannelNamePanel.setBorder(new EmptyBorder(0, 0, 7, 0));
+    streamingPanelTwitchChannelNamePanel.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(7), 0));
 
     JLabel streamingPanelTwitchChannelNameLabel = new JLabel("Twitch channel to chat in: ");
     streamingPanelTwitchChannelNameLabel.setToolTipText("The Twitch channel you want to chat in");
     streamingPanelTwitchChannelNamePanel.add(streamingPanelTwitchChannelNameLabel);
-    streamingPanelTwitchChannelNameLabel.setAlignmentY((float) 0.9);
+    streamingPanelTwitchChannelNameLabel.setAlignmentY(0.9f);
 
     streamingPanelTwitchChannelNameTextField = new JTextField();
     streamingPanelTwitchChannelNamePanel.add(streamingPanelTwitchChannelNameTextField);
-    streamingPanelTwitchChannelNameTextField.setMinimumSize(new Dimension(100, 28));
-    streamingPanelTwitchChannelNameTextField.setMaximumSize(new Dimension(Short.MAX_VALUE, 28));
-    streamingPanelTwitchChannelNameTextField.setAlignmentY((float) 0.75);
+    streamingPanelTwitchChannelNameTextField.setMinimumSize(osScaleMul(new Dimension(100, 28)));
+    streamingPanelTwitchChannelNameTextField.setMaximumSize(
+        new Dimension(Short.MAX_VALUE, osScaleMul(28)));
+    streamingPanelTwitchChannelNameTextField.setAlignmentY(0.75f);
 
     JPanel streamingPanelTwitchUserPanel = new JPanel();
     streamingPanel.add(streamingPanelTwitchUserPanel);
     streamingPanelTwitchUserPanel.setLayout(
         new BoxLayout(streamingPanelTwitchUserPanel, BoxLayout.X_AXIS));
-    streamingPanelTwitchUserPanel.setPreferredSize(new Dimension(0, 37));
+    streamingPanelTwitchUserPanel.setPreferredSize(osScaleMul(new Dimension(0, twitchTextHeight)));
     streamingPanelTwitchUserPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    streamingPanelTwitchUserPanel.setBorder(new EmptyBorder(0, 0, 7, 0));
+    streamingPanelTwitchUserPanel.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(7), 0));
 
     JLabel streamingPanelTwitchUserLabel = new JLabel("Your Twitch username: ");
     streamingPanelTwitchUserLabel.setToolTipText("The Twitch username you log into Twitch with");
     streamingPanelTwitchUserPanel.add(streamingPanelTwitchUserLabel);
-    streamingPanelTwitchUserLabel.setAlignmentY((float) 0.9);
+    streamingPanelTwitchUserLabel.setAlignmentY(0.9f);
 
     streamingPanelTwitchUserTextField = new JTextField();
     streamingPanelTwitchUserPanel.add(streamingPanelTwitchUserTextField);
-    streamingPanelTwitchUserTextField.setMinimumSize(new Dimension(100, 28));
-    streamingPanelTwitchUserTextField.setMaximumSize(new Dimension(Short.MAX_VALUE, 28));
-    streamingPanelTwitchUserTextField.setAlignmentY((float) 0.75);
+    streamingPanelTwitchUserTextField.setMinimumSize(osScaleMul(new Dimension(100, 28)));
+    streamingPanelTwitchUserTextField.setMaximumSize(
+        new Dimension(Short.MAX_VALUE, osScaleMul(28)));
+    streamingPanelTwitchUserTextField.setAlignmentY(0.75f);
 
     JPanel streamingPanelTwitchOAuthPanel = new JPanel();
     streamingPanel.add(streamingPanelTwitchOAuthPanel);
     streamingPanelTwitchOAuthPanel.setLayout(
         new BoxLayout(streamingPanelTwitchOAuthPanel, BoxLayout.X_AXIS));
-    streamingPanelTwitchOAuthPanel.setPreferredSize(new Dimension(0, 37));
+    streamingPanelTwitchOAuthPanel.setPreferredSize(osScaleMul(new Dimension(0, twitchTextHeight)));
     streamingPanelTwitchOAuthPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    streamingPanelTwitchOAuthPanel.setBorder(new EmptyBorder(0, 0, 7, 0));
+    streamingPanelTwitchOAuthPanel.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(7), 0));
 
     JLabel streamingPanelTwitchOAuthLabel =
         new JLabel("Your Twitch OAuth token (not your Stream key): ");
     streamingPanelTwitchOAuthLabel.setToolTipText("Your Twitch OAuth token (not your Stream Key)");
     streamingPanelTwitchOAuthPanel.add(streamingPanelTwitchOAuthLabel);
-    streamingPanelTwitchOAuthLabel.setAlignmentY((float) 0.9);
+    streamingPanelTwitchOAuthLabel.setAlignmentY(0.9f);
 
     streamingPanelTwitchOAuthTextField = new JPasswordField();
     streamingPanelTwitchOAuthPanel.add(streamingPanelTwitchOAuthTextField);
-    streamingPanelTwitchOAuthTextField.setMinimumSize(new Dimension(100, 28));
-    streamingPanelTwitchOAuthTextField.setMaximumSize(new Dimension(Short.MAX_VALUE, 28));
-    streamingPanelTwitchOAuthTextField.setAlignmentY((float) 0.75);
+    streamingPanelTwitchOAuthTextField.setMinimumSize(osScaleMul(new Dimension(100, 28)));
+    streamingPanelTwitchOAuthTextField.setMaximumSize(
+        new Dimension(Short.MAX_VALUE, osScaleMul(28)));
+    streamingPanelTwitchOAuthTextField.setAlignmentY(0.75f);
 
     streamingPanelSaveLoginCheckbox =
         addCheckbox("Save login information between logins (Requires restart)", streamingPanel);
@@ -1258,6 +1847,8 @@ public class ConfigWindow {
     streamingPanelStartLoginCheckbox = addCheckbox("Start game at login screen", streamingPanel);
     streamingPanelStartLoginCheckbox.setToolTipText(
         "Starts the game at the login screen and return to it on logout");
+
+    addPanelBottomGlue(streamingPanel);
 
     /*
      * Keybind tab
@@ -1274,6 +1865,7 @@ public class ConfigWindow {
     gbl_constraints.fill = GridBagConstraints.HORIZONTAL;
     gbl_constraints.anchor = GridBagConstraints.FIRST_LINE_START;
     gbl_constraints.weightx = 1;
+    gbl_constraints.ipadx = 20;
     gbl_constraints.gridy = 0;
     gbl_constraints.gridwidth = 3;
 
@@ -1281,11 +1873,19 @@ public class ConfigWindow {
     // consider using ALT instead.
 
     addKeybindCategory(keybindContainerPanel, "General");
-    /*
-    addKeybindSet(keybindContainerPanel, "Logout", "logout", KeyModifier.CTRL, KeyEvent.VK_L);
+    // addKeybindSet(keybindContainerPanel, "Logout", "logout", KeyModifier.CTRL, KeyEvent.VK_L);
     addKeybindSet(
-            keybindContainerPanel, "Take screenshot", "screenshot", KeyModifier.CTRL, KeyEvent.VK_S);
-     */
+        keybindContainerPanel, "Take screenshot", "screenshot", KeyModifier.CTRL, KeyEvent.VK_S);
+    addKeybindSet(
+        keybindContainerPanel, "Toggle scaling", "toggle_scaling", KeyModifier.ALT, KeyEvent.VK_S);
+    addKeybindSet(
+        keybindContainerPanel, "Increase scale", "increase_scale", KeyModifier.ALT, KeyEvent.VK_UP);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Decrease scale",
+        "decrease_scale",
+        KeyModifier.ALT,
+        KeyEvent.VK_DOWN);
     addKeybindSet(
         keybindContainerPanel,
         "Show settings window",
@@ -1298,6 +1898,12 @@ public class ConfigWindow {
         "show_worldmap_window",
         KeyModifier.ALT,
         KeyEvent.VK_M);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle trackpad camera rotation",
+        "toggle_trackpad_camera_rotation",
+        KeyModifier.ALT,
+        KeyEvent.VK_D);
     /*
     addKeybindSet(
             keybindContainerPanel,
@@ -1504,7 +2110,7 @@ public class ConfigWindow {
             "Show player controls",
             "show_player_controls",
             KeyModifier.ALT,
-            KeyEvent.VK_UP);
+            KeyEvent.VK_C);
 
     */
 
@@ -1573,6 +2179,8 @@ public class ConfigWindow {
     keybindContainerContainerPanel.add(keybindContainerPanel, gbl_constraints);
     keybindPanel.add(keybindContainerContainerPanel, con);
 
+    addPanelBottomGlue(keybindPanel);
+
     /*
      * Presets tab
      */
@@ -1587,7 +2195,7 @@ public class ConfigWindow {
 
     JPanel presetsPanelPresetSliderPanel = new JPanel();
     presetsPanelPresetSliderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    presetsPanelPresetSliderPanel.setMaximumSize(new Dimension(400, 175));
+    presetsPanelPresetSliderPanel.setMaximumSize(osScaleMul(new Dimension(300, 175)));
     presetsPanelPresetSliderPanel.setLayout(
         new BoxLayout(presetsPanelPresetSliderPanel, BoxLayout.X_AXIS));
     presetsPanel.add(presetsPanelPresetSliderPanel);
@@ -1610,16 +2218,22 @@ public class ConfigWindow {
     presetsPanelPresetSlider.setSnapToTicks(true);
     presetsPanelPresetSlider.setMinimum(0);
     presetsPanelPresetSlider.setMaximum(5);
-    presetsPanelPresetSlider.setPreferredSize(new Dimension(100, 0));
     presetsPanelPresetSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
-    presetsPanelPresetSlider.setBorder(new EmptyBorder(0, 0, 5, 70));
+    presetsPanelPresetSlider.setBorder(
+        BorderFactory.createEmptyBorder(0, 0, osScaleMul(5), osScaleMul(70)));
     presetsPanelPresetSlider.setOrientation(SwingConstants.VERTICAL);
+
+    if (Util.isUsingFlatLAFTheme()) {
+      presetsPanelPresetSliderPanel.add(Box.createHorizontalStrut(osScaleMul(35)));
+    }
+
     presetsPanelPresetSliderPanel.add(presetsPanelPresetSlider);
 
     JPanel presetsButtonPanel = new JPanel();
     presetsButtonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    presetsButtonPanel.setMaximumSize(new Dimension(300, 50));
-    presetsButtonPanel.setBorder(BorderFactory.createEmptyBorder(7, 10, 10, 0));
+    presetsButtonPanel.setMaximumSize(osScaleMul(new Dimension(400, 50)));
+    presetsButtonPanel.setBorder(
+        BorderFactory.createEmptyBorder(osScaleMul(7), osScaleMul(10), osScaleMul(10), 0));
     presetsButtonPanel.setLayout(new BoxLayout(presetsButtonPanel, BoxLayout.X_AXIS));
 
     replaceConfigButton =
@@ -1628,10 +2242,16 @@ public class ConfigWindow {
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            String confirmPresetDefaultMessage =
+                "<b>Warning</b>: this will delete your old settings!<br/>"
+                    + "<br/>"
+                    + "Are you sure you want to delete your old settings?";
+            JPanel confirmPresetDefaultPanel =
+                Util.createOptionMessagePanel(confirmPresetDefaultMessage);
             int choice =
                 JOptionPane.showConfirmDialog(
                     Launcher.getConfigWindow().frame,
-                    "Warning: this will delete your old settings! Are you sure you want to delete your old settings?",
+                    confirmPresetDefaultPanel,
                     "Confirm",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE);
@@ -1642,6 +2262,11 @@ public class ConfigWindow {
             Settings.save(Settings.currentProfile);
           }
         });
+
+    if (Util.isUsingFlatLAFTheme()) {
+      presetsButtonPanel.add(Box.createRigidArea(osScaleMul(new Dimension(4, 0))));
+    }
+
     resetPresetsButton = addButton("Reset Presets", presetsButtonPanel, Component.RIGHT_ALIGNMENT);
     resetPresetsButton.addActionListener(
         new ActionListener() {
@@ -1662,6 +2287,8 @@ public class ConfigWindow {
           }
         });
 
+    addPanelBottomGlue(presetsPanel);
+
     // World List Tab
     worldListPanel.setLayout(new BoxLayout(worldListPanel, BoxLayout.Y_AXIS));
     worldListPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1669,13 +2296,15 @@ public class ConfigWindow {
     addSettingsHeader(worldListPanel, "World List");
 
     JLabel spacingLabel = new JLabel("");
-    spacingLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+    spacingLabel.setBorder(BorderFactory.createEmptyBorder(osScaleMul(15), 0, 0, 0));
     worldListPanel.add(spacingLabel);
 
     for (int i = 1; i <= Settings.WORLDS_TO_DISPLAY; i++) {
       addWorldFields(i);
     }
     addAddWorldButton();
+
+    addPanelBottomGlue(worldListPanel);
 
     // Authors Tab
     JPanel logoPanel = new JPanel();
@@ -1689,8 +2318,12 @@ public class ConfigWindow {
     try {
       BufferedImage rsctimesLogo = ImageIO.read(Launcher.getResource("/assets/icon-large.png"));
       JLabel rsctimesLogoJLabel =
-          new JLabel(new ImageIcon(rsctimesLogo.getScaledInstance(250, 250, Image.SCALE_DEFAULT)));
-      rsctimesLogoJLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 20, 40));
+          new JLabel(
+              new ImageIcon(
+                  rsctimesLogo.getScaledInstance(
+                      osScaleMul(250), osScaleMul(250), Image.SCALE_SMOOTH)));
+      rsctimesLogoJLabel.setBorder(
+          BorderFactory.createEmptyBorder(0, osScaleMul(10), osScaleMul(20), osScaleMul(40)));
       logoPanel.add(rsctimesLogoJLabel);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1709,8 +2342,8 @@ public class ConfigWindow {
     JLabel RSCTimesText =
         new JLabel(
             String.format(
-                "<html><div style=\"font-size:45px; padding-bottom:10px;\"<b>RSC</b>Times</div><div style=\"font-size:20px;\">v%8.6f </div></html>",
-                Settings.VERSION_NUMBER));
+                "<html><div style=\"font-size:%dpx; padding-bottom:%dpx;\"<b>RSC</b>Times</div><div style=\"font-size:%dpx;\">v%8.6f </div></html>",
+                osScaleMul(45), osScaleMul(10), osScaleMul(20), Settings.VERSION_NUMBER));
 
     rightPane.add(RSCTimesText);
 
@@ -1718,14 +2351,20 @@ public class ConfigWindow {
 
     JLabel aboutText =
         new JLabel(
-            "<html><head><style>p{font-size:10px; padding-top:15px;}ul{padding-left:0px;margin-left:10px;}</style></head><p><b>RSC</b>Times is a RuneLite-like client "
-                + "based on mudclient38-recreated.<br/> Learn more at https://rsc.plus<br/><br/>"
-                + "Thanks to the authors who made this software possible:<br/>"
-                + "<ul><li><b>Luis</b>, for creating the client and finding lots of hooks</li>"
-                + "<li><b>Logg</b>, helped port features from RSC+, new interfaces & improvements</li>"
-                + "<li><b>Ornox</b>, for creating RSC+ & most of its features</li>"
-                + "<li><b>The RSC+ team of 2016 to 2018</li></b>"
-                + "<li><b>The Jagex team of 2000 to 2001</b></li></ul></p></html>");
+            String.format(
+                "<html><head><style>p{font-size:%dpx; padding-top:%dpx;}ul{list-style-type:none;padding-left:0px;margin-left:0px;}</style></head>"
+                    + "<p><b>RSC</b>Times is a RuneLite-like client "
+                    + "based on mudclient38-recreated.<br/> Learn more at https://rsc.plus<br/><br/>"
+                    + "Thanks to the authors who made this software possible:<br/><ul>"
+                    + "<li><b>● Luis</b>, for creating the client and finding lots of hooks</li>"
+                    + "<li><b>● Logg</b>, helped port features from RSC+, new interfaces & improvements</li>"
+                    + "<li><b>● conker</b>, ported scaling from RSC+, modern UI, and fixed bugs</li>"
+                    + "<li><b>● Yumeko</b>, fixed Twitch chat integration in 2023</li>"
+                    + "<li><b>● Ornox</b>, for creating RSC+ & most of its features</li>"
+                    + "<li><b>● The RSC+ team of 2016 to 2018</b></li>"
+                    + "<li><b>● The Jagex team of 2000 to 2001</b></li>"
+                    + "</ul></p></html>",
+                osScaleMul(10), osScaleMul(15)));
 
     rightPane.add(aboutText, cR);
     c.gridx = 2;
@@ -1758,6 +2397,44 @@ public class ConfigWindow {
     thirdsPanel.add(bottomPane, c);
 
     authorsPanel.add(thirdsPanel);
+
+    addPanelBottomGlue(authorsPanel);
+
+    //// End component creation ////
+  }
+
+  /** Resets the tooltip listener state */
+  private void resetToolTipListener() {
+    toolTipTextString = " ";
+    toolTipTextLabel.setText(toolTipInitText);
+    resetToolTipBarPanelColors();
+    removeConfigWindowEventQueueListener();
+  }
+
+  /** Resets the tooltip bar panel colors */
+  private void resetToolTipBarPanelColors() {
+    if (Util.isDarkThemeFlatLAF()) {
+      toolTipPanel.setBackground(new Color(52, 56, 58));
+    } else if (Util.isLightThemeFlatLAF()) {
+      toolTipPanel.setBackground(new Color(235, 235, 235));
+    } else {
+      toolTipPanel.setBackground(new Color(233, 236, 242));
+    }
+  }
+
+  /**
+   * Adds vertical glue to a settings panel to ensure that components do not shrink / grow when an
+   * active search removes the scrollbar. This must be the very last component added to a settings
+   * panel.
+   *
+   * @param panel The panel to which glue should be added
+   */
+  private static void addPanelBottomGlue(JPanel panel) {
+    JComponent panelGlue = (JComponent) Box.createVerticalGlue();
+    // These are named such that they can be identified in cases where the panel
+    // layout dynamically changes, such as during search.
+    panelGlue.setName(panel.getName().toLowerCase() + "PanelBottomGlue");
+    panel.add(panelGlue);
   }
 
   /**
@@ -1814,7 +2491,7 @@ public class ConfigWindow {
   private JLabel addKeybindLabel(JPanel panel, String labelText) {
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.anchor = GridBagConstraints.WEST;
-    gbc.insets = new Insets(0, 0, 5, 0);
+    gbc.insets = new Insets(0, 0, osScaleMul(5), 0);
     gbc.gridx = 0;
     gbc.gridy = keybindLabelGridYCounter++;
     gbc.weightx = 20;
@@ -1841,7 +2518,7 @@ public class ConfigWindow {
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.anchor = GridBagConstraints.EAST;
     gbc.fill = GridBagConstraints.HORIZONTAL;
-    gbc.insets = new Insets(0, 0, 5, 0);
+    gbc.insets = new Insets(0, 0, osScaleMul(5), 0);
     gbc.gridx = 1;
     gbc.gridy = keybindButtonGridYCounter++;
     JButton jbtn = new JButton(buttonText);
@@ -1877,10 +2554,12 @@ public class ConfigWindow {
     keybindLabelGridYCounter++;
     gbc.gridwidth = 2;
 
-    panel.add(Box.createVerticalStrut(7), gbc);
+    JComponent spacer1 = (JComponent) Box.createVerticalStrut(osScaleMul(7));
+    panel.add(spacer1, gbc);
     JSeparator jsep = new JSeparator(SwingConstants.HORIZONTAL);
     panel.add(jsep, gbc);
-    panel.add(Box.createVerticalStrut(7), gbc);
+    JComponent spacer2 = (JComponent) Box.createVerticalStrut(osScaleMul(7));
+    panel.add(spacer2, gbc);
   }
 
   /**
@@ -1895,7 +2574,7 @@ public class ConfigWindow {
     gbc.anchor = GridBagConstraints.WEST;
     gbc.gridx = 0;
     if (keybindLabelGridYCounter == 0) gbc.insets = new Insets(0, 0, 0, 0);
-    else gbc.insets = new Insets(7, 0, 0, 0);
+    else gbc.insets = new Insets(osScaleMul(7), 0, 0, 0);
     gbc.gridy = keybindLabelGridYCounter++;
     keybindButtonGridYCounter++;
     gbc.weightx = 20;
@@ -1924,7 +2603,8 @@ public class ConfigWindow {
    */
   private void addSettingsHeaderSeparator(JPanel panel) {
     JSeparator jsep = new JSeparator(SwingConstants.HORIZONTAL);
-    jsep.setMaximumSize(new Dimension(Short.MAX_VALUE, 7));
+    jsep.setPreferredSize(new Dimension(0, osScaleMul(7)));
+    jsep.setMaximumSize(new Dimension(Short.MAX_VALUE, osScaleMul(7)));
     panel.add(jsep);
   }
 
@@ -1952,7 +2632,7 @@ public class ConfigWindow {
   private JCheckBox addCheckbox(String text, Container container) {
     JCheckBox checkbox = new JCheckBox(text);
     checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-    checkbox.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 5));
+    checkbox.setBorder(BorderFactory.createEmptyBorder(0, 0, osScaleMul(10), osScaleMul(5)));
     container.add(checkbox);
     return checkbox;
   }
@@ -1986,7 +2666,8 @@ public class ConfigWindow {
   private JRadioButton addRadioButton(String text, Container container, int leftIndent) {
     JRadioButton radioButton = new JRadioButton(text);
     radioButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-    radioButton.setBorder(BorderFactory.createEmptyBorder(0, leftIndent, 7, 5));
+    radioButton.setBorder(
+        BorderFactory.createEmptyBorder(0, leftIndent, osScaleMul(7), osScaleMul(5)));
     container.add(radioButton);
     return radioButton;
   }
@@ -2025,6 +2706,24 @@ public class ConfigWindow {
         Settings.CUSTOM_CLIENT_SIZE_X.get(Settings.currentProfile));
     generalPanelClientSizeYSpinner.setValue(
         Settings.CUSTOM_CLIENT_SIZE_Y.get(Settings.currentProfile));
+    generalPanelScaleWindowCheckbox.setSelected(
+        Settings.SCALED_CLIENT_WINDOW.get(Settings.currentProfile));
+    if (Settings.SCALING_ALGORITHM.get(Settings.currentProfile)
+        == AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
+      generalPanelIntegerScalingFocusButton.setSelected(true);
+    } else if (Settings.SCALING_ALGORITHM.get(Settings.currentProfile)
+        == AffineTransformOp.TYPE_BILINEAR) {
+      generalPanelBilinearScalingFocusButton.setSelected(true);
+    } else if (Settings.SCALING_ALGORITHM.get(Settings.currentProfile)
+        == AffineTransformOp.TYPE_BICUBIC) {
+      generalPanelBicubicScalingFocusButton.setSelected(true);
+    }
+    generalPanelIntegerScalingSpinner.setValue(
+        Settings.INTEGER_SCALING_FACTOR.get(Settings.currentProfile));
+    generalPanelBilinearScalingSpinner.setValue(
+        Settings.BILINEAR_SCALING_FACTOR.get(Settings.currentProfile));
+    generalPanelBicubicScalingSpinner.setValue(
+        Settings.BICUBIC_SCALING_FACTOR.get(Settings.currentProfile));
     generalPanelCheckUpdates.setSelected(Settings.CHECK_UPDATES.get(Settings.currentProfile));
     generalPanelWelcomeEnabled.setSelected(
         Settings.REMIND_HOW_TO_OPEN_SETTINGS.get(Settings.currentProfile));
@@ -2075,10 +2774,18 @@ public class ConfigWindow {
         Settings.AUTO_SCREENSHOT.get(Settings.currentProfile));
     generalPanelCustomCursorCheckbox.setSelected(
         Settings.SOFTWARE_CURSOR.get(Settings.currentProfile));
+    generalPanelShiftScrollCameraRotationCheckbox.setSelected(
+        Settings.SHIFT_SCROLL_CAMERA_ROTATION.get(Settings.currentProfile));
+    generalPanelTrackpadRotationSlider.setValue(
+        Settings.TRACKPAD_ROTATION_SENSITIVITY.get(Settings.currentProfile));
     generalPanelViewDistanceSlider.setValue(Settings.VIEW_DISTANCE.get(Settings.currentProfile));
     generalPanelPatchGenderCheckbox.setSelected(Settings.PATCH_GENDER.get(Settings.currentProfile));
     generalPanelPatchHbar512LastPixelCheckbox.setSelected(
         Settings.PATCH_HBAR_512_LAST_PIXEL.get(Settings.currentProfile));
+    generalPanelUseDarkModeCheckbox.setSelected(
+        Settings.USE_DARK_FLATLAF.get(Settings.currentProfile));
+    generalPanelUseNimbusThemeCheckbox.setSelected(
+        Settings.USE_NIMBUS_THEME.get(Settings.currentProfile));
     generalPanelPrefersXdgOpenCheckbox.setSelected(
         Settings.PREFERS_XDG_OPEN.get(Settings.currentProfile));
 
@@ -2174,8 +2881,6 @@ public class ConfigWindow {
         Settings.TRADE_NOTIFICATIONS.get(Settings.currentProfile));
     notificationPanelUnderAttackNotifsCheckbox.setSelected(
         Settings.UNDER_ATTACK_NOTIFICATIONS.get(Settings.currentProfile));
-    notificationPanelLogoutNotifsCheckbox.setSelected(
-        Settings.LOGOUT_NOTIFICATIONS.get(Settings.currentProfile));
     notificationPanelLowHPNotifsCheckbox.setSelected(
         Settings.LOW_HP_NOTIFICATIONS.get(Settings.currentProfile));
     notificationPanelLowHPNotifsSpinner.setValue(
@@ -2239,6 +2944,36 @@ public class ConfigWindow {
     Settings.CUSTOM_CLIENT_SIZE_Y.put(
         Settings.currentProfile,
         ((SpinnerNumberModel) (generalPanelClientSizeYSpinner.getModel())).getNumber().intValue());
+    Settings.SCALED_CLIENT_WINDOW.put(
+        Settings.currentProfile, generalPanelScaleWindowCheckbox.isSelected());
+    Settings.SCALING_ALGORITHM.put(
+        Settings.currentProfile,
+        generalPanelIntegerScalingFocusButton.isSelected()
+            ? AffineTransformOp.TYPE_NEAREST_NEIGHBOR
+            : generalPanelBilinearScalingFocusButton.isSelected()
+                ? AffineTransformOp.TYPE_BILINEAR
+                : AffineTransformOp.TYPE_BICUBIC);
+    Settings.INTEGER_SCALING_FACTOR.put(
+        Settings.currentProfile,
+        ((SpinnerNumberModel) (generalPanelIntegerScalingSpinner.getModel()))
+            .getNumber()
+            .intValue());
+    Settings.BILINEAR_SCALING_FACTOR.put(
+        Settings.currentProfile,
+        BigDecimal.valueOf(
+                ((SpinnerNumberModel) (generalPanelBilinearScalingSpinner.getModel()))
+                    .getNumber()
+                    .floatValue())
+            .setScale(1, RoundingMode.HALF_DOWN)
+            .floatValue());
+    Settings.BICUBIC_SCALING_FACTOR.put(
+        Settings.currentProfile,
+        BigDecimal.valueOf(
+                ((SpinnerNumberModel) (generalPanelBicubicScalingSpinner.getModel()))
+                    .getNumber()
+                    .floatValue())
+            .setScale(1, RoundingMode.HALF_DOWN)
+            .floatValue());
     Settings.CHECK_UPDATES.put(Settings.currentProfile, generalPanelCheckUpdates.isSelected());
     Settings.REMIND_HOW_TO_OPEN_SETTINGS.put(
         Settings.currentProfile, generalPanelWelcomeEnabled.isSelected());
@@ -2292,6 +3027,10 @@ public class ConfigWindow {
     Settings.FOV.put(Settings.currentProfile, generalPanelFoVSlider.getValue());
     Settings.SOFTWARE_CURSOR.put(
         Settings.currentProfile, generalPanelCustomCursorCheckbox.isSelected());
+    Settings.SHIFT_SCROLL_CAMERA_ROTATION.put(
+        Settings.currentProfile, generalPanelShiftScrollCameraRotationCheckbox.isSelected());
+    Settings.TRACKPAD_ROTATION_SENSITIVITY.put(
+        Settings.currentProfile, generalPanelTrackpadRotationSlider.getValue());
     Settings.AUTO_SCREENSHOT.put(
         Settings.currentProfile, generalPanelAutoScreenshotCheckbox.isSelected());
     Settings.VIEW_DISTANCE.put(Settings.currentProfile, generalPanelViewDistanceSlider.getValue());
@@ -2304,6 +3043,10 @@ public class ConfigWindow {
         Settings.currentProfile, generalPanelPatchGenderCheckbox.isSelected());
     Settings.PATCH_HBAR_512_LAST_PIXEL.put(
         Settings.currentProfile, generalPanelPatchHbar512LastPixelCheckbox.isSelected());
+    Settings.USE_DARK_FLATLAF.put(
+        Settings.currentProfile, generalPanelUseDarkModeCheckbox.isSelected());
+    Settings.USE_NIMBUS_THEME.put(
+        Settings.currentProfile, generalPanelUseNimbusThemeCheckbox.isSelected());
 
     // Overlays options
     Settings.SHOW_HP_OVERLAY.put(
@@ -2371,8 +3114,6 @@ public class ConfigWindow {
         Settings.currentProfile, notificationPanelTradeNotifsCheckbox.isSelected());
     Settings.UNDER_ATTACK_NOTIFICATIONS.put(
         Settings.currentProfile, notificationPanelUnderAttackNotifsCheckbox.isSelected());
-    Settings.LOGOUT_NOTIFICATIONS.put(
-        Settings.currentProfile, notificationPanelLogoutNotifsCheckbox.isSelected());
     Settings.LOW_HP_NOTIFICATIONS.put(
         Settings.currentProfile, notificationPanelLowHPNotifsCheckbox.isSelected());
     Settings.LOW_HP_NOTIF_VALUE.put(
@@ -2504,11 +3245,11 @@ public class ConfigWindow {
    */
   public void applySettings() {
     saveSettings();
-    if (Settings.CUSTOM_CLIENT_SIZE.get(Settings.currentProfile))
-      Game.getInstance().resizeFrameWithContents();
+    // Tell the Renderer to update the scale from its thread to avoid thread-safety issues.
+    Settings.renderingScalarUpdateRequired = true;
     // Tell the Renderer to update the FoV from its thread to avoid thread-safety issues.
     Settings.fovUpdateRequired = true;
-    Settings.checkSoftwareCursor(true);
+    Settings.checkSoftwareCursor();
     Camera.setDistance(Settings.VIEW_DISTANCE.get(Settings.currentProfile));
     synchronizeGuiValues();
     // QueueWindow.syncColumnsWithSettings();
@@ -2545,17 +3286,22 @@ public class ConfigWindow {
     cR.gridwidth = 1;
 
     JLabel worldNumberJLabel = new JLabel(String.format("<html><b>World %d</b></html>", i));
-    worldNumberJLabel.setAlignmentY((float) 0.75);
+    worldNumberJLabel.setAlignmentY(0.75f);
     worldListTitleTextFieldContainers.get(i).add(worldNumberJLabel, cR);
 
     cR.weightx = 0.5;
     cR.gridwidth = 5;
 
+    if (Util.isUsingFlatLAFTheme()) {
+      cR.insets = new Insets(0, 0, 0, osScaleMul(4));
+    }
+
     worldNamesJTextFields.put(i, new HintTextField("Name of World"));
-    worldNamesJTextFields.get(i).setMinimumSize(new Dimension(80, 28));
-    worldNamesJTextFields.get(i).setMaximumSize(new Dimension(300, 28));
-    worldNamesJTextFields.get(i).setPreferredSize(new Dimension(200, 28));
-    worldNamesJTextFields.get(i).setAlignmentY((float) 0.75);
+    worldNamesJTextFields.get(i).setMinimumSize(osScaleMul(new Dimension(80, 28)));
+    worldNamesJTextFields.get(i).setMaximumSize(osScaleMul(new Dimension(300, 28)));
+    worldNamesJTextFields.get(i).setPreferredSize(osScaleMul(new Dimension(202, 28)));
+    worldNamesJTextFields.get(i).setAlignmentY(0.75f);
+
     worldListTitleTextFieldContainers.get(i).add(worldNamesJTextFields.get(i), cR);
 
     cR.weightx = 0.1;
@@ -2564,16 +3310,20 @@ public class ConfigWindow {
 
     /*
           JLabel spacingJLabel = new JLabel("");
-          worldNumberJLabel.setAlignmentY((float) 0.75);
+          worldNumberJLabel.setAlignmentY(0.75f);
           worldListTitleTextFieldContainers.get(i).add(spacingJLabel, cR);
     */
 
     cR.weightx = 0.3;
     cR.gridwidth = 1;
 
+    if (Util.isUsingFlatLAFTheme()) {
+      cR.insets = new Insets(0, 0, 0, 0);
+    }
+
     worldDeleteJButtons.put(i, new JButton("Delete World"));
-    worldDeleteJButtons.get(i).setAlignmentY((float) 0.80);
-    worldDeleteJButtons.get(i).setPreferredSize(new Dimension(50, 28));
+    worldDeleteJButtons.get(i).setAlignmentY(0.80f);
+    worldDeleteJButtons.get(i).setPreferredSize(osScaleMul(new Dimension(50, 28)));
     worldDeleteJButtons.get(i).setActionCommand(String.format("%d", i));
     worldDeleteJButtons
         .get(i)
@@ -2582,12 +3332,15 @@ public class ConfigWindow {
               @Override
               public void actionPerformed(ActionEvent e) {
                 String actionCommandWorld = e.getActionCommand();
+
+                JPanel confirmDeleteWorldPanel =
+                    Util.createOptionMessagePanel(
+                        "<b>Warning</b>: Are you sure you want to <b>DELETE</b> World %s?",
+                        actionCommandWorld);
                 int choice =
                     JOptionPane.showConfirmDialog(
                         Launcher.getConfigWindow().frame,
-                        String.format(
-                            "Warning: Are you sure you want to DELETE World %s?",
-                            actionCommandWorld),
+                        confirmDeleteWorldPanel,
                         "Confirm",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.QUESTION_MESSAGE);
@@ -2602,7 +3355,7 @@ public class ConfigWindow {
 
     worldListTitleTextFieldContainers.get(i).add(worldDeleteJButtons.get(i), cR);
 
-    worldListTitleTextFieldContainers.get(i).setMaximumSize(new Dimension(680, 40));
+    worldListTitleTextFieldContainers.get(i).setMaximumSize(osScaleMul(new Dimension(680, 40)));
     worldListPanel.add(worldListTitleTextFieldContainers.get(i));
 
     //// URL/Ports line
@@ -2610,14 +3363,15 @@ public class ConfigWindow {
     worldPortsJTextFields.put(
         i, new HintTextField(String.format("World %d Port (default: 43594)", i)));
 
-    worldUrlsJTextFields.get(i).setMinimumSize(new Dimension(100, 28));
-    worldUrlsJTextFields.get(i).setMaximumSize(new Dimension(500, 28));
-    worldUrlsJTextFields.get(i).setPreferredSize(new Dimension(500, 28));
-    worldUrlsJTextFields.get(i).setAlignmentY((float) 0.75);
+    worldUrlsJTextFields.get(i).setMinimumSize(osScaleMul(new Dimension(100, 28)));
+    worldUrlsJTextFields.get(i).setMaximumSize(osScaleMul(new Dimension(500, 28)));
+    worldUrlsJTextFields.get(i).setPreferredSize(osScaleMul(new Dimension(500, 28)));
+    worldUrlsJTextFields.get(i).setAlignmentY(0.75f);
 
-    worldPortsJTextFields.get(i).setMinimumSize(new Dimension(100, 28));
-    worldPortsJTextFields.get(i).setMaximumSize(new Dimension(180, 28));
-    worldPortsJTextFields.get(i).setAlignmentY((float) 0.75);
+    int portOffset = Util.isUsingFlatLAFTheme() ? 4 : 0;
+    worldPortsJTextFields.get(i).setMinimumSize(osScaleMul(new Dimension(100 - portOffset, 28)));
+    worldPortsJTextFields.get(i).setMaximumSize(osScaleMul(new Dimension(180 - portOffset, 28)));
+    worldPortsJTextFields.get(i).setAlignmentY(0.75f);
 
     worldListURLPortTextFieldContainers.put(i, new JPanel());
 
@@ -2626,11 +3380,21 @@ public class ConfigWindow {
         .setLayout(new BoxLayout(worldListURLPortTextFieldContainers.get(i), BoxLayout.X_AXIS));
 
     worldListURLPortTextFieldContainers.get(i).add(worldUrlsJTextFields.get(i));
+    if (Util.isUsingFlatLAFTheme()) {
+      JLabel spacingLabel = new JLabel("");
+      spacingLabel.setBorder(BorderFactory.createEmptyBorder(0, osScaleMul(4), 0, 0));
+      worldListURLPortTextFieldContainers.get(i).add(spacingLabel);
+      worldListURLPortTextFieldContainers
+          .get(i)
+          .setBorder(BorderFactory.createEmptyBorder(osScaleMul(4), 0, osScaleMul(4), 0));
+    }
     worldListURLPortTextFieldContainers.get(i).add(worldPortsJTextFields.get(i));
     worldListPanel.add(worldListURLPortTextFieldContainers.get(i));
 
     worldListSpacingLabels.put(i, new JLabel(""));
-    worldListSpacingLabels.get(i).setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
+    worldListSpacingLabels
+        .get(i)
+        .setBorder(BorderFactory.createEmptyBorder(osScaleMul(30), 0, 0, 0));
     worldListPanel.add(worldListSpacingLabels.get(i));
 
     if (i > Settings.WORLD_NAMES.size()) {
@@ -2640,19 +3404,114 @@ public class ConfigWindow {
 
   public void addAddWorldButton() {
     JButton addWorldButton = new JButton("Add New World");
+    addWorldButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
     addWorldButton.addActionListener(
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
             worldListPanel.remove(addWorldButton);
+            Component verticalGlue =
+                Arrays.stream(worldListPanel.getComponents())
+                    .filter(
+                        c -> c.getName() != null && c.getName().equals("world_listPanelBottomGlue"))
+                    .findFirst()
+                    .orElse(null);
+            if (verticalGlue != null) {
+              worldListPanel.remove(verticalGlue);
+            }
             ++Settings.WORLDS_TO_DISPLAY;
             synchronizeWorldTab();
             addAddWorldButton();
+            if (verticalGlue != null) {
+              worldListPanel.add(verticalGlue);
+            }
           }
         });
     worldListPanel.add(addWorldButton);
     worldListPanel.revalidate();
     worldListPanel.repaint();
+  }
+
+  public void updateCustomClientSizeMinValues(Dimension updatedMinimumWindowSize) {
+    spinnerWinXModel.setMinimum(updatedMinimumWindowSize.width);
+    spinnerWinYModel.setMinimum(updatedMinimumWindowSize.height);
+  }
+
+  /**
+   * Creates an EventQueue listener, used to capture {@link MouseEvent#MOUSE_ENTERED} events for
+   * display tooltip text within the {@link #toolTipPanel}
+   *
+   * @return The constructed {@link AWTEventListener} instance
+   */
+  private AWTEventListener createConfigWindowEventQueueListener() {
+    return new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent e) {
+        try {
+          // Exit early if the label hasn't been initialized
+          if (toolTipTextLabel == null) {
+            return;
+          }
+
+          // Exit early for things that aren't MOUSE_ENTERED events
+          if (e.getID() != MouseEvent.MOUSE_ENTERED) {
+            return;
+          }
+
+          // Exit early for events that aren't on a JComponent
+          if (!(e.getSource() instanceof JComponent)) {
+            return;
+          }
+
+          // Exit early for events that did not originate from the ConfigWindow
+          if (SwingUtilities.getWindowAncestor((JComponent) e.getSource()) != frame) {
+            return;
+          }
+
+          String componentToolTipText = ((JComponent) e.getSource()).getToolTipText();
+
+          if (componentToolTipText != null && !componentToolTipText.equals(toolTipTextString)) {
+            toolTipTextString = componentToolTipText;
+            toolTipTextLabel.setText(toolTipTextString);
+          }
+        } catch (Exception ex) {
+          Logger.Error(
+              "There was an error with processing the MOUSE_ENTERED event listener."
+                  + "Please screenshot and report this error if possible.");
+          ex.printStackTrace();
+        }
+      }
+    };
+  }
+
+  /** Attaches the EventQueue listener */
+  private void addConfigWindowEventQueueListener() {
+    if (isListeningForEventQueue) {
+      return;
+    }
+
+    // Disable tooltips
+    ToolTipManager.sharedInstance().setEnabled(false);
+
+    // Add listener
+    Toolkit.getDefaultToolkit().addAWTEventListener(eventQueueListener, AWTEvent.MOUSE_EVENT_MASK);
+
+    isListeningForEventQueue = true;
+  }
+
+  /** Detaches the EventQueue listener */
+  private void removeConfigWindowEventQueueListener() {
+    if (!isListeningForEventQueue) {
+      return;
+    }
+
+    // Enable tooltips
+    ToolTipManager.sharedInstance().setEnabled(true);
+
+    // Remove listener
+    Toolkit.getDefaultToolkit().removeAWTEventListener(eventQueueListener);
+
+    isListeningForEventQueue = false;
   }
 
   // adds or removes world list text fields & fills them with their values

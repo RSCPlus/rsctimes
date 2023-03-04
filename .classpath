@@ -12,5 +12,8 @@
 	<classpathentry kind="lib" path="lib/json-20201115.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.12.jar"/>
 	<classpathentry kind="lib" path="lib/sqlite-jdbc-3.8.11.2.jar"/>
+    <classpathentry kind="lib" path="lib/flatlaf-3.1.1.jar"/>
+    <classpathentry kind="lib" path="lib/jna-platform-5.13.0.jar"/>
+    <classpathentry kind="lib" path="lib/jna-5.13.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

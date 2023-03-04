@@ -21,6 +21,7 @@ package Game;
 import Client.Logger;
 import Client.Settings;
 import Client.Util;
+import Game.MouseHandler.BufferedMouseClick;
 import java.awt.*;
 import java.text.NumberFormat;
 
@@ -69,7 +70,7 @@ public class XPBar {
    *
    * @param g the Graphics2D object
    */
-  void draw(Graphics2D g) {
+  void draw(Graphics2D g, BufferedMouseClick bufferedMouseClick) {
 
     // current_skill from skill not known
     /*if (Renderer.time > m_timer && !pinnedBar) {
@@ -173,7 +174,7 @@ public class XPBar {
             && showingMenu);
 
     if (hoveringOverBar()) {
-      if (MouseHandler.mouseClicked) {
+      if (bufferedMouseClick.isRightClick()) {
         showingMenu = true;
       } else {
         if (!showingMenu) {
@@ -196,7 +197,7 @@ public class XPBar {
       }
     }
 
-    if (showingMenu) drawMenu(g, x, y);
+    if (showingMenu) drawMenu(g, x, y, bufferedMouseClick);
 
     Renderer.setAlpha(g, 1.0f);
   }
@@ -209,7 +210,7 @@ public class XPBar {
         && alpha > 0.01;
   }
 
-  private void drawMenu(Graphics2D g, int x, int y) {
+  private void drawMenu(Graphics2D g, int x, int y, BufferedMouseClick bufferedMouseClick) {
     x = xp_bar_x;
     y = xp_bar_y + bounds.height;
 
@@ -228,7 +229,7 @@ public class XPBar {
     // Option 0
     if (MouseHandler.y > y + offset && MouseHandler.y < y + textHeight) {
       textColour = Renderer.color_yellow;
-      if (MouseHandler.mouseClicked) {
+      if (bufferedMouseClick.isMouseClicked()) {
         setLvlGoal();
       }
     } else {
@@ -241,7 +242,7 @@ public class XPBar {
     // Option 1
     if (MouseHandler.y > y + offset && MouseHandler.y < y + textHeight) {
       textColour = Renderer.color_yellow;
-      if (MouseHandler.mouseClicked) {
+      if (bufferedMouseClick.isMouseClicked()) {
         togglePinnedBar();
       }
     } else {
@@ -358,6 +359,14 @@ public class XPBar {
 
   public static boolean shouldShowGoalInput() {
     return drawGoalInputState != 0;
+  }
+
+  public static boolean shouldConsume() {
+    if (XPBar.hoveringOverMenu || XPBar.hoveringOverBar()) {
+      XPBar.hoveringOverMenu = false;
+      return true;
+    }
+    return false;
   }
 
   public static boolean shouldConsumeKey() {
