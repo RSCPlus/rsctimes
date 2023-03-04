@@ -103,6 +103,7 @@
 			</manifest>
 			<fileset dir=".">
 				<include name="${assets.dir}/**" />
+				<include name="${main.src.dir}/Client/FlatLaf/*.properties" />
 				<include name="LICENSE" />
 			</fileset>
 			<zipgroupfileset dir="lib" includes="*.jar" excludes="junit-*.jar,hamcrest-core-*.jar" />

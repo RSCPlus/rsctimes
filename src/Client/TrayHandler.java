@@ -18,8 +18,11 @@
  */
 package Client;
 
+import static Client.Util.osScaleMul;
+
 import Game.Game;
 import java.awt.AWTException;
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -31,6 +34,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import javax.imageio.ImageIO;
+import javax.swing.JTabbedPane;
 
 /** Handles the creation of system tray icons and notifications */
 public class TrayHandler implements MouseListener {
@@ -59,22 +63,47 @@ public class TrayHandler implements MouseListener {
       return;
     }
 
-    tray = SystemTray.getSystemTray();
-    trayIcon =
-        new TrayIcon(
-            trayIconImage.getScaledInstance(tray.getTrayIconSize().height, -1, Image.SCALE_SMOOTH));
+    trayIcon = new TrayIcon(trayIconImage);
     trayIcon.addMouseListener(new TrayHandler());
+
+    tray = SystemTray.getSystemTray();
+
+    Font scaledFont = new Font("sans-serif", Font.PLAIN, osScaleMul(12));
 
     // Create popup menu
     PopupMenu popup = new PopupMenu();
+
+    MenuItem about = new MenuItem("About RSCx");
+    about.setFont(scaledFont);
+
+    JTabbedPane settingsTabbedPane = Launcher.getConfigWindow().tabbedPane;
+
+    int authorsTabIndex = settingsTabbedPane.indexOfTab("Authors");
+
+    if (authorsTabIndex > -1) {
+      about.addActionListener(
+          new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              settingsTabbedPane.setSelectedIndex(authorsTabIndex);
+              Launcher.getConfigWindow().showConfigWindow();
+            }
+          });
+    } else {
+      about.setEnabled(false);
+    }
+
     MenuItem settings = new MenuItem("Settings");
+    settings.setFont(scaledFont);
     MenuItem exit = new MenuItem("Exit");
+    exit.setFont(scaledFont);
 
     settings.addActionListener(
         new ActionListener() {
 
           @Override
           public void actionPerformed(ActionEvent e) {
+            settingsTabbedPane.setSelectedIndex(0);
             Launcher.getConfigWindow().showConfigWindow();
           }
         });
@@ -92,6 +121,8 @@ public class TrayHandler implements MouseListener {
           }
         });
 
+    popup.add(about);
+    popup.addSeparator();
     popup.add(settings);
     popup.add(exit);
 
@@ -114,7 +145,7 @@ public class TrayHandler implements MouseListener {
 
   @Override
   public void mouseClicked(MouseEvent e) {
-    Game.getInstance().toFront();
+    ScaledWindow.getInstance().toFront();
   }
 
   @Override

@@ -1,10 +1,14 @@
 package Client;
 
+import static Client.Util.osScaleDiv;
+import static Client.Util.osScaleMul;
+
 import Game.Client;
 import Game.JGameData;
 import Game.Renderer;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -15,7 +19,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -63,7 +66,7 @@ public class WorldMapWindow {
   private static SearchResult[] searchResults;
   private static boolean searchOverflow;
   private static boolean searchValid;
-  private static float zoom = 2.0f;
+  private static float zoom = osScaleMul(2.0f);
 
   private static boolean developmentMode;
 
@@ -91,7 +94,8 @@ public class WorldMapWindow {
   private static Point playerPosition;
   private static int playerPlane;
 
-  private static int BORDER_SIZE = 8;
+  private static int BORDER_SIZE = osScaleMul(8);
+
   private static int SCENERY_OFFSET_X = 48;
   private static int SCENERY_OFFSET_Y = 432;
 
@@ -151,27 +155,7 @@ public class WorldMapWindow {
   };
 
   public WorldMapWindow() {
-    try {
-      // Set System L&F as a fall-back option.
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-      for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-        if ("Nimbus".equals(info.getName())) {
-          UIManager.setLookAndFeel(info.getClassName());
-          NimbusLookAndFeel laf = (NimbusLookAndFeel) UIManager.getLookAndFeel();
-          laf.getDefaults().put("defaultFont", new Font(Font.SANS_SERIF, Font.PLAIN, 11));
-          laf.getDefaults().put("Table.alternateRowColor", new Color(230, 230, 255));
-          break;
-        }
-      }
-    } catch (UnsupportedLookAndFeelException e) {
-      Logger.Error("Unable to set L&F: Unsupported look and feel");
-    } catch (ClassNotFoundException e) {
-      Logger.Error("Unable to set L&F: Class not found");
-    } catch (InstantiationException e) {
-      Logger.Error("Unable to set L&F: Class object cannot be instantiated");
-    } catch (IllegalAccessException e) {
-      Logger.Error("Unable to set L&F: Illegal access exception");
-    }
+    Util.setUITheme();
     initialize();
   }
 
@@ -195,27 +179,30 @@ public class WorldMapWindow {
       e.printStackTrace();
     }
 
+    int squareEdge = osScaleMul(24);
+    int buttonWidth = osScaleMul(116);
+
     cameraPosition = new Point(0, 0);
     waypointPosition = null;
-    floorUpBounds = new Rectangle(0, 0, 24, 24);
-    floorDownBounds = new Rectangle(0, 0, 24, 24);
-    zoomUpBounds = new Rectangle(0, 0, 24, 24);
-    zoomDownBounds = new Rectangle(0, 0, 24, 24);
+    floorUpBounds = new Rectangle(0, 0, squareEdge, squareEdge);
+    floorDownBounds = new Rectangle(0, 0, squareEdge, squareEdge);
+    zoomUpBounds = new Rectangle(0, 0, squareEdge, squareEdge);
+    zoomDownBounds = new Rectangle(0, 0, squareEdge, squareEdge);
     floorTextBounds = new Point(0, 0);
     zoomTextBounds = new Point(0, 0);
     posTextBounds = new Point(0, 0);
     prevMousePoint = new Point(0, 0);
     prevMousePointMap = new Point(0, 0);
     playerPosition = new Point(0, 0);
-    chunkGridBounds = new Rectangle(0, 0, 116, 24);
-    showLabelsBounds = new Rectangle(0, 0, 116, 24);
-    showSceneryBounds = new Rectangle(0, 0, 116, 24);
-    showIconsBounds = new Rectangle(0, 0, 116, 24);
-    showOtherFloorsBounds = new Rectangle(0, 0, 116, 24);
-    followPlayerBounds = new Rectangle(0, 0, 116, 24);
-    legendBounds = new Rectangle(0, 0, 150, 24);
-    searchBounds = new Rectangle(0, 0, 250, 24);
-    searchRefreshBounds = new Rectangle(0, 0, 64, 24);
+    chunkGridBounds = new Rectangle(0, 0, buttonWidth, squareEdge);
+    showLabelsBounds = new Rectangle(0, 0, buttonWidth, squareEdge);
+    showSceneryBounds = new Rectangle(0, 0, buttonWidth, squareEdge);
+    showIconsBounds = new Rectangle(0, 0, buttonWidth, squareEdge);
+    showOtherFloorsBounds = new Rectangle(0, 0, buttonWidth, squareEdge);
+    followPlayerBounds = new Rectangle(0, 0, buttonWidth, squareEdge);
+    legendBounds = new Rectangle(0, 0, osScaleMul(150), squareEdge);
+    searchBounds = new Rectangle(0, 0, osScaleMul(250), squareEdge);
+    searchRefreshBounds = new Rectangle(0, 0, osScaleMul(64), squareEdge);
     planeIndex = 0;
     playerPlane = -1;
     followPlayer = true;
@@ -380,9 +367,12 @@ public class WorldMapWindow {
   }
 
   private static void drawButton(Graphics2D g, String text, Rectangle bounds) {
-    g.setFont(Renderer.font_main);
+    g.setFont(
+        Renderer.font_main.deriveFont(
+            AffineTransform.getScaleInstance(Launcher.OSScalingFactor, Launcher.OSScalingFactor)));
     setAlpha(g, 0.5f);
     g.setColor(Renderer.color_text);
+    g.setStroke(new BasicStroke(osScaleMul(1)));
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
     setAlpha(g, 1.0f);
     g.setColor(Renderer.color_shadow);
@@ -500,7 +490,9 @@ public class WorldMapWindow {
       searchTerm += "*";
     }
 
-    g.setFont(Renderer.font_main);
+    g.setFont(
+        Renderer.font_main.deriveFont(
+            AffineTransform.getScaleInstance(Launcher.OSScalingFactor, Launcher.OSScalingFactor)));
     g.setColor(Renderer.color_gray);
     setAlpha(g, 0.5f);
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -511,17 +503,17 @@ public class WorldMapWindow {
         g,
         searchTerm,
         bounds.x + BORDER_SIZE,
-        bounds.y + (bounds.height / 2) + 4,
+        bounds.y + (bounds.height / 2) + osScaleMul(4),
         searchColor,
         false);
 
     if (searchResults != null || searchOverflow) {
       // Calculate height
       int searchHeight;
-      if (searchOverflow || searchResults.length == 0) searchHeight = 16 + BORDER_SIZE;
+      if (searchOverflow || searchResults.length == 0) searchHeight = osScaleMul(16) + BORDER_SIZE;
       else if (searchResults.length <= SEARCH_RESULTS_MAX)
-        searchHeight = searchResults.length * 16 + BORDER_SIZE;
-      else searchHeight = (SEARCH_RESULTS_MAX + 1) * 16 + BORDER_SIZE;
+        searchHeight = searchResults.length * osScaleMul(16) + BORDER_SIZE;
+      else searchHeight = (SEARCH_RESULTS_MAX + 1) * osScaleMul(16) + BORDER_SIZE;
 
       if (searchHeight > 0) {
         g.setColor(Renderer.color_gray);
@@ -556,7 +548,12 @@ public class WorldMapWindow {
         }
 
         Renderer.drawShadowText(
-            g, resultName, bounds.x + BORDER_SIZE, bounds.y - 8 - (i * 16), resultColor, false);
+            g,
+            resultName,
+            bounds.x + BORDER_SIZE,
+            bounds.y - osScaleMul(8) - (i * osScaleMul(16)),
+            resultColor,
+            false);
 
         // Only 1 result
         if (searchResults.length == 1) break;
@@ -567,7 +564,7 @@ public class WorldMapWindow {
             g,
             "Too many results, narrow your search",
             bounds.x + BORDER_SIZE,
-            bounds.y - 8,
+            bounds.y - osScaleMul(8),
             Renderer.color_text,
             false);
       } else if (searchResults.length == 0) {
@@ -575,7 +572,7 @@ public class WorldMapWindow {
             g,
             "No matches found",
             bounds.x + BORDER_SIZE,
-            bounds.y - 8,
+            bounds.y - osScaleMul(8),
             Renderer.color_text,
             false);
       } else {
@@ -587,7 +584,7 @@ public class WorldMapWindow {
               g,
               Integer.toString(remaining) + " more " + resultText + "...",
               bounds.x + BORDER_SIZE,
-              bounds.y - 8 - (SEARCH_RESULTS_MAX * 16),
+              bounds.y - osScaleMul(8) - (SEARCH_RESULTS_MAX * osScaleMul(16)),
               Renderer.color_text,
               false);
         }
@@ -620,10 +617,10 @@ public class WorldMapWindow {
     // Initialize window
     frame = new JFrame();
     frame.setTitle("World Map");
-    frame.setBounds(0, 0, 800, 580);
+    frame.setBounds(0, 0, osScaleMul(800), osScaleMul(580));
     frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
     frame.getContentPane().setLayout(new BorderLayout());
-    URL iconURL = Launcher.getResource("/assets/RSCX.logo.png");
+    URL iconURL = Launcher.getResource("/assets/icon.png");
     if (iconURL != null) {
       ImageIcon icon = new ImageIcon(iconURL);
       frame.setIconImage(icon.getImage());
@@ -1191,11 +1188,27 @@ public class WorldMapWindow {
     frame.setVisible(true);
   }
 
+  public void hideWorldMapWindow() {
+    frame.setVisible(false);
+  }
+
+  public void toggleWorldMapWindow() {
+    if (isShown()) {
+      this.hideWorldMapWindow();
+    } else {
+      this.showWorldMapWindow();
+    }
+  }
+
+  public static boolean isShown() {
+    return frame.isVisible();
+  }
+
   private static void setZoom(float val) {
     float prevZoom = zoom;
     zoom = val;
     if (zoom < 1.0f) zoom = 1.0f;
-    else if (zoom > 8.0f) zoom = 8.0f;
+    else if (zoom > osScaleMul(8.0f)) zoom = osScaleMul(8.0f);
 
     if ((!followPlayer || playerPlane == -1) && prevZoom < zoom) {
       float newX = (planes[0].getWidth(null)) - prevMousePointMap.x * 3;
@@ -1395,6 +1408,7 @@ public class WorldMapWindow {
           && label.text.replaceAll("\n", " ").toLowerCase().contains(searchText.toLowerCase()))
         labelColor = Renderer.color_item_highlighted;
 
+      // Don't scale map labels
       Renderer.drawShadowText(g, line, x - offsetX + width / 2, y + offsetY, labelColor, false);
       y += height;
     }
@@ -1416,16 +1430,16 @@ public class WorldMapWindow {
       floorDownBounds.x = canvasWidth - floorDownBounds.width - BORDER_SIZE;
       floorDownBounds.y = canvasHeight - floorDownBounds.height - BORDER_SIZE;
       floorUpBounds.x = floorDownBounds.x;
-      floorUpBounds.y = floorDownBounds.y - 64;
+      floorUpBounds.y = floorDownBounds.y - osScaleMul(64);
       floorTextBounds.x = floorDownBounds.x + (floorDownBounds.width / 2);
-      floorTextBounds.y = floorDownBounds.y - 24;
+      floorTextBounds.y = floorDownBounds.y - osScaleMul(24);
 
       zoomDownBounds.x = floorUpBounds.x;
       zoomDownBounds.y = floorUpBounds.y - zoomDownBounds.height - BORDER_SIZE;
       zoomTextBounds.x = zoomDownBounds.x + (zoomDownBounds.width / 2);
-      zoomTextBounds.y = zoomDownBounds.y - 24;
+      zoomTextBounds.y = zoomDownBounds.y - osScaleMul(24);
       zoomUpBounds.x = zoomDownBounds.x;
-      zoomUpBounds.y = zoomDownBounds.y - 64;
+      zoomUpBounds.y = zoomDownBounds.y - osScaleMul(64);
 
       posTextBounds.x = BORDER_SIZE;
       posTextBounds.y = BORDER_SIZE * 2;
@@ -1505,14 +1519,26 @@ public class WorldMapWindow {
       if (waypointPosition != null) {
         Rectangle p = convertWorldCoordsToMap(waypointPosition.x, waypointPosition.y);
         setAlpha(g, p.width == planeIndex ? 1.0f : 0.25f);
-        g.setFont(fontsBold[18]);
+        g.setFont(
+            fontsBold[18].deriveFont(
+                AffineTransform.getScaleInstance(
+                    Launcher.OSScalingFactor, Launcher.OSScalingFactor)));
+        AffineTransform currentTransform = g.getTransform();
+        g.setTransform(
+            AffineTransform.getScaleInstance(Launcher.OSScalingFactor, Launcher.OSScalingFactor));
         g.drawImage(
             waypointImage,
-            p.x - pointImage.getWidth(null) / 2 + (tileSize / 2),
-            p.y - pointImage.getHeight(null) / 2 + (tileSize / 2),
+            osScaleDiv(p.x - pointImage.getWidth(null) / 2 + (tileSize / 2)),
+            osScaleDiv(p.y - pointImage.getHeight(null) / 2 + (tileSize / 2)),
             null);
+        g.setTransform(currentTransform);
         Renderer.drawShadowText(
-            g, "Your destination", p.x + tileSize / 2, p.y - 28, Renderer.color_low, true);
+            g,
+            "Your destination",
+            p.x + tileSize / 2,
+            p.y - osScaleMul(28),
+            Renderer.color_low,
+            true);
         setAlpha(g, 1.0f);
       }
 
@@ -1520,23 +1546,38 @@ public class WorldMapWindow {
       if (playerPlane != -1) {
         setAlpha(g, playerPlane == planeIndex ? 1.0f : 0.25f);
         Rectangle p = convertWorldCoordsToMap(playerPosition.x, playerPosition.y);
-        g.setFont(fontsBold[18]);
+        g.setFont(
+            fontsBold[18].deriveFont(
+                AffineTransform.getScaleInstance(
+                    Launcher.OSScalingFactor, Launcher.OSScalingFactor)));
+        AffineTransform currentTransform = g.getTransform();
+        g.setTransform(
+            AffineTransform.getScaleInstance(Launcher.OSScalingFactor, Launcher.OSScalingFactor));
         g.drawImage(
             pointImage,
-            p.x - pointImage.getWidth(null) / 2 + (tileSize / 2),
-            p.y - pointImage.getHeight(null) / 2 + (tileSize / 2),
+            osScaleDiv(p.x - pointImage.getWidth(null) / 2 + (tileSize / 2)),
+            osScaleDiv(p.y - pointImage.getHeight(null) / 2 + (tileSize / 2)),
             null);
+        g.setTransform(currentTransform);
         Renderer.drawShadowText(
-            g, "You are here", p.x + tileSize / 2, p.y - 28, Renderer.color_item_highlighted, true);
+            g,
+            "You are here",
+            p.x + tileSize / 2,
+            p.y - osScaleMul(28),
+            Renderer.color_item_highlighted,
+            true);
         setAlpha(g, 1.0f);
       }
 
       int renderY = posTextBounds.y;
-      g.setFont(Renderer.font_main);
+      g.setFont(
+          Renderer.font_main.deriveFont(
+              AffineTransform.getScaleInstance(
+                  Launcher.OSScalingFactor, Launcher.OSScalingFactor)));
       if (developmentMode) {
         Renderer.drawShadowText(
             g, "DEVELOPMENT MODE", posTextBounds.x, renderY, Renderer.color_text, false);
-        renderY += 16;
+        renderY += osScaleMul(16);
       }
       Renderer.drawShadowText(
           g,
@@ -1552,7 +1593,10 @@ public class WorldMapWindow {
       drawButton(g, "+", zoomUpBounds);
       // Renderer.drawShadowText(g, "Floor", floorTextBounds.x, floorTextBounds.y - 54,
       // Renderer.color_text, true);
-      g.setFont(Renderer.font_big);
+      g.setFont(
+          Renderer.font_big.deriveFont(
+              AffineTransform.getScaleInstance(
+                  Launcher.OSScalingFactor, Launcher.OSScalingFactor)));
 
       final String[] floorNames = {"G", "1", "2", "B"};
 
@@ -1613,15 +1657,15 @@ public class WorldMapWindow {
 
       if (showLegend) {
         // First size legend and draw background
-        int startX = legendBounds.x - 150 + BORDER_SIZE;
+        int startX = legendBounds.x - osScaleMul(150) + BORDER_SIZE;
         int x = startX;
         int y = legendBounds.y + BORDER_SIZE;
         int offsetY = 0;
-        int maxY = 16 * 15;
+        int maxY = osScaleMul(16) * 15;
         for (int i = 0; i < legends.length; i++) {
-          offsetY += 16;
+          offsetY += osScaleMul(16);
           if (offsetY >= maxY) {
-            x += 150;
+            x += osScaleMul(150);
             offsetY = 0;
           }
         }
@@ -1635,23 +1679,33 @@ public class WorldMapWindow {
         x = legendBounds.x + BORDER_SIZE;
         y = legendBounds.y + BORDER_SIZE;
         offsetY = 0;
+        AffineTransform currentTransform = g.getTransform();
         for (int i = 0; i < legends.length; i++) {
+          g.setTransform(
+              AffineTransform.getScaleInstance(Launcher.OSScalingFactor, Launcher.OSScalingFactor));
           g.drawImage(
               legends[i],
-              x + (7 - legends[i].getWidth(null) / 2),
-              y + offsetY + (7 - legends[i].getHeight(null) / 2),
+              osScaleDiv(x + (osScaleMul(7) - osScaleMul(legends[i].getWidth(null) / 2))),
+              osScaleDiv(
+                  y + offsetY + (osScaleMul(7) - osScaleMul(legends[i].getHeight(null) / 2))),
               null);
+          g.setTransform(currentTransform);
           Renderer.drawShadowText(
-              g, legendText[i], x + 18, y + offsetY + 12, Renderer.color_text, false);
-          offsetY += 16;
+              g,
+              legendText[i],
+              x + osScaleMul(18),
+              y + offsetY + osScaleMul(12),
+              Renderer.color_text,
+              false);
+          offsetY += osScaleMul(16);
           if (offsetY >= maxY) {
-            x += 150;
+            x += osScaleMul(150);
             offsetY = 0;
           }
         }
       } else {
-        legendBounds.height = 24;
-        legendBounds.width = 150;
+        legendBounds.height = osScaleMul(24);
+        legendBounds.width = osScaleMul(150);
         legendBounds.x = canvasWidth - legendBounds.width - BORDER_SIZE;
         legendBounds.y = BORDER_SIZE;
         drawButton(g, showLegend ? "" : "Legend", legendBounds);

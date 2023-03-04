@@ -551,6 +551,37 @@ public class JClassPatcher {
           }
         }
       }
+
+      // draw loading screen
+      if (methodNode.name.equals("hj") && methodNode.desc.equals("(ILjava/lang/String;)V")) {
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+
+          if (insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL
+              && ((MethodInsnNode) insnNode).name.equals("setColor")) {
+
+            insnNode = insnNode.getPrevious().getPrevious().getPrevious();
+
+            methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+
+            methodNode.instructions.insertBefore(
+                insnNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "Client/ScaledWindow",
+                    "hookLoadingGraphics",
+                    "()Ljava/awt/Graphics;",
+                    false));
+
+            methodNode.instructions.insertBefore(
+                insnNode,
+                new FieldInsnNode(Opcodes.PUTFIELD, "jagex/client/k", "cq", "Ljava/awt/Graphics;"));
+
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -1816,16 +1847,11 @@ public class JClassPatcher {
         methodNode.instructions.insert(
             findNode,
             new MethodInsnNode(
-                Opcodes.INVOKESTATIC,
-                "Game/Renderer",
-                "present",
-                "(Ljava/awt/Graphics;Ljava/awt/Image;)V",
-                false));
+                Opcodes.INVOKESTATIC, "Game/Renderer", "present", "(Ljava/awt/Image;)V", false));
         methodNode.instructions.insert(
             findNode,
             new FieldInsnNode(Opcodes.GETFIELD, node.name, imageNode.name, imageNode.desc));
         methodNode.instructions.insert(findNode, new VarInsnNode(Opcodes.ALOAD, 0));
-        methodNode.instructions.insert(findNode, new VarInsnNode(Opcodes.ALOAD, 1));
       }
       // Drawstring ~1000~ fix
       if (methodNode.name.equals("ef") && methodNode.desc.equals("(Ljava/lang/String;IIII)V")) {

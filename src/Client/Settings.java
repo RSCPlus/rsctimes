@@ -26,10 +26,13 @@ import Game.Renderer;
 import Game.XPBar;
 import java.awt.Cursor;
 import java.awt.Point;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -39,6 +42,7 @@ import java.util.Properties;
 public class Settings {
   // Internally used variables
   public static boolean fovUpdateRequired;
+  public static boolean renderingScalarUpdateRequired;
   public static boolean versionCheckRequired = true;
   public static int javaVersion = 0;
   public static final double VERSION_NUMBER = 20221031.170000;
@@ -59,6 +63,11 @@ public class Settings {
 
   public static HashMap<String, Integer> CUSTOM_CLIENT_SIZE_X = new HashMap<String, Integer>();
   public static HashMap<String, Integer> CUSTOM_CLIENT_SIZE_Y = new HashMap<String, Integer>();
+  public static HashMap<String, Boolean> SCALED_CLIENT_WINDOW = new HashMap<String, Boolean>();
+  public static HashMap<String, Integer> SCALING_ALGORITHM = new HashMap<String, Integer>();
+  public static HashMap<String, Integer> INTEGER_SCALING_FACTOR = new HashMap<String, Integer>();
+  public static HashMap<String, Float> BILINEAR_SCALING_FACTOR = new HashMap<String, Float>();
+  public static HashMap<String, Float> BICUBIC_SCALING_FACTOR = new HashMap<String, Float>();
   public static HashMap<String, Boolean> CHECK_UPDATES = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> REMIND_HOW_TO_OPEN_SETTINGS =
       new HashMap<String, Boolean>();
@@ -76,6 +85,10 @@ public class Settings {
   public static HashMap<String, Boolean> COLORIZE_CONSOLE_TEXT = new HashMap<String, Boolean>();
   public static HashMap<String, Integer> FOV = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> SOFTWARE_CURSOR = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> SHIFT_SCROLL_CAMERA_ROTATION =
+      new HashMap<String, Boolean>();
+  public static HashMap<String, Integer> TRACKPAD_ROTATION_SENSITIVITY =
+      new HashMap<String, Integer>();
   public static HashMap<String, Boolean> FPS_LIMIT_ENABLED = new HashMap<String, Boolean>();
   public static HashMap<String, Integer> FPS_LIMIT = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> AUTO_SCREENSHOT = new HashMap<String, Boolean>();
@@ -89,6 +102,8 @@ public class Settings {
   public static HashMap<String, Boolean> LOG_FORCE_LEVEL = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> PREFERS_XDG_OPEN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> INVENTORY_FULL_ALERT = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> USE_DARK_FLATLAF = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> USE_NIMBUS_THEME = new HashMap<String, Boolean>();
 
   //// Notifications
   public static HashMap<String, Boolean> TRAY_NOTIFS = new HashMap<String, Boolean>();
@@ -96,12 +111,10 @@ public class Settings {
   public static HashMap<String, Boolean> NOTIFICATION_SOUNDS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SOUND_NOTIFS_ALWAYS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> USE_SYSTEM_NOTIFICATIONS = new HashMap<String, Boolean>();
-  public static HashMap<String, Boolean> FATIGUE_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> PM_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> TRADE_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> UNDER_ATTACK_NOTIFICATIONS =
       new HashMap<String, Boolean>();
-  public static HashMap<String, Boolean> LOGOUT_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> LOW_HP_NOTIFICATIONS = new HashMap<String, Boolean>();
   public static HashMap<String, Integer> LOW_HP_NOTIF_VALUE = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> HIGHLIGHTED_ITEM_NOTIFICATIONS =
@@ -282,22 +295,71 @@ public class Settings {
         "custom", getPropBoolean(props, "custom_client_size", CUSTOM_CLIENT_SIZE.get("default")));
 
     CUSTOM_CLIENT_SIZE_X.put("vanilla", 512);
-    CUSTOM_CLIENT_SIZE_X.put("vanilla_resizable", 512);
-    CUSTOM_CLIENT_SIZE_X.put("lite", 512);
-    CUSTOM_CLIENT_SIZE_X.put("default", 512);
-    CUSTOM_CLIENT_SIZE_X.put("heavy", 512);
-    CUSTOM_CLIENT_SIZE_X.put("all", 512);
+    CUSTOM_CLIENT_SIZE_X.put("vanilla_resizable", 1024);
+    CUSTOM_CLIENT_SIZE_X.put("lite", 1024);
+    CUSTOM_CLIENT_SIZE_X.put("default", 1024);
+    CUSTOM_CLIENT_SIZE_X.put("heavy", 1024);
+    CUSTOM_CLIENT_SIZE_X.put("all", 1024);
     CUSTOM_CLIENT_SIZE_X.put(
         "custom", getPropInt(props, "custom_client_size_x", CUSTOM_CLIENT_SIZE_X.get("default")));
 
     CUSTOM_CLIENT_SIZE_Y.put("vanilla", 357);
-    CUSTOM_CLIENT_SIZE_Y.put("vanilla_resizable", 357);
-    CUSTOM_CLIENT_SIZE_Y.put("lite", 357);
-    CUSTOM_CLIENT_SIZE_Y.put("default", 357);
-    CUSTOM_CLIENT_SIZE_Y.put("heavy", 357);
-    CUSTOM_CLIENT_SIZE_Y.put("all", 357);
+    CUSTOM_CLIENT_SIZE_Y.put("vanilla_resizable", 714);
+    CUSTOM_CLIENT_SIZE_Y.put("lite", 714);
+    CUSTOM_CLIENT_SIZE_Y.put("default", 714);
+    CUSTOM_CLIENT_SIZE_Y.put("heavy", 714);
+    CUSTOM_CLIENT_SIZE_Y.put("all", 714);
     CUSTOM_CLIENT_SIZE_Y.put(
         "custom", getPropInt(props, "custom_client_size_y", CUSTOM_CLIENT_SIZE_Y.get("default")));
+
+    SCALED_CLIENT_WINDOW.put("vanilla", false);
+    SCALED_CLIENT_WINDOW.put("vanilla_resizable", true);
+    SCALED_CLIENT_WINDOW.put("lite", true);
+    SCALED_CLIENT_WINDOW.put("default", true);
+    SCALED_CLIENT_WINDOW.put("heavy", true);
+    SCALED_CLIENT_WINDOW.put("all", true);
+    SCALED_CLIENT_WINDOW.put(
+        "custom",
+        getPropBoolean(props, "enable_window_scaling", SCALED_CLIENT_WINDOW.get("default")));
+
+    SCALING_ALGORITHM.put("vanilla", AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+    SCALING_ALGORITHM.put("vanilla_resizable", AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+    SCALING_ALGORITHM.put("lite", AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+    SCALING_ALGORITHM.put("default", AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+    SCALING_ALGORITHM.put("heavy", AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+    SCALING_ALGORITHM.put("all", AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+    SCALING_ALGORITHM.put(
+        "custom", getPropInt(props, "scaling_algorithm", SCALING_ALGORITHM.get("default")));
+
+    INTEGER_SCALING_FACTOR.put("vanilla", 2);
+    INTEGER_SCALING_FACTOR.put("vanilla_resizable", 2);
+    INTEGER_SCALING_FACTOR.put("lite", 2);
+    INTEGER_SCALING_FACTOR.put("default", 2);
+    INTEGER_SCALING_FACTOR.put("heavy", 2);
+    INTEGER_SCALING_FACTOR.put("all", 2);
+    INTEGER_SCALING_FACTOR.put(
+        "custom",
+        getPropInt(props, "integer_scaling_factor", INTEGER_SCALING_FACTOR.get("default")));
+
+    BILINEAR_SCALING_FACTOR.put("vanilla", 1.5f);
+    BILINEAR_SCALING_FACTOR.put("vanilla_resizable", 1.5f);
+    BILINEAR_SCALING_FACTOR.put("lite", 1.5f);
+    BILINEAR_SCALING_FACTOR.put("default", 1.5f);
+    BILINEAR_SCALING_FACTOR.put("heavy", 1.5f);
+    BILINEAR_SCALING_FACTOR.put("all", 1.5f);
+    BILINEAR_SCALING_FACTOR.put(
+        "custom",
+        getPropFloat(props, "bilinear_scaling_factor", BILINEAR_SCALING_FACTOR.get("default")));
+
+    BICUBIC_SCALING_FACTOR.put("vanilla", 1.5f);
+    BICUBIC_SCALING_FACTOR.put("vanilla_resizable", 1.5f);
+    BICUBIC_SCALING_FACTOR.put("lite", 1.5f);
+    BICUBIC_SCALING_FACTOR.put("default", 1.5f);
+    BICUBIC_SCALING_FACTOR.put("heavy", 1.5f);
+    BICUBIC_SCALING_FACTOR.put("all", 1.5f);
+    BICUBIC_SCALING_FACTOR.put(
+        "custom",
+        getPropFloat(props, "bicubic_scaling_factor", BICUBIC_SCALING_FACTOR.get("default")));
 
     CHECK_UPDATES.put("vanilla", true);
     CHECK_UPDATES.put("vanilla_resizable", true);
@@ -452,6 +514,28 @@ public class Settings {
     SOFTWARE_CURSOR.put(
         "custom", getPropBoolean(props, "software_cursor", SOFTWARE_CURSOR.get("default")));
 
+    SHIFT_SCROLL_CAMERA_ROTATION.put("vanilla", false);
+    SHIFT_SCROLL_CAMERA_ROTATION.put("vanilla_resizable", false);
+    SHIFT_SCROLL_CAMERA_ROTATION.put("lite", false);
+    SHIFT_SCROLL_CAMERA_ROTATION.put("default", true);
+    SHIFT_SCROLL_CAMERA_ROTATION.put("heavy", true);
+    SHIFT_SCROLL_CAMERA_ROTATION.put("all", true);
+    SHIFT_SCROLL_CAMERA_ROTATION.put(
+        "custom",
+        getPropBoolean(
+            props, "shift_scroll_camera_rotation", SHIFT_SCROLL_CAMERA_ROTATION.get("default")));
+
+    TRACKPAD_ROTATION_SENSITIVITY.put("vanilla", 8);
+    TRACKPAD_ROTATION_SENSITIVITY.put("vanilla_resizable", 8);
+    TRACKPAD_ROTATION_SENSITIVITY.put("lite", 8);
+    TRACKPAD_ROTATION_SENSITIVITY.put("default", 8);
+    TRACKPAD_ROTATION_SENSITIVITY.put("heavy", 8);
+    TRACKPAD_ROTATION_SENSITIVITY.put("all", 8);
+    TRACKPAD_ROTATION_SENSITIVITY.put(
+        "custom",
+        getPropInt(
+            props, "trackpad_rotation_sensitivity", TRACKPAD_ROTATION_SENSITIVITY.get("default")));
+
     VIEW_DISTANCE.put("vanilla", 2300);
     VIEW_DISTANCE.put("vanilla_resizable", 3000);
     VIEW_DISTANCE.put("lite", 10000);
@@ -543,6 +627,26 @@ public class Settings {
     PREFERS_XDG_OPEN.put(
         "custom", getPropBoolean(props, "prefers_xdg_open", PREFERS_XDG_OPEN.get("default")));
 
+    boolean defaultDarkMode = shouldDefaultDarkMode();
+
+    USE_DARK_FLATLAF.put("vanilla", defaultDarkMode);
+    USE_DARK_FLATLAF.put("vanilla_resizable", defaultDarkMode);
+    USE_DARK_FLATLAF.put("lite", defaultDarkMode);
+    USE_DARK_FLATLAF.put("default", defaultDarkMode);
+    USE_DARK_FLATLAF.put("heavy", defaultDarkMode);
+    USE_DARK_FLATLAF.put("all", defaultDarkMode);
+    USE_DARK_FLATLAF.put(
+        "custom", getPropBoolean(props, "use_dark_flatlaf", USE_DARK_FLATLAF.get("default")));
+
+    USE_NIMBUS_THEME.put("vanilla", false);
+    USE_NIMBUS_THEME.put("vanilla_resizable", false);
+    USE_NIMBUS_THEME.put("lite", false);
+    USE_NIMBUS_THEME.put("default", false);
+    USE_NIMBUS_THEME.put("heavy", false);
+    USE_NIMBUS_THEME.put("all", false);
+    USE_NIMBUS_THEME.put(
+        "custom", getPropBoolean(props, "use_nimbus_theme", USE_NIMBUS_THEME.get("default")));
+
     INVENTORY_FULL_ALERT.put("vanilla", false);
     INVENTORY_FULL_ALERT.put("vanilla_resizable", false);
     INVENTORY_FULL_ALERT.put("lite", false);
@@ -628,16 +732,6 @@ public class Settings {
         getPropBoolean(
             props, "under_attack_notifications", UNDER_ATTACK_NOTIFICATIONS.get("default")));
 
-    LOGOUT_NOTIFICATIONS.put("vanilla", false);
-    LOGOUT_NOTIFICATIONS.put("vanilla_resizable", false);
-    LOGOUT_NOTIFICATIONS.put("lite", false);
-    LOGOUT_NOTIFICATIONS.put("default", true);
-    LOGOUT_NOTIFICATIONS.put("heavy", true);
-    LOGOUT_NOTIFICATIONS.put("all", true);
-    LOGOUT_NOTIFICATIONS.put(
-        "custom",
-        getPropBoolean(props, "logout_notifications", LOGOUT_NOTIFICATIONS.get("default")));
-
     LOW_HP_NOTIFICATIONS.put("vanilla", false);
     LOW_HP_NOTIFICATIONS.put("vanilla_resizable", false);
     LOW_HP_NOTIFICATIONS.put("lite", false);
@@ -656,16 +750,6 @@ public class Settings {
     LOW_HP_NOTIF_VALUE.put("all", 30);
     LOW_HP_NOTIF_VALUE.put(
         "custom", getPropInt(props, "low_hp_notif_value", LOW_HP_NOTIF_VALUE.get("default")));
-
-    FATIGUE_NOTIFICATIONS.put("vanilla", false);
-    FATIGUE_NOTIFICATIONS.put("vanilla_resizable", false);
-    FATIGUE_NOTIFICATIONS.put("lite", false);
-    FATIGUE_NOTIFICATIONS.put("default", true);
-    FATIGUE_NOTIFICATIONS.put("heavy", true);
-    FATIGUE_NOTIFICATIONS.put("all", true);
-    FATIGUE_NOTIFICATIONS.put(
-        "custom",
-        getPropBoolean(props, "fatigue_notifications", FATIGUE_NOTIFICATIONS.get("default")));
 
     HIGHLIGHTED_ITEM_NOTIFICATIONS.put("vanilla", false);
     HIGHLIGHTED_ITEM_NOTIFICATIONS.put("vanilla_resizable", false);
@@ -1108,6 +1192,24 @@ public class Settings {
       save("custom");
     }
 
+    if (INTEGER_SCALING_FACTOR.get("custom") < (int) Renderer.minScalar) {
+      INTEGER_SCALING_FACTOR.put("custom", (int) Renderer.minScalar);
+    } else if (INTEGER_SCALING_FACTOR.get("custom") > (int) Renderer.maxIntegerScalar) {
+      INTEGER_SCALING_FACTOR.put("custom", (int) Renderer.maxIntegerScalar);
+    }
+
+    if (BILINEAR_SCALING_FACTOR.get("custom") < Renderer.minScalar) {
+      BILINEAR_SCALING_FACTOR.put("custom", Renderer.minScalar);
+    } else if (BILINEAR_SCALING_FACTOR.get("custom") > Renderer.maxInterpolationScalar) {
+      BILINEAR_SCALING_FACTOR.put("custom", Renderer.maxInterpolationScalar);
+    }
+
+    if (BICUBIC_SCALING_FACTOR.get("custom") < Renderer.minScalar) {
+      BICUBIC_SCALING_FACTOR.put("custom", Renderer.minScalar);
+    } else if (BICUBIC_SCALING_FACTOR.get("custom") > Renderer.maxInterpolationScalar) {
+      BICUBIC_SCALING_FACTOR.put("custom", Renderer.maxInterpolationScalar);
+    }
+
     if (WORLD.get("custom") < 0) {
       WORLD.put("custom", 0);
       save("custom");
@@ -1131,6 +1233,21 @@ public class Settings {
       COMBAT_STYLE.put("custom", Client.COMBAT_DEFENSIVE);
       save("custom");
     }
+  }
+
+  /**
+   * Determine whether we should default to dark mode for the app interface
+   *
+   * @return {@code boolean} indicating whether dark mode should be used
+   */
+  public static boolean shouldDefaultDarkMode() {
+    // Detect via JNA/registry for Windows
+    if (Util.isWindowsOS()) {
+      return Util.isWindowsOSDarkTheme();
+    }
+
+    // Default to dark mode for other OS's
+    return true;
   }
 
   public static void initDir() { // TODO: Consider moving to a more relevant place
@@ -1167,7 +1284,16 @@ public class Settings {
         // TODO: if (Client.state != Client.STATE_LOGIN) Client.logout();
         return true;
       case "screenshot":
-        // TODO: Renderer.takeScreenshot(false);
+        Renderer.takeScreenshot(false);
+        return true;
+      case "toggle_scaling":
+        Settings.toggleWindowScaling();
+        return true;
+      case "increase_scale":
+        Settings.increaseScale();
+        return true;
+      case "decrease_scale":
+        Settings.decreaseScale();
         return true;
       case "toggle_indicators":
         // TODO: Settings.toggleLagIndicator();
@@ -1177,6 +1303,9 @@ public class Settings {
         return true;
       case "reset_rotation":
         // TODO: Camera.resetRotation();
+        return true;
+      case "toggle_trackpad_camera_rotation":
+        Settings.toggleTrackpadRotation();
         return true;
       case "toggle_colorize":
         // TODO: Settings.toggleColorTerminal();
@@ -1248,10 +1377,10 @@ public class Settings {
         // TODO: Settings.toggleXpDrops();
         return true;
       case "show_config_window":
-        Launcher.getConfigWindow().showConfigWindow();
+        Launcher.getConfigWindow().toggleConfigWindow();
         return true;
       case "show_worldmap_window":
-        Launcher.getWorldMapWindow().showWorldMapWindow();
+        Launcher.getWorldMapWindow().toggleWorldMapWindow();
         return true;
       case "show_queue_window":
         // Try to not allow Replay window to appear while logged into the game :-)
@@ -1325,6 +1454,163 @@ public class Settings {
     return false;
   }
 
+  public static void toggleWindowScaling() {
+    if (ScaledWindow.getInstance().isViewportLoaded()) {
+      SCALED_CLIENT_WINDOW.put(
+          currentProfile, new Boolean(!SCALED_CLIENT_WINDOW.get(currentProfile)));
+
+      if (SCALED_CLIENT_WINDOW.get(currentProfile)) {
+        Client.displayMessage("@cya@Client scaling is now enabled", Client.CHAT_NONE);
+      } else {
+        Client.displayMessage("@cya@Client scaling is now disabled", Client.CHAT_NONE);
+      }
+
+      Settings.renderingScalarUpdateRequired = true;
+
+      save();
+    }
+  }
+
+  public static void increaseScale() {
+    if (ScaledWindow.getInstance().isViewportLoaded()) {
+      float scalingDelta = 0f;
+
+      if (!SCALED_CLIENT_WINDOW.get(currentProfile)) {
+        Client.displayMessage(
+            "@cya@Enable client scaling before attempting to increase the scale value",
+            Client.CHAT_NONE);
+        return;
+      }
+
+      String scaleLimitReached = "@cya@Cannot increase the scale further";
+
+      if (SCALING_ALGORITHM.get(currentProfile).equals(AffineTransformOp.TYPE_NEAREST_NEIGHBOR)) {
+        int currentIntegerScalingFactor = INTEGER_SCALING_FACTOR.get(currentProfile);
+        scalingDelta = 1.0f;
+
+        if (currentIntegerScalingFactor < (int) Renderer.maxIntegerScalar) {
+          int newScale = currentIntegerScalingFactor + (int) scalingDelta;
+
+          INTEGER_SCALING_FACTOR.put(currentProfile, newScale);
+          Client.displayMessage("@cya@Increased scale to " + newScale + "x", Client.CHAT_NONE);
+        } else {
+          Client.displayMessage(scaleLimitReached, Client.CHAT_NONE);
+          return;
+        }
+      } else if (SCALING_ALGORITHM.get(currentProfile).equals(AffineTransformOp.TYPE_BILINEAR)) {
+        float currentBilinearScalingFactor = BILINEAR_SCALING_FACTOR.get(currentProfile);
+        scalingDelta = 0.1f;
+
+        if (currentBilinearScalingFactor < Renderer.maxInterpolationScalar) {
+          float newScale =
+              BigDecimal.valueOf(currentBilinearScalingFactor + scalingDelta)
+                  .setScale(1, RoundingMode.HALF_DOWN)
+                  .floatValue();
+          BILINEAR_SCALING_FACTOR.put(currentProfile, newScale);
+          Client.displayMessage("@cya@Increased scale to " + newScale + "x", Client.CHAT_NONE);
+        } else {
+          Client.displayMessage(scaleLimitReached, Client.CHAT_NONE);
+          return;
+        }
+      } else if (SCALING_ALGORITHM.get(currentProfile).equals(AffineTransformOp.TYPE_BICUBIC)) {
+        float currentBicubicScalingFactor = BICUBIC_SCALING_FACTOR.get(currentProfile);
+        scalingDelta = 0.1f;
+
+        if (currentBicubicScalingFactor < Renderer.maxInterpolationScalar) {
+          float newScale =
+              BigDecimal.valueOf(currentBicubicScalingFactor + scalingDelta)
+                  .setScale(1, RoundingMode.HALF_DOWN)
+                  .floatValue();
+          BICUBIC_SCALING_FACTOR.put(currentProfile, newScale);
+          Client.displayMessage("@cya@Increased scale to " + newScale + "x", Client.CHAT_NONE);
+        } else {
+          Client.displayMessage(scaleLimitReached, Client.CHAT_NONE);
+          return;
+        }
+      }
+
+      Settings.renderingScalarUpdateRequired = true;
+
+      save();
+    }
+  }
+
+  public static void decreaseScale() {
+    if (ScaledWindow.getInstance().isViewportLoaded()) {
+      float scalingDelta = 0;
+
+      if (!SCALED_CLIENT_WINDOW.get(currentProfile)) {
+        Client.displayMessage(
+            "@cya@Enable client scaling before attempting to decrease the scale value",
+            Client.CHAT_NONE);
+        return;
+      }
+
+      String scaleLimitReached = "@cya@Cannot decrease the scale further";
+
+      if (SCALING_ALGORITHM.get(currentProfile).equals(AffineTransformOp.TYPE_NEAREST_NEIGHBOR)) {
+        int currentIntegerScalingFactor = INTEGER_SCALING_FACTOR.get(currentProfile);
+        scalingDelta = 1.0f;
+
+        if (currentIntegerScalingFactor > (int) Renderer.minScalar) {
+          int newScale = currentIntegerScalingFactor - (int) scalingDelta;
+          INTEGER_SCALING_FACTOR.put(currentProfile, newScale);
+          Client.displayMessage("@cya@Decreased scale to " + newScale + "x", Client.CHAT_NONE);
+        } else {
+          Client.displayMessage(scaleLimitReached, Client.CHAT_NONE);
+          return;
+        }
+      } else if (SCALING_ALGORITHM.get(currentProfile).equals(AffineTransformOp.TYPE_BILINEAR)) {
+        float currentBilinearScalingFactor = BILINEAR_SCALING_FACTOR.get(currentProfile);
+        scalingDelta = 0.1f;
+
+        if (currentBilinearScalingFactor > Renderer.minScalar) {
+          float newScale =
+              BigDecimal.valueOf(currentBilinearScalingFactor - scalingDelta)
+                  .setScale(1, RoundingMode.HALF_DOWN)
+                  .floatValue();
+          BILINEAR_SCALING_FACTOR.put(currentProfile, newScale);
+          Client.displayMessage("@cya@Decreased scale to " + newScale + "x", Client.CHAT_NONE);
+        } else {
+          Client.displayMessage(scaleLimitReached, Client.CHAT_NONE);
+          return;
+        }
+      } else if (SCALING_ALGORITHM.get(currentProfile).equals(AffineTransformOp.TYPE_BICUBIC)) {
+        float currentBicubicScalingFactor = BICUBIC_SCALING_FACTOR.get(currentProfile);
+        scalingDelta = 0.1f;
+
+        if (currentBicubicScalingFactor > Renderer.minScalar) {
+          float newScale =
+              BigDecimal.valueOf(currentBicubicScalingFactor - scalingDelta)
+                  .setScale(1, RoundingMode.HALF_DOWN)
+                  .floatValue();
+          BICUBIC_SCALING_FACTOR.put(currentProfile, newScale);
+          Client.displayMessage("@cya@Decreased scale to " + newScale + "x", Client.CHAT_NONE);
+        } else {
+          Client.displayMessage(scaleLimitReached, Client.CHAT_NONE);
+          return;
+        }
+      }
+
+      Settings.renderingScalarUpdateRequired = true;
+
+      save();
+    }
+  }
+
+  public static void toggleTrackpadRotation() {
+    SHIFT_SCROLL_CAMERA_ROTATION.put(
+        currentProfile, !SHIFT_SCROLL_CAMERA_ROTATION.get(currentProfile));
+
+    if (SHIFT_SCROLL_CAMERA_ROTATION.get(currentProfile)) {
+      Client.displayMessage("@cya@Trackpad Camera Rotation is now enabled", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Trackpad Camera Rotation is now disabled", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
   public static void toggleGoalBar() {
     SHOW_XP_BAR.put(currentProfile, !SHOW_XP_BAR.get(currentProfile));
     if (SHOW_XP_BAR.get(currentProfile))
@@ -1341,20 +1627,20 @@ public class Settings {
     save();
   }
 
-  public static void checkSoftwareCursor(boolean initial) {
-    if (Renderer.lastDisplayingSoftwareCursor != Renderer.displayingSoftwareCursor || initial) {
-      if (SOFTWARE_CURSOR.get(currentProfile) && Renderer.displayingSoftwareCursor) {
-        Game.getInstance()
-            .setCursor(
-                Game.getInstance()
-                    .getToolkit()
-                    .createCustomCursor(
-                        new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB),
-                        new Point(0, 0),
-                        "null"));
-      } else {
-        Game.getInstance().setCursor(Cursor.getDefaultCursor());
-      }
+  public static void checkSoftwareCursor() {
+    // Only load the software cursor if setting is enabled and
+    // the game has begun rendering post-loading
+    if (SOFTWARE_CURSOR.get(currentProfile) && ScaledWindow.getInstance().isViewportLoaded()) {
+      ScaledWindow.getInstance()
+          .setCursor(
+              ScaledWindow.getInstance()
+                  .getToolkit()
+                  .createCustomCursor(
+                      new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB),
+                      new Point(0, 0),
+                      "null"));
+    } else {
+      ScaledWindow.getInstance().setCursor(Cursor.getDefaultCursor());
     }
   }
 
@@ -1416,6 +1702,26 @@ public class Settings {
   }
 
   /**
+   * Gets the Float value of a Properties object for the specified key. If no value is defined for
+   * that key, it returns the specified default value.
+   *
+   * @param props the Properties object to read
+   * @param key the name of the property to lookup
+   * @param defaultProp the default Float value of the specified property
+   * @return a Float value corresponding to the specified property
+   */
+  private static float getPropFloat(Properties props, String key, float defaultProp) {
+    String value = props.getProperty(key);
+    if (value == null) return defaultProp;
+
+    try {
+      return Float.parseFloat(value);
+    } catch (Exception e) {
+      return defaultProp;
+    }
+  }
+
+  /**
    * Gets the Boolean value of a Properties object for the specified key. If no value is defined for
    * that key, it returns the specified default value.
    *
@@ -1441,10 +1747,9 @@ public class Settings {
    * @return if it is recommended to use system notifications
    */
   public static boolean isRecommendedToUseSystemNotifs() {
-    // Users on Windows 8.1 or 10 are recommend to set USE_SYSTEM_NOTIFICATIONS = true
-    if (System.getProperty("os.name").contains("Windows")) {
-      return "Windows 10".equals(System.getProperty("os.name"))
-          || "Windows 8.1".equals(System.getProperty("os.name"));
+    // Users on Windows 8.1+ are recommend to set USE_SYSTEM_NOTIFICATIONS = true
+    if (Util.isWindowsOS()) {
+      return Util.isModernWindowsOS();
     } else { // Linux, macOS, etc.
       return NotificationsHandler.hasNotifySend;
     }
@@ -1541,7 +1846,18 @@ public class Settings {
       props.setProperty("custom_client_size", Boolean.toString(CUSTOM_CLIENT_SIZE.get(preset)));
       props.setProperty("custom_client_size_x", Integer.toString(CUSTOM_CLIENT_SIZE_X.get(preset)));
       props.setProperty("custom_client_size_y", Integer.toString(CUSTOM_CLIENT_SIZE_Y.get(preset)));
+      props.setProperty(
+          "enable_window_scaling", Boolean.toString(SCALED_CLIENT_WINDOW.get(preset)));
+      props.setProperty("scaling_algorithm", Integer.toString(SCALING_ALGORITHM.get(preset)));
+      props.setProperty(
+          "integer_scaling_factor", Integer.toString(INTEGER_SCALING_FACTOR.get(preset)));
+      props.setProperty(
+          "bilinear_scaling_factor", Float.toString(BILINEAR_SCALING_FACTOR.get(preset)));
+      props.setProperty(
+          "bicubic_scaling_factor", Float.toString(BICUBIC_SCALING_FACTOR.get(preset)));
       props.setProperty("check_updates", Boolean.toString(CHECK_UPDATES.get(preset)));
+      props.setProperty("use_dark_flatlaf", Boolean.toString(USE_DARK_FLATLAF.get(preset)));
+      props.setProperty("use_nimbus_theme", Boolean.toString(USE_NIMBUS_THEME.get(preset)));
       props.setProperty(
           "welcome_enabled", Boolean.toString(REMIND_HOW_TO_OPEN_SETTINGS.get(preset)));
       props.setProperty("combat_menu", Boolean.toString(COMBAT_MENU_SHOWN.get(preset)));
@@ -1569,6 +1885,12 @@ public class Settings {
       props.setProperty("fps_limit_enabled", Boolean.toString(FPS_LIMIT_ENABLED.get(preset)));
       props.setProperty("fps_limit", Integer.toString(FPS_LIMIT.get(preset)));
       props.setProperty("software_cursor", Boolean.toString(SOFTWARE_CURSOR.get(preset)));
+      props.setProperty(
+          "shift_scroll_camera_rotation",
+          Boolean.toString(SHIFT_SCROLL_CAMERA_ROTATION.get(preset)));
+      props.setProperty(
+          "trackpad_rotation_sensitivity",
+          Integer.toString(TRACKPAD_ROTATION_SENSITIVITY.get(preset)));
       props.setProperty("auto_screenshot", Boolean.toString(AUTO_SCREENSHOT.get(preset)));
       props.setProperty("view_distance", Integer.toString(VIEW_DISTANCE.get(preset)));
       props.setProperty("patch_gender", Boolean.toString(PATCH_GENDER.get(preset)));
@@ -1632,7 +1954,6 @@ public class Settings {
       props.setProperty("trade_notifications", Boolean.toString(TRADE_NOTIFICATIONS.get(preset)));
       props.setProperty(
           "under_attack_notifications", Boolean.toString(UNDER_ATTACK_NOTIFICATIONS.get(preset)));
-      props.setProperty("logout_notifications", Boolean.toString(LOGOUT_NOTIFICATIONS.get(preset)));
       props.setProperty("low_hp_notifications", Boolean.toString(LOW_HP_NOTIFICATIONS.get(preset)));
       props.setProperty("low_hp_notif_value", Integer.toString(LOW_HP_NOTIF_VALUE.get(preset)));
       props.setProperty(
@@ -1811,7 +2132,7 @@ public class Settings {
     int i = 1;
     if (fList != null) {
       for (File worldFile : fList) {
-        if (!worldFile.isDirectory()) {
+        if (!worldFile.isDirectory() && !worldFile.getName().equals(".DS_Store")) {
           Properties worldProps = new Properties();
           try {
             FileInputStream in = new FileInputStream(worldFile);
