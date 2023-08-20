@@ -2041,15 +2041,15 @@ public class JClassPatcher {
                 new MethodInsnNode(
                     Opcodes.INVOKESTATIC, "Game/Client", "sortFriends", "()V", false));
           }
-          
+
           if (insnNode.getOpcode() == Opcodes.GETFIELD
-                  && ((FieldInsnNode) insnNode).name.equals("jd")
-                  && nextNode.getOpcode() == Opcodes.IF_ICMPLT
-                  && nextNode.getNext().getOpcode() == Opcodes.GOTO) {
-        	  methodNode.instructions.insert(
-                      nextNode,
-                      new MethodInsnNode(
-                          Opcodes.INVOKESTATIC, "Game/Client", "sortFriends", "()V", false));
+              && ((FieldInsnNode) insnNode).name.equals("jd")
+              && nextNode.getOpcode() == Opcodes.IF_ICMPLT
+              && nextNode.getNext().getOpcode() == Opcodes.GOTO) {
+            methodNode.instructions.insert(
+                nextNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "sortFriends", "()V", false));
           }
 
           if (insnNode.getOpcode() == Opcodes.LDC
