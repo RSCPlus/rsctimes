@@ -177,7 +177,9 @@ public class KeyboardHandler implements KeyListener {
         int n =
             converted == e.getExtendedKeyCode()
                 ? e.getKeyChar()
-                : converted; // with getKeyCode() is always placing letter to upper
+                : keyShift
+                    ? e.getKeyChar()
+                    : converted; // with getKeyCode() is always placing letter to upper
         Reflection.keyDown.invoke(Client.instance, evt, n);
       } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1) {
         // TODO Auto-generated catch block
@@ -240,7 +242,9 @@ public class KeyboardHandler implements KeyListener {
         int n =
             converted == e.getExtendedKeyCode()
                 ? e.getKeyChar()
-                : converted; // with getKeyCode() is always placing letter to upper
+                : keyShift
+                    ? e.getKeyChar()
+                    : converted; // with getKeyCode() is always placing letter to upper
         Reflection.keyUp.invoke(Client.instance, evt, n);
       } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e1) {
         // TODO Auto-generated catch block

@@ -1977,7 +1977,9 @@ public class WorldMapWindow {
     if (keyChar == KeyEvent.VK_BACK_SPACE) {
       if (searchText.length() > 0) searchText = searchText.substring(0, searchText.length() - 1);
     } else {
-      searchText += keyChar;
+      if (keyChar != 65535) {
+        searchText += keyChar;
+      }
     }
 
     buildSearchResults();
