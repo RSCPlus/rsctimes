@@ -1213,8 +1213,8 @@ public class WorldMapWindow {
     if ((!followPlayer || playerPlane == -1) && prevZoom < zoom) {
       float newX = (planes[0].getWidth(null)) - prevMousePointMap.x * 3;
       float newY = (prevMousePointMap.y - planeIndex * 944) * 3;
-      float diffX = newX - cameraCurrentPosition.x;
-      float diffY = newY - cameraCurrentPosition.y;
+      float diffX = 3 * SCENERY_OFFSET_X + newX - cameraCurrentPosition.x;
+      float diffY = -3 * SCENERY_OFFSET_Y + newY - cameraCurrentPosition.y;
 
       cameraCurrentPosition.x += diffX / zoom;
       cameraCurrentPosition.y += diffY / zoom;
