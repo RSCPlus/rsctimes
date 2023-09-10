@@ -1313,9 +1313,6 @@ public class Settings {
       case "toggle_combat_xp_menu":
         Settings.toggleCombatMenuShown();
         return true;
-      case "toggle_debug":
-        Settings.toggleDebug();
-        return true;
       case "toggle_inventory_full_alert":
         Settings.toggleInventoryFullAlert();
         return true;
