@@ -1065,7 +1065,6 @@ public class ConfigWindow {
     generalPanelDebugModeCheckbox = addCheckbox("Enable debug mode", generalPanel);
     generalPanelDebugModeCheckbox.setToolTipText(
         "Shows debug overlays and enables debug text in the console");
-    generalPanelDebugModeCheckbox.setEnabled(false);
 
     generalPanelExceptionHandlerCheckbox = addCheckbox("Enable exception handler", generalPanel);
     generalPanelExceptionHandlerCheckbox.setToolTipText(
@@ -1091,17 +1090,14 @@ public class ConfigWindow {
         addCheckbox("Combat style menu shown outside of combat", generalPanel);
     generalPanelCombatXPMenuCheckbox.setToolTipText(
         "Always show the combat style menu when out of combat");
-    generalPanelCombatXPMenuCheckbox.setEnabled(false);
 
     generalPanelCombatXPMenuHiddenCheckbox =
         addCheckbox("Combat style menu hidden when in combat", generalPanel);
     generalPanelCombatXPMenuHiddenCheckbox.setToolTipText("Hide combat style menu when in combat");
-    generalPanelCombatXPMenuHiddenCheckbox.setEnabled(false);
 
     generalPanelInventoryFullAlertCheckbox = addCheckbox("Inventory full alert", generalPanel);
     generalPanelInventoryFullAlertCheckbox.setToolTipText(
         "Displays a large notice when the inventory is full");
-    generalPanelInventoryFullAlertCheckbox.setEnabled(false);
 
     generalPanelKeepScrollbarPosGoodMagicEvilMagicCheckbox =
         addCheckbox("Keep GoodMagic & EvilMagic scrollbar position", generalPanel);
@@ -1904,6 +1900,24 @@ public class ConfigWindow {
         "toggle_trackpad_camera_rotation",
         KeyModifier.ALT,
         KeyEvent.VK_D);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle combat XP menu persistence",
+        "toggle_combat_xp_menu",
+        KeyModifier.CTRL,
+        KeyEvent.VK_C);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle inventory full alert",
+        "toggle_inventory_full_alert",
+        KeyModifier.CTRL,
+        KeyEvent.VK_V);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle roof hiding",
+        "toggle_roof_hiding",
+        KeyModifier.CTRL,
+        KeyEvent.VK_R);
     /*
     addKeybindSet(
             keybindContainerPanel,
@@ -1913,28 +1927,10 @@ public class ConfigWindow {
             KeyEvent.VK_Q);
     addKeybindSet(
             keybindContainerPanel,
-            "Toggle combat XP menu persistence",
-            "toggle_combat_xp_menu",
-            KeyModifier.CTRL,
-            KeyEvent.VK_C);
-    addKeybindSet(
-            keybindContainerPanel,
             "Toggle XP drops",
             "toggle_xp_drops",
             KeyModifier.CTRL,
             KeyEvent.VK_OPEN_BRACKET);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle inventory full alert",
-            "toggle_inventory_full_alert",
-            KeyModifier.CTRL,
-            KeyEvent.VK_V);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle roof hiding",
-            "toggle_roof_hiding",
-            KeyModifier.CTRL,
-            KeyEvent.VK_R);
     addKeybindSet(
             keybindContainerPanel,
             "Toggle color coded text",
@@ -1958,95 +1954,94 @@ public class ConfigWindow {
             KeyEvent.VK_N);
     */
 
-    /* TODO: overlays...
     addKeybindCategory(keybindContainerPanel, "Overlays");
     addKeybindSet(
-            keybindContainerPanel,
-            "Toggle HP display",
-            "toggle_hp_display",
-            KeyModifier.CTRL,
-            KeyEvent.VK_U);
+        keybindContainerPanel,
+        "Toggle HP display",
+        "toggle_hp_display",
+        KeyModifier.CTRL,
+        KeyEvent.VK_U);
     addKeybindSet(
-            keybindContainerPanel,
-            "Toggle combat buffs and cooldowns display         ", // TODO: remove this spacing
-            "toggle_buffs_display",
-            KeyModifier.CTRL,
-            KeyEvent.VK_Y);
+        keybindContainerPanel,
+        "Toggle combat buffs and cooldowns display         ", // TODO: remove this spacing
+        "toggle_buffs_display",
+        KeyModifier.CTRL,
+        KeyEvent.VK_Y);
     addKeybindSet(
-            keybindContainerPanel, "Toggle XP bar", "toggle_xp_bar", KeyModifier.CTRL, KeyEvent.VK_K);
+        keybindContainerPanel, "Toggle Goal bar", "toggle_xp_bar", KeyModifier.CTRL, KeyEvent.VK_K);
     addKeybindSet(
-            keybindContainerPanel,
-            "Toggle inventory count overlay",
-            "toggle_inven_count_overlay",
-            KeyModifier.CTRL,
-            KeyEvent.VK_E);
+        keybindContainerPanel,
+        "Toggle inventory count overlay",
+        "toggle_inven_count_overlay",
+        KeyModifier.CTRL,
+        KeyEvent.VK_E);
     addKeybindSet(
-            keybindContainerPanel,
-            "Toggle position overlay",
-            "toggle_position_overlay",
-            KeyModifier.ALT,
-            KeyEvent.VK_P);
+        keybindContainerPanel,
+        "Toggle position overlay",
+        "toggle_position_overlay",
+        KeyModifier.ALT,
+        KeyEvent.VK_P);
     addKeybindSet(
-            keybindContainerPanel,
-            "Toggle retro fps overlay",
-            "toggle_retro_fps_overlay",
-            KeyModifier.ALT,
-            KeyEvent.VK_F);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle item name overlay",
-            "toggle_item_overlay",
-            KeyModifier.CTRL,
-            KeyEvent.VK_I);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle player name overlay",
-            "toggle_player_name_overlay",
-            KeyModifier.CTRL,
-            KeyEvent.VK_P);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle friend name overlay",
-            "toggle_friend_name_overlay",
-            KeyModifier.CTRL,
-            KeyEvent.VK_M);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle NPC name overlay",
-            "toggle_npc_name_overlay",
-            KeyModifier.CTRL,
-            KeyEvent.VK_N);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle hitboxes",
-            "toggle_hitboxes",
-            KeyModifier.CTRL,
-            KeyEvent.VK_H);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle food heal overlay",
-            "toggle_food_heal_overlay",
-            KeyModifier.CTRL,
-            KeyEvent.VK_G);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle time until health regen",
-            "toggle_health_regen_timer",
-            KeyModifier.CTRL,
-            KeyEvent.VK_X);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle debug mode",
-            "toggle_debug",
-            KeyModifier.CTRL,
-            KeyEvent.VK_D);
-    addKeybindSet(
-            keybindContainerPanel,
-            "Toggle Wiki Hbar Button",
-            "toggle_wiki_hbar_button",
-            KeyModifier.ALT,
-            KeyEvent.VK_W);
+        keybindContainerPanel,
+        "Toggle retro fps overlay",
+        "toggle_fps_overlay",
+        KeyModifier.ALT,
+        KeyEvent.VK_F);
+    /*addKeybindSet(
+    keybindContainerPanel,
+    "Toggle item name overlay",
+    "toggle_item_overlay",
+    KeyModifier.CTRL,
+    KeyEvent.VK_I);
     */
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle player name overlay",
+        "toggle_player_name_overlay",
+        KeyModifier.CTRL,
+        KeyEvent.VK_P);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle friend name overlay",
+        "toggle_friend_name_overlay",
+        KeyModifier.CTRL,
+        KeyEvent.VK_M);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle NPC name overlay",
+        "toggle_npc_name_overlay",
+        KeyModifier.CTRL,
+        KeyEvent.VK_N);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle hitboxes",
+        "toggle_hitboxes",
+        KeyModifier.CTRL,
+        KeyEvent.VK_H);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle food heal overlay",
+        "toggle_food_heal_overlay",
+        KeyModifier.CTRL,
+        KeyEvent.VK_G);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle time until health regen",
+        "toggle_health_regen_timer",
+        KeyModifier.CTRL,
+        KeyEvent.VK_X);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle debug mode",
+        "toggle_debug",
+        KeyModifier.CTRL,
+        KeyEvent.VK_D);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle Wiki Hbar Button",
+        "toggle_wiki_hbar_button",
+        KeyModifier.ALT,
+        KeyEvent.VK_W);
 
     /* TODO: uncomment if twitch integration is implemented
     addKeybindCategory(keybindContainerPanel, "Streaming & Privacy");
@@ -2730,12 +2725,14 @@ public class ConfigWindow {
     /*
     generalPanelShowSecurityTipsAtLoginCheckbox.setSelected(
             Settings.SHOW_SECURITY_TIP_DAY.get(Settings.currentProfile));
+            */
     generalPanelCombatXPMenuCheckbox.setSelected(
-            Settings.COMBAT_MENU_SHOWN.get(Settings.currentProfile));
+        Settings.COMBAT_MENU_SHOWN.get(Settings.currentProfile));
     generalPanelCombatXPMenuHiddenCheckbox.setSelected(
-            Settings.COMBAT_MENU_HIDDEN.get(Settings.currentProfile));
+        Settings.COMBAT_MENU_HIDDEN.get(Settings.currentProfile));
     generalPanelInventoryFullAlertCheckbox.setSelected(
-            Settings.INVENTORY_FULL_ALERT.get(Settings.currentProfile));
+        Settings.INVENTORY_FULL_ALERT.get(Settings.currentProfile));
+    /*
     generalPanelNamePatchModeSlider.setValue(Settings.NAME_PATCH_TYPE.get(Settings.currentProfile));
     */
     generalPanelLogVerbositySlider.setValue(Settings.LOG_VERBOSITY.get(Settings.currentProfile));
@@ -2987,9 +2984,9 @@ public class ConfigWindow {
         Settings.currentProfile, generalPanelCombatXPMenuHiddenCheckbox.isSelected());
     Settings.CENTER_XPDROPS.put(
         Settings.currentProfile, overlayPanelXPCenterAlignFocusButton.isSelected());
-    /*
     Settings.INVENTORY_FULL_ALERT.put(
-            Settings.currentProfile, generalPanelInventoryFullAlertCheckbox.isSelected());
+        Settings.currentProfile, generalPanelInventoryFullAlertCheckbox.isSelected());
+    /*
     Settings.NAME_PATCH_TYPE.put(
             Settings.currentProfile, generalPanelNamePatchModeSlider.getValue());
     */

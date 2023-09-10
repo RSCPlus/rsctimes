@@ -1311,34 +1311,34 @@ public class Settings {
         // TODO: Settings.toggleColorTerminal();
         return true;
       case "toggle_combat_xp_menu":
-        // TODO: Settings.toggleCombatMenuShown();
+        Settings.toggleCombatMenuShown();
         return true;
       case "toggle_debug":
-        // TODO: Settings.toggleDebug();
+        Settings.toggleDebug();
         return true;
       case "toggle_inventory_full_alert":
-        // TODO: Settings.toggleInventoryFullAlert();
+        Settings.toggleInventoryFullAlert();
         return true;
       case "toggle_food_heal_overlay":
         // TODO: Settings.toggleFoodOverlay();
         return true;
       case "toggle_friend_name_overlay":
-        // TOOD: Settings.toggleShowFriendNameOverlay();
+        Settings.toggleShowFriendNameOverlay();
         return true;
       case "toggle_buffs_display":
-        // TODO: Settings.toggleBuffs();
+        Settings.toggleBuffs();
         return true;
       case "toggle_hp_display":
-        // TODO: Settings.toggleHpPrayerFatigueOverlay();
+        Settings.toggleHpOverlay();
         return true;
       case "toggle_position_overlay":
-        // TODO: Settings.togglePosition();
+        Settings.togglePosition();
         return true;
-      case "toggle_retro_fps_overlay":
-        // TODO: ? Settings.toggleRetroFPS();
+      case "toggle_fps_overlay":
+        Settings.toggleFPS();
         return true;
       case "toggle_inven_count_overlay":
-        // TODO: Settings.toggleInvCount();
+        Settings.toggleInvCount();
         return true;
       case "toggle_ipdns":
         // TODO: Settings.toggleShowLoginIpAddress();
@@ -1347,22 +1347,22 @@ public class Settings {
         // TODO: Settings.toggleShowItemGroundOverlay();
         return true;
       case "toggle_hitboxes":
-        // TODO: Settings.toggleShowHitbox();
+        Settings.toggleShowHitbox();
         return true;
       case "toggle_npc_name_overlay":
-        // TODO: Settings.toggleShowNPCNameOverlay();
+        Settings.toggleShowNPCNameOverlay();
         return true;
       case "toggle_ids_overlay":
-        // TODO: Settings.toggleExtendIdsOverlay();
+        Settings.toggleExtendIdsOverlay();
         return true;
       case "toggle_trace_object_info":
-        // TODO: Settings.toggleTraceObjectInfo();
+        Settings.toggleTraceObjectInfo();
         return true;
       case "toggle_player_name_overlay":
-        // TODO: Settings.toggleShowPlayerNameOverlay();
+        Settings.toggleShowPlayerNameOverlay();
         return true;
       case "toggle_roof_hiding":
-        // TODO: Settings.toggleHideRoofs();
+        Settings.toggleHideRoofs();
         return true;
       case "toggle_save_login_info":
         // TODO: Settings.toggleSaveLoginInfo();
@@ -1373,9 +1373,9 @@ public class Settings {
       case "toggle_twitch_chat":
         // TODO: maybe someday Settings.toggleTwitchHide();
         return true;
-      case "toggle_xp_drops":
+        /*case "toggle_xp_drops":
         // TODO: Settings.toggleXpDrops();
-        return true;
+        return true;*/
       case "show_config_window":
         Launcher.getConfigWindow().toggleConfigWindow();
         return true;
@@ -1423,7 +1423,7 @@ public class Settings {
         if (Client.state == Client.STATE_LOGIN) Game.getInstance().getJConfig().changeWorld(10);
         return true;
       case "toggle_wiki_hbar_button":
-        // TODO: Settings.toggleWikiHbar();
+        Settings.toggleWikiHbar();
         return true;
       case "stop":
       case "restart":
@@ -1439,7 +1439,7 @@ public class Settings {
          */
         return true;
       case "toggle_xp_bar":
-        // TODO: Settings.toggleXPBar();
+        Settings.toggleGoalBar();
         return true;
       case "show_seek_bar":
         // TODO: if replays are implemented Settings.toggleShowSeekBar();
@@ -1598,6 +1598,255 @@ public class Settings {
     }
   }
 
+  /*public static void toggleAttackAlwaysLeftClick() {
+    ATTACK_ALWAYS_LEFT_CLICK.put(
+        currentProfile, new Boolean(!ATTACK_ALWAYS_LEFT_CLICK.get(currentProfile)));
+
+    if (ATTACK_ALWAYS_LEFT_CLICK.get(currentProfile)) {
+      Client.displayMessage(
+          "@cya@You are now able to left click attack all monsters", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage(
+          "@cya@You are no longer able to left click attack all monsters", Client.CHAT_NONE);
+    }
+
+    save();
+  }*/
+
+  /*public static void toggleNumberedDialogue() {
+    NUMBERED_DIALOGUE_OPTIONS.put(
+        currentProfile, new Boolean(!NUMBERED_DIALOGUE_OPTIONS.get(currentProfile)));
+
+    if (NUMBERED_DIALOGUE_OPTIONS.get(currentProfile)) {
+      Client.displayMessage("@cya@Displaying numbered dialogue options", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage(
+          "@cya@No longer displaying numbered dialogue options", Client.CHAT_NONE);
+    }
+
+    save();
+  }*/
+
+  public static void toggleHideRoofs() {
+    HIDE_ROOFS.put(currentProfile, !HIDE_ROOFS.get(currentProfile));
+
+    if (HIDE_ROOFS.get(currentProfile)) {
+      Client.displayMessage("@cya@Roofs are now hidden", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Roofs are now shown", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleCombatMenuShown() {
+    COMBAT_MENU_SHOWN.put(currentProfile, !COMBAT_MENU_SHOWN.get(currentProfile));
+
+    if (COMBAT_MENU_SHOWN.get(currentProfile)) {
+      Client.displayMessage("@cya@Combat style is now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Combat style is now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleShowFriendNameOverlay() {
+    SHOW_FRIEND_NAME_OVERLAY.put(currentProfile, !SHOW_FRIEND_NAME_OVERLAY.get(currentProfile));
+
+    if (SHOW_FRIEND_NAME_OVERLAY.get(currentProfile)) {
+      Client.displayMessage("@cya@Friend Names overlay now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Friend Names overlay now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void togglePosition() {
+    SHOW_PLAYER_POSITION.put(currentProfile, !SHOW_PLAYER_POSITION.get(currentProfile));
+    if (SHOW_PLAYER_POSITION.get(currentProfile))
+      Client.displayMessage("@cya@Global Position is now shown", Client.CHAT_NONE);
+    else Client.displayMessage("@cya@Global Position is now hidden", Client.CHAT_NONE);
+    save();
+  }
+
+  public static void toggleFPS() {
+    HIDE_FPS.put(currentProfile, !HIDE_FPS.get(currentProfile));
+    if (HIDE_FPS.get(currentProfile))
+      Client.displayMessage("@cya@FPS is now hidden", Client.CHAT_NONE);
+    else Client.displayMessage("@cya@FPS is now shown", Client.CHAT_NONE);
+    save();
+  }
+
+  public static void toggleXPBar() {
+    SHOW_XP_BAR.put(currentProfile, !SHOW_XP_BAR.get(currentProfile));
+    if (SHOW_XP_BAR.get(currentProfile))
+      Client.displayMessage("@cya@XP Bar is now shown", Client.CHAT_NONE);
+    else Client.displayMessage("@cya@XP Bar is now hidden", Client.CHAT_NONE);
+    save();
+  }
+
+  /*public static void toggleSkillClickPinning() {
+    XPBar.skillClickPinning = !XPBar.skillClickPinning;
+    save();
+  }*/
+
+  public static void toggleXPBarPin() {
+    SHOW_XP_BAR.put(currentProfile, true);
+    if (!XPBar.pinnedBar) Client.displayMessage("@cya@XP Bar is now pinned", Client.CHAT_NONE);
+    else Client.displayMessage("@cya@XP Bar is now unpinned", Client.CHAT_NONE);
+    XPBar.pinnedBar = !XPBar.pinnedBar;
+    save();
+  }
+
+  /*public static void toggleShowSeekBar() {
+    SHOW_SEEK_BAR.put(currentProfile, !SHOW_SEEK_BAR.get(currentProfile));
+    if (SHOW_SEEK_BAR.get(currentProfile))
+      Client.displayMessage("@cya@Seek bar is now shown", Client.CHAT_NONE);
+    else Client.displayMessage("@cya@Seek bar is now hidden", Client.CHAT_NONE);
+    save();
+  }
+
+  public static void toggleShowPlayerControls() {
+    SHOW_PLAYER_CONTROLS.put(currentProfile, !SHOW_PLAYER_CONTROLS.get(currentProfile));
+    if (SHOW_PLAYER_CONTROLS.get(currentProfile))
+      Client.displayMessage("@cya@Player controls are now shown", Client.CHAT_NONE);
+    else Client.displayMessage("@cya@Player controls are now hidden", Client.CHAT_NONE);
+    save();
+  }*/
+
+  public static void toggleInvCount() {
+    SHOW_INVCOUNT.put(currentProfile, !SHOW_INVCOUNT.get(currentProfile));
+
+    if (SHOW_INVCOUNT.get(currentProfile)) {
+      Client.displayMessage("@cya@Inventory count is now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Inventory count is now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleBuffs() {
+    SHOW_BUFFS.put(currentProfile, !SHOW_BUFFS.get(currentProfile));
+
+    if (SHOW_BUFFS.get(currentProfile)) {
+      Client.displayMessage("@cya@Combat (de)buffs and cooldowns are now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Combat (de)buffs and cooldowns are now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleHpOverlay() {
+    SHOW_HP_OVERLAY.put(currentProfile, !SHOW_HP_OVERLAY.get(currentProfile));
+
+    if (SHOW_HP_OVERLAY.get(currentProfile)) {
+      Client.displayMessage("@cya@HP is now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@HP is now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleShowHitbox() {
+    SHOW_HITBOX.put(currentProfile, !SHOW_HITBOX.get(currentProfile));
+
+    if (SHOW_HITBOX.get(currentProfile)) {
+      Client.displayMessage("@cya@Hitboxes are now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Hitboxes are now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleShowNPCNameOverlay() {
+    SHOW_NPC_NAME_OVERLAY.put(currentProfile, !SHOW_NPC_NAME_OVERLAY.get(currentProfile));
+    if (SHOW_NPC_NAME_OVERLAY.get(currentProfile)) {
+      Client.displayMessage("@cya@NPC names are now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@NPC names are is now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleShowPlayerNameOverlay() {
+    SHOW_PLAYER_NAME_OVERLAY.put(currentProfile, !SHOW_PLAYER_NAME_OVERLAY.get(currentProfile));
+
+    if (SHOW_PLAYER_NAME_OVERLAY.get(currentProfile)) {
+      Client.displayMessage("@cya@Player names are now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Player names are now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleExtendIdsOverlay() {
+    EXTEND_IDS_OVERLAY.put(currentProfile, !EXTEND_IDS_OVERLAY.get(currentProfile));
+
+    if (EXTEND_IDS_OVERLAY.get(currentProfile)) {
+      Client.displayMessage("@cya@IDs are now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@IDs are now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleTraceObjectInfo() {
+    TRACE_OBJECT_INFO.put(currentProfile, !TRACE_OBJECT_INFO.get(currentProfile));
+
+    if (TRACE_OBJECT_INFO.get(currentProfile)) {
+      Client.displayMessage("@cya@Object info now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Object info now hidden", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleDebug() {
+    DEBUG.put(currentProfile, !DEBUG.get(currentProfile));
+
+    if (DEBUG.get(currentProfile)) {
+      Client.displayMessage("@cya@Debug mode is on", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Debug mode is off", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleInventoryFullAlert() {
+    INVENTORY_FULL_ALERT.put(currentProfile, !INVENTORY_FULL_ALERT.get(currentProfile));
+
+    if (INVENTORY_FULL_ALERT.get(currentProfile)) {
+      Client.displayMessage("@cya@Inventory full alert is now on", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Inventory full alert is now off", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
+  public static void toggleTwitchHide() {
+    TWITCH_HIDE_CHAT.put(currentProfile, !TWITCH_HIDE_CHAT.get(currentProfile));
+
+    if (TWITCH_HIDE_CHAT.get(currentProfile)) {
+      Client.displayMessage("@cya@Twitch chat is now hidden", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Twitch chat is now shown", Client.CHAT_NONE);
+    }
+
+    save();
+  }
+
   public static void toggleTrackpadRotation() {
     SHIFT_SCROLL_CAMERA_ROTATION.put(
         currentProfile, !SHIFT_SCROLL_CAMERA_ROTATION.get(currentProfile));
@@ -1624,6 +1873,18 @@ public class Settings {
     if (!XPBar.pinnedBar) Client.displayMessage("@cya@Goal Bar is now pinned", Client.CHAT_NONE);
     else Client.displayMessage("@cya@Goal Bar is now unpinned", Client.CHAT_NONE);
     XPBar.pinnedBar = !XPBar.pinnedBar;
+    save();
+  }
+
+  public static void toggleWikiHbar() {
+    WIKI_LOOKUP_ON_HBAR.put(currentProfile, !WIKI_LOOKUP_ON_HBAR.get(currentProfile));
+
+    if (WIKI_LOOKUP_ON_HBAR.get(currentProfile)) {
+      Client.displayMessage("@cya@Wiki button in Hbar now shown", Client.CHAT_NONE);
+    } else {
+      Client.displayMessage("@cya@Wiki button in Hbar now hidden", Client.CHAT_NONE);
+    }
+
     save();
   }
 
@@ -1863,9 +2124,8 @@ public class Settings {
       props.setProperty("combat_menu", Boolean.toString(COMBAT_MENU_SHOWN.get(preset)));
       props.setProperty("combat_menu_hidden", Boolean.toString(COMBAT_MENU_HIDDEN.get(preset)));
       props.setProperty("center_xpdrops", Boolean.toString(CENTER_XPDROPS.get(preset)));
-      /*
       props.setProperty("inventory_full_alert", Boolean.toString(INVENTORY_FULL_ALERT.get(preset)));
-      props.setProperty("name_patch_type", Integer.toString(NAME_PATCH_TYPE.get(preset)));
+      /*props.setProperty("name_patch_type", Integer.toString(NAME_PATCH_TYPE.get(preset)));
       props.setProperty("command_patch_quest", Boolean.toString(COMMAND_PATCH_QUEST.get(preset)));
       props.setProperty(
               "keep_scrollbar_pos_magic_prayer",
