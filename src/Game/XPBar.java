@@ -122,22 +122,22 @@ public class XPBar {
     } catch (Exception e) {
       goalLvl = currLvl + 1;
     }
+    goalLvl = Math.max(currLvl + 1, goalLvl);
 
-    double estimatedPercent;
-    int levelsDifference;
-    if (goalLvl > Client.base_level[current_skill]) {
-      levelsDifference = goalLvl - Client.base_level[current_skill];
-      estimatedPercent = 1 / (Math.pow(2, (levelsDifference / 7.0)));
-    } else {
-      estimatedPercent = 1.0;
-    }
+    int skill_current_xp = (int) Client.getXPforLevel(Client.getBaseLevel(current_skill));
+    int skill_next_xp = (int) Client.getXPforLevel(Client.getBaseLevel(current_skill) + 1);
+    int skill_goal_xp = (int) Client.getXPforLevel(goalLvl);
 
-    int percent = (int) (estimatedPercent * (bounds.width - 2));
+    int xp_progress = skill_next_xp - skill_current_xp;
+
+    int percent = skill_current_xp * (bounds.width - 2) / skill_goal_xp;
+    int percent_progress = xp_progress * (bounds.width - 2) / skill_goal_xp;
 
     boolean post99xp = Client.base_level[current_skill] == 99;
 
     if (percent > bounds.width - 2) { // happens after virtual lvl 100
       percent = bounds.width - 2;
+      percent_progress = 0;
     }
 
     int x = xp_bar_x;
@@ -156,6 +156,10 @@ public class XPBar {
       g.setColor(Renderer.color_fatigue);
     }
     g.fillRect(x + 1, y + 1, percent, bounds.height - 2);
+    if (percent_progress > 0.0f) {
+      g.setColor(Renderer.color_fatigue);
+      g.fillRect(x + percent + 1, y + 1, percent_progress, bounds.height - 2);
+    }
 
     Renderer.drawShadowText(
         g,
