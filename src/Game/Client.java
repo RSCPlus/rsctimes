@@ -544,6 +544,20 @@ public class Client {
     }
   }
 
+  public static String appendDetailsHook(int id, int dir, int x, int y, int type) {
+    int fullX = x + regionX;
+    int fullY = y + regionY;
+    MouseText.lastObjectId = id;
+
+    MouseText.lastObjectType = type;
+
+    if (Settings.TRACE_OBJECT_INFO.get(Settings.currentProfile)) {
+      return " @gre@(" + id + ";" + dir + ";" + fullX + "," + fullY + ")";
+    } else {
+      return "";
+    }
+  }
+
   /**
    * Tells the client that the adjacent region is loading, so not to do spikes in position printing
    *

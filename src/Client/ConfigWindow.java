@@ -1553,7 +1553,6 @@ public class ConfigWindow {
     overlayPanelObjectInfoCheckbox = addCheckbox("Trace object info", overlayPanel);
     overlayPanelObjectInfoCheckbox.setToolTipText(
         "Displays object information after their name on the right click examine");
-    overlayPanelObjectInfoCheckbox.setEnabled(false);
 
     overlayPanelItemNamesCheckbox =
         addCheckbox("Display the names of items on the ground", overlayPanel);
