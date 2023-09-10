@@ -2018,7 +2018,7 @@ public class ConfigWindow {
         "toggle_hitboxes",
         KeyModifier.CTRL,
         KeyEvent.VK_H);
-    addKeybindSet(
+    /*addKeybindSet(
         keybindContainerPanel,
         "Toggle food heal overlay",
         "toggle_food_heal_overlay",
@@ -2035,7 +2035,7 @@ public class ConfigWindow {
         "Toggle debug mode",
         "toggle_debug",
         KeyModifier.CTRL,
-        KeyEvent.VK_D);
+        KeyEvent.VK_D);*/
     addKeybindSet(
         keybindContainerPanel,
         "Toggle Wiki Hbar Button",
