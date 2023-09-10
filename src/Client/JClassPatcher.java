@@ -1016,7 +1016,7 @@ public class JClassPatcher {
               methodNode.instructions.insertBefore(
                   findNode,
                   new FieldInsnNode(Opcodes.PUTSTATIC, "Game/Renderer", "combat_menu_shown", "Z"));
-              methodNode.instructions.insert(findNode.getNext().getNext(), label);
+              methodNode.instructions.insert(findNode.getNext(), label);
 
               // Show combat menu patch
               JumpInsnNode jumpNode = (JumpInsnNode) insnNode.getNext();

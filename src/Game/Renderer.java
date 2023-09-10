@@ -1003,10 +1003,7 @@ public class Renderer {
                   + "): "
                   + Client.current_level[i]
                   + "/"
-                  + Client.base_level[i]
-                  + " ("
-                  + Client.getXP(i)
-                  + " xp)",
+                  + Client.base_level[i],
               x,
               y,
               color_text,
