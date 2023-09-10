@@ -131,7 +131,8 @@ public class XPBar {
     int xp_progress = skill_next_xp - skill_current_xp;
 
     int percent = skill_current_xp * (bounds.width - 2) / skill_goal_xp;
-    int percent_progress = xp_progress * (bounds.width - 2) / skill_goal_xp;
+    int percent_progress =
+        (xp_progress * (bounds.width - 2) / skill_goal_xp) + (percent > 0 ? 1 : 0);
 
     boolean post99xp = Client.base_level[current_skill] == 99;
 
