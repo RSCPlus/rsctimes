@@ -1651,6 +1651,138 @@ public class JClassPatcher {
           }
         }
       }
+      // add on info for objects and wall objects
+      if (methodNode.name.equals("tk") && methodNode.desc.equals("()V")) {
+        int foundExamineCount = 0; // do two times, for scenery and boundary
+        boolean foundObj; // whether examine found for scenery, otherwise was boundary
+        boolean foundExaminePos;
+
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+        AbstractInsnNode insnNode = insnNodeList.next();
+
+        while (foundExamineCount < 2) {
+          foundObj = foundExaminePos = false;
+          while (!foundExaminePos && insnNodeList.hasNext()) {
+            insnNode = insnNodeList.next();
+            if (insnNode.getOpcode() == Opcodes.SIPUSH
+                && ((((IntInsnNode) insnNode).operand == 3400)
+                    || (((IntInsnNode) insnNode).operand == 3300))) {
+              foundExamineCount++;
+              foundObj = ((IntInsnNode) insnNode).operand == 3400;
+              foundExaminePos = true;
+            }
+          }
+          Logger.Info("count " + foundExamineCount);
+          if (foundExamineCount != 0) {
+            // add on info for objects
+            if (foundObj) {
+              while (insnNode.getOpcode() != Opcodes.INVOKEVIRTUAL
+                  || !((MethodInsnNode) insnNode).name.equals("append")) {
+                insnNode = insnNode.getPrevious();
+              }
+              insnNode = insnNode.getNext();
+
+              if (insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL
+                  && ((MethodInsnNode) insnNode).name.equals("toString")) {
+                // id
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 9));
+                // direction
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "yw", "[I"));
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 8));
+                methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.IALOAD));
+                // x
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "vw", "[I"));
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 8));
+                methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.IALOAD));
+                // y
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "ww", "[I"));
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 8));
+                methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.IALOAD));
+                // mark as scenery by inserting Game/MouseText.SCENERY
+                methodNode.instructions.insertBefore(
+                    insnNode,
+                    new FieldInsnNode(Opcodes.GETSTATIC, "Game/MouseText", "SCENERY", "I"));
+                methodNode.instructions.insertBefore(
+                    insnNode,
+                    new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        "Game/Client",
+                        "appendDetailsHook",
+                        "(IIIII)Ljava/lang/String;",
+                        false));
+                methodNode.instructions.insertBefore(
+                    insnNode,
+                    new MethodInsnNode(
+                        Opcodes.INVOKEVIRTUAL,
+                        "java/lang/StringBuffer",
+                        "append",
+                        "(Ljava/lang/String;)Ljava/lang/StringBuffer;",
+                        false));
+                continue;
+              }
+            }
+            // add on info for wall objects
+            else {
+              while (insnNode.getOpcode() != Opcodes.INVOKEVIRTUAL
+                  || !((MethodInsnNode) insnNode).name.equals("append")) {
+                insnNode = insnNode.getPrevious();
+              }
+              insnNode = insnNode.getNext();
+
+              if (insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL
+                  && ((MethodInsnNode) insnNode).name.equals("toString")) {
+                // id
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 9));
+                // direction
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "gx", "[I"));
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 8));
+                methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.IALOAD));
+                // x
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "ex", "[I"));
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 8));
+                methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.IALOAD));
+                // y
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ALOAD, 0));
+                methodNode.instructions.insertBefore(
+                    insnNode, new FieldInsnNode(Opcodes.GETFIELD, "mudclient", "fx", "[I"));
+                methodNode.instructions.insertBefore(insnNode, new VarInsnNode(Opcodes.ILOAD, 8));
+                methodNode.instructions.insertBefore(insnNode, new InsnNode(Opcodes.IALOAD));
+                // mark as boundary by inserting Game/MouseText.BOUNDARY
+                methodNode.instructions.insertBefore(
+                    insnNode,
+                    new FieldInsnNode(Opcodes.GETSTATIC, "Game/MouseText", "BOUNDARY", "I"));
+                methodNode.instructions.insertBefore(
+                    insnNode,
+                    new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        "Game/Client",
+                        "appendDetailsHook",
+                        "(IIIII)Ljava/lang/String;",
+                        false));
+                methodNode.instructions.insertBefore(
+                    insnNode,
+                    new MethodInsnNode(
+                        Opcodes.INVOKEVIRTUAL,
+                        "java/lang/StringBuffer",
+                        "append",
+                        "(Ljava/lang/String;)Ljava/lang/StringBuffer;",
+                        false));
+                continue;
+              }
+            }
+          }
+        }
+      }
       if (methodNode.name.equals("jk") && methodNode.desc.equals("()V")) {
         // menu ui
         Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
