@@ -1983,7 +1983,7 @@ public class ConfigWindow {
         KeyEvent.VK_P);
     addKeybindSet(
         keybindContainerPanel,
-        "Toggle retro fps overlay",
+        "Toggle fps overlay",
         "toggle_fps_overlay",
         KeyModifier.ALT,
         KeyEvent.VK_F);

@@ -994,7 +994,7 @@ public class Renderer {
         y = 32;
 
         // Draw Skills
-        for (int i = 0; i < 18; i++) {
+        for (int i = 0; i < 19; i++) {
           drawShadowText(
               g2,
               Client.skill_name[i]
