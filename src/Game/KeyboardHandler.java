@@ -59,19 +59,31 @@ public class KeyboardHandler implements KeyListener {
       return;
     }
 
-    boolean shouldConsume;
+    boolean shouldConsume = false;
 
-    boolean altgr = false;
-    if (e.isControlDown() && e.isAltDown() || e.isAltGraphDown()) {
-      altgr = true;
-    }
+    boolean altgr = e.isControlDown() && e.isAltDown() || e.isAltGraphDown();
 
     // implement alt-f4
     if ((altgr || e.isAltDown()) && e.getKeyCode() == 115) {
       System.exit(0);
     }
 
-    if (e.isControlDown() && !altgr) {
+    // Handle CTRL + Alt modifiers
+    //  Note: KeybindSet does not support multiple modifiers
+    if (e.isControlDown() && e.isAltDown() && !e.isAltGraphDown()) {
+
+      // Special debug key combo
+      if (e.getKeyCode() == KeyEvent.VK_D) {
+        Settings.toggleDebug();
+        shouldConsume = true;
+      }
+
+      if (shouldConsume) {
+        e.consume();
+      }
+
+      // Handle CTRL modifier
+    } else if (e.isControlDown() && !altgr) {
       for (KeybindSet kbs : keybindSetList) {
         if (kbs.getModifier() == KeybindSet.KeyModifier.CTRL && e.getKeyCode() == kbs.getKey()) {
           shouldConsume = Settings.processKeybindCommand(kbs.getCommandName());
@@ -81,6 +93,7 @@ public class KeyboardHandler implements KeyListener {
         }
       }
 
+      // Handle shift modifier
     } else if (e.isShiftDown()) {
       for (KeybindSet kbs : keybindSetList) {
         if (kbs.getModifier() == KeybindSet.KeyModifier.SHIFT && e.getKeyCode() == kbs.getKey()) {
@@ -91,6 +104,7 @@ public class KeyboardHandler implements KeyListener {
         }
       }
 
+      // Handle Alt modifier
     } else if (e.isAltDown() && !altgr) {
       for (KeybindSet kbs : keybindSetList) {
         if (kbs.getModifier() == KeybindSet.KeyModifier.ALT && e.getKeyCode() == kbs.getKey()) {
@@ -101,6 +115,7 @@ public class KeyboardHandler implements KeyListener {
         }
       }
 
+      // Handle all other keys
     } else {
       for (KeybindSet kbs : keybindSetList) {
         if (kbs.getModifier() == KeybindSet.KeyModifier.NONE && e.getKeyCode() == kbs.getKey()) {

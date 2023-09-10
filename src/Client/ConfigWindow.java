@@ -2029,13 +2029,14 @@ public class ConfigWindow {
         "Toggle time until health regen",
         "toggle_health_regen_timer",
         KeyModifier.CTRL,
-        KeyEvent.VK_X);
-    addKeybindSet(
-        keybindContainerPanel,
-        "Toggle debug mode",
-        "toggle_debug",
-        KeyModifier.CTRL,
-        KeyEvent.VK_D);*/
+        KeyEvent.VK_X);*/
+    // TODO: When replaced with "show items kept on death"
+    // addKeybindSet(
+    //    keybindContainerPanel,
+    //    "Toggle debug mode",
+    //    "toggle_debug",
+    //    KeyModifier.CTRL,
+    //    KeyEvent.VK_D);
     addKeybindSet(
         keybindContainerPanel,
         "Toggle Wiki Hbar Button",
