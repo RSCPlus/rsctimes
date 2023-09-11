@@ -188,6 +188,11 @@ public class Client {
   public static int ignores_count;
   public static long[] ignores_hash;
 
+  public static String pm_text;
+  public static String pm_enteredText;
+  public static String pm_enteredTextCopy = ""; // must be initialized
+  public static String lastpm_username = null;
+
   public static int tileSize;
   public static long menu_timer;
   public static String lastAction;
@@ -707,6 +712,13 @@ public class Client {
     return "(" + worldX + "," + worldY + ")";
   }
 
+  public static void setPmUserHash(long hash) {
+    try {
+      Reflection.pmUserHash.set(Client.instance, hash);
+    } catch (Exception e) {
+    }
+  }
+
   public static int check_draw_string(String inputString, int position, int n, boolean isPos) {
     int ret = !isPos ? n : 0;
     if (inputString.charAt(position) == '~'
@@ -738,6 +750,8 @@ public class Client {
     // since message is (optionally username) + message
     String message = inMessage;
     int type = CHAT_NONE;
+    String PATTERN_PRIV_OUT = "You tell (.+?): (.*)";
+    String PATTERN_PRIV_IN = "(.+?): tells you (.*)";
 
     if (messageType == 2 || messageType == 4 || messageType == 6) {
       for (;
@@ -803,9 +817,11 @@ public class Client {
       // should extract sender/receiver here
       if (message.matches("^(?:@pri@|)You tell.*$")) {
         type = CHAT_PRIVATE_OUTGOING;
+        username = message.replaceAll(PATTERN_PRIV_OUT, "$1");
         NotificationsHandler.notify(NotifType.PM, "PM sent", message);
       } else if (message.matches("^(?:@pri@|).*tells you.*$")) {
         type = CHAT_PRIVATE;
+        username = message.replaceAll(PATTERN_PRIV_IN, "$1");
         NotificationsHandler.notify(NotifType.PM, "PM received", message);
       }
     } else if (messageType == MESSAGE_INVENTORY) {
@@ -814,6 +830,10 @@ public class Client {
       type = CHAT_QUEST;
     } else if (messageType == MESSAGE_CHAT) {
       type = CHAT_CHAT;
+    }
+
+    if (type == Client.CHAT_PRIVATE || type == Client.CHAT_PRIVATE_OUTGOING) {
+      if (username != null) lastpm_username = username;
     }
 
     // Don't output private messages if option is turned on and replaying

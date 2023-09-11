@@ -57,6 +57,9 @@ public class Reflection {
   private static final String DRAWSTRINGCENTER =
       "public void jagex.client.i.mg(java.lang.String,int,int,int,int)";
 
+  private static final String USERNAMETOHASH = "public static long jagex.o.rm(java.lang.String)";
+  private static final String HASHTOUSERNAME = "public static java.lang.String jagex.o.tm(long)";
+
   public static Method mouseMove = null;
   public static Method mouseDrag = null;
   public static Method mouseUp = null;
@@ -80,6 +83,7 @@ public class Reflection {
   public static Field friendCount = null;
   public static Field friendHash = null;
   public static Field friendOnline = null;
+  public static Field pmUserHash = null;
 
   public static Method displayMessage = null;
   public static Method setResponseMessage = null;
@@ -89,6 +93,9 @@ public class Reflection {
   public static Method drawBox = null;
   public static Method drawBoxBorder = null;
   public static Method drawStringCenter = null;
+
+  public static Method userNameToHash = null;
+  public static Method hashToUserName = null;
 
   public static void Load() {
     try {
@@ -125,6 +132,7 @@ public class Reflection {
 
       // Client
       c = classLoader.loadClass("mudclient");
+      pmUserHash = c.getDeclaredField("kcb");
       methods = c.getDeclaredMethods();
       for (Method method : methods) {
         if (method.toGenericString().equals(DISPLAYMESSAGE)) {
@@ -133,6 +141,19 @@ public class Reflection {
         } else if (method.toGenericString().equals(SETRESPONSEMESSAGE)) {
           setResponseMessage = method;
           Logger.Info("Found setResponseMessage");
+        }
+      }
+
+      // Utility
+      c = classLoader.loadClass("jagex.o");
+      methods = c.getDeclaredMethods();
+      for (Method method : methods) {
+        if (method.toGenericString().equals(USERNAMETOHASH)) {
+          userNameToHash = method;
+          Logger.Info("Found userNameToHash");
+        } else if (method.toGenericString().equals(HASHTOUSERNAME)) {
+          hashToUserName = method;
+          Logger.Info("Found hashToUserName");
         }
       }
 
@@ -217,6 +238,9 @@ public class Reflection {
       if (drawBox != null) drawBox.setAccessible(true);
       if (drawBoxBorder != null) drawBoxBorder.setAccessible(true);
       if (drawStringCenter != null) drawStringCenter.setAccessible(true);
+      if (pmUserHash != null) pmUserHash.setAccessible(true);
+      if (userNameToHash != null) userNameToHash.setAccessible(true);
+      if (hashToUserName != null) hashToUserName.setAccessible(true);
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -188,6 +188,47 @@ public class JClassPatcher {
 
       hookClassVariable(
           methodNode,
+          "jagex/client/e",
+          "vq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "pm_enteredText",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "vq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "pm_enteredText",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "jagex/client/e",
+          "wq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "pm_text",
+          "Ljava/lang/String;",
+          true,
+          true);
+      hookClassVariable(
+          methodNode,
+          "mudclient",
+          "wq",
+          "Ljava/lang/String;",
+          "Game/Client",
+          "pm_text",
+          "Ljava/lang/String;",
+          true,
+          true);
+
+      hookClassVariable(
+          methodNode,
           "mudclient",
           "ty",
           "[I",
@@ -1672,7 +1713,6 @@ public class JClassPatcher {
               foundExaminePos = true;
             }
           }
-          Logger.Info("count " + foundExamineCount);
           if (foundExamineCount != 0) {
             // add on info for objects
             if (foundObj) {
