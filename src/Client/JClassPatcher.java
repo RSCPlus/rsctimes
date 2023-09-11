@@ -1692,6 +1692,31 @@ public class JClassPatcher {
           }
         }
       }
+      if (methodNode.name.equals("tk") && methodNode.desc.equals("()V")) {
+        // bypass npc attack on left option, regardless of level difference if user wants it that
+        // way
+        Iterator<AbstractInsnNode> insnNodeList = methodNode.instructions.iterator();
+
+        while (insnNodeList.hasNext()) {
+          AbstractInsnNode insnNode = insnNodeList.next();
+          AbstractInsnNode nextNode = insnNode.getNext();
+
+          if (nextNode == null) break;
+
+          if (insnNode.getOpcode() == Opcodes.ILOAD
+              && ((VarInsnNode) insnNode).var == 11
+              && nextNode.getOpcode() == Opcodes.IFLT
+              && nextNode.getNext().getOpcode() == Opcodes.ALOAD) {
+            methodNode.instructions.insert(insnNode, new VarInsnNode(Opcodes.ILOAD, 11));
+            methodNode.instructions.insert(insnNode, new VarInsnNode(Opcodes.ISTORE, 11));
+            methodNode.instructions.insert(
+                insnNode,
+                new MethodInsnNode(
+                    Opcodes.INVOKESTATIC, "Game/Client", "attack_menu_hook", "(I)I", false));
+            break;
+          }
+        }
+      }
       // add on info for objects and wall objects
       if (methodNode.name.equals("tk") && methodNode.desc.equals("()V")) {
         int foundExamineCount = 0; // do two times, for scenery and boundary

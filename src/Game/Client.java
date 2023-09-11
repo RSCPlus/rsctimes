@@ -549,6 +549,15 @@ public class Client {
     }
   }
 
+  public static int attack_menu_hook(int cmpVar) {
+    if (Settings.ATTACK_ALWAYS_LEFT_CLICK.get(Settings.currentProfile)
+        && !Settings.SPEEDRUNNER_MODE_ACTIVE.get(Settings.currentProfile)) {
+      return 10;
+    } else {
+      return cmpVar;
+    }
+  }
+
   public static String appendDetailsHook(int id, int dir, int x, int y, int type) {
     int fullX = x + regionX;
     int fullY = y + regionY;
