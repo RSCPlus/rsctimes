@@ -38,7 +38,7 @@ public class XPBar {
   public static final String excludeUsername = "excludemefromxpbartracking";
 
   public static Dimension bounds = new Dimension(110, 16);
-  public static Dimension menuBounds = new Dimension(110, 56);
+  public static Dimension menuBounds = new Dimension(110, 30);
   public static int xp_bar_x;
   // Don't need to set this more than once; we are always positioning the xp_bar to be vertically
   // center aligned with
@@ -183,7 +183,7 @@ public class XPBar {
         showingMenu = true;
       } else {
         if (!showingMenu) {
-          drawInfoBox(g, x, y, current_skill, post99xp);
+          drawInfoBox(g, x, y, current_skill);
         }
       }
       // Don't allow XP bar to disappear while user is still interacting with it.
@@ -292,7 +292,7 @@ public class XPBar {
     pinnedBar = !pinnedBar;
   }
 
-  private static void drawInfoBox(Graphics2D g, int x, int y, int current_skill, boolean post99xp) {
+  private static void drawInfoBox(Graphics2D g, int x, int y, int current_skill) {
     // Draw info box
     x = MouseHandler.x;
     y = MouseHandler.y + 24;
@@ -302,26 +302,20 @@ public class XPBar {
     String textColour = "@whi@";
     String highlightColour = "@gre@";
 
-    int height = 50;
+    int height = 25;
 
-    if (!post99xp) {
-      height += 20;
-    }
     if (hasGoalForSkill(current_skill)) {
-      height += 32;
+      height += 20;
     }
 
     // Draw new rect
     g.fillRect(x - 100, y, 200, height);
 
     Renderer.setAlpha(g, 1.0f);
-    y += 12;
-
-    y += 8;
+    y += 10;
 
     String username = Util.formatString(Client.player_name, 50);
     if (hasGoalForSkill(current_skill)) {
-      y += 12;
       Renderer.drawColoredText(
           g,
           labelColour
@@ -347,7 +341,7 @@ public class XPBar {
   }
 
   /**
-   * Rounds up a double to to the nearest integer and adds commas, periods, etc. according to the
+   * Rounds up a double to the nearest integer and adds commas, periods, etc. according to the
    * local of the user
    *
    * @param number the number to round

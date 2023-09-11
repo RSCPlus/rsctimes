@@ -2192,6 +2192,7 @@ public class Settings {
       props.setProperty("wiki_lookup_on_hbar", Boolean.toString(WIKI_LOOKUP_ON_HBAR.get(preset)));
       props.setProperty(
           "motivational_quotes_button", Boolean.toString(MOTIVATIONAL_QUOTES_BUTTON.get(preset)));
+      props.setProperty("toggle_xp_bar_on_stats_button", Boolean.toString(TOGGLE_XP_BAR_ON_STATS_BUTTON.get(preset)));
       props.setProperty("show_iteminfo", Boolean.toString(SHOW_ITEM_GROUND_OVERLAY.get(preset)));
       props.setProperty("show_playerinfo", Boolean.toString(SHOW_PLAYER_NAME_OVERLAY.get(preset)));
       props.setProperty("show_friendinfo", Boolean.toString(SHOW_FRIEND_NAME_OVERLAY.get(preset)));
