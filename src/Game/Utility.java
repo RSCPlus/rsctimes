@@ -31,4 +31,20 @@ public class Utility {
       throw new IOException(file + " not found!");
     }
   }
+
+  public static long userNameToHash(String userName) {
+    try {
+      return (long) Reflection.userNameToHash.invoke(null, userName);
+    } catch (Exception e) {
+      return 0;
+    }
+  }
+
+  public static String hashToUserName(long userHash) {
+    try {
+      return (String) Reflection.hashToUserName.invoke(null, userHash);
+    } catch (Exception e) {
+      return "-null-";
+    }
+  }
 }

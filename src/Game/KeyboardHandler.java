@@ -148,19 +148,17 @@ public class KeyboardHandler implements KeyListener {
       if (dialogue_option >= 0) e.consume();
     }
 
-    /* TODO: tab to respond to PM
     if (Client.state == Client.STATE_GAME
-            && e.getKeyCode() == KeyEvent.VK_TAB
-            && !Client.isInterfaceOpen()) {
+        && e.getKeyCode() == KeyEvent.VK_TAB
+        && !Client.isInterfaceOpen()) {
       if (!Replay.isPlaying && Client.lastpm_username != null) {
         Client.pm_text = "";
         Client.pm_enteredText = "";
-        Client.pm_username = Client.lastpm_username;
+        Client.setPmUserHash(Utility.userNameToHash(Client.lastpm_username));
         Client.show_friends = 2;
       }
       e.consume();
     }
-     */
 
     // Handle camera keys
     if (!e.isConsumed()) {
