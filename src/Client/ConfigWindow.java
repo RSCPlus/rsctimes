@@ -181,7 +181,6 @@ public class ConfigWindow {
   private JCheckBox generalPanelCommandPatchEdibleRaresCheckbox;
   private JCheckBox generalPanelCommandPatchDiskOfReturningCheckbox;
   private JCheckBox generalPanelBypassAttackCheckbox;
-  private JCheckBox generalPanelKeepScrollbarPosGoodMagicEvilMagicCheckbox;
   private JCheckBox generalPanelSortFriendsCheckbox;
   private JCheckBox generalPanelRoofHidingCheckbox;
   private JCheckBox generalPanelDisableUndergroundLightingCheckbox;
@@ -1098,12 +1097,6 @@ public class ConfigWindow {
     generalPanelInventoryFullAlertCheckbox = addCheckbox("Inventory full alert", generalPanel);
     generalPanelInventoryFullAlertCheckbox.setToolTipText(
         "Displays a large notice when the inventory is full");
-
-    generalPanelKeepScrollbarPosGoodMagicEvilMagicCheckbox =
-        addCheckbox("Keep GoodMagic & EvilMagic scrollbar position", generalPanel);
-    generalPanelKeepScrollbarPosGoodMagicEvilMagicCheckbox.setToolTipText(
-        "Keeps the GoodMagic & EvilMagic scrollbar position when switching between tabs");
-    generalPanelKeepScrollbarPosGoodMagicEvilMagicCheckbox.setEnabled(false);
 
     generalPanelSortFriendsCheckbox = addCheckbox("Friend online first", generalPanel);
     generalPanelSortFriendsCheckbox.setToolTipText(
@@ -3013,8 +3006,6 @@ public class ConfigWindow {
     /*
     Settings.COMMAND_PATCH_QUEST.put(
             Settings.currentProfile, generalPanelCommandPatchQuestCheckbox.isSelected());
-    Settings.KEEP_SCROLLBAR_POS_MAGIC_PRAYER.put(
-            Settings.currentProfile, generalPanelKeepScrollbarPosMagicPrayerCheckbox.isSelected());
             */
     Settings.ATTACK_ALWAYS_LEFT_CLICK.put(
         Settings.currentProfile, generalPanelBypassAttackCheckbox.isSelected());
