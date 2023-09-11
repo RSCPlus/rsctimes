@@ -2127,10 +2127,7 @@ public class Settings {
       props.setProperty("center_xpdrops", Boolean.toString(CENTER_XPDROPS.get(preset)));
       props.setProperty("inventory_full_alert", Boolean.toString(INVENTORY_FULL_ALERT.get(preset)));
       /*props.setProperty("name_patch_type", Integer.toString(NAME_PATCH_TYPE.get(preset)));
-      props.setProperty("command_patch_quest", Boolean.toString(COMMAND_PATCH_QUEST.get(preset)));
-      props.setProperty(
-              "keep_scrollbar_pos_magic_prayer",
-              Boolean.toString(KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(preset)));*/
+      props.setProperty("command_patch_quest", Boolean.toString(COMMAND_PATCH_QUEST.get(preset)));*/
       props.setProperty("bypass_attack", Boolean.toString(ATTACK_ALWAYS_LEFT_CLICK.get(preset)));
       props.setProperty("sort_friends", Boolean.toString(SORT_FRIENDS.get(preset)));
       props.setProperty("hide_roofs", Boolean.toString(HIDE_ROOFS.get(preset)));

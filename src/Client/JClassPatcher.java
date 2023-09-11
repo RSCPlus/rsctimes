@@ -75,6 +75,8 @@ public class JClassPatcher {
     }*/
     else if (node.name.equals("jagex/client/k")) {
       patchApplet(node);
+    } else if (node.name.equals("jagex/client/g")) {
+      patchMenu(node);
     } else if (node.name.equals("r")) {
       patchData(node);
     } else if (node.name.equals("mudclient")) {
@@ -541,6 +543,30 @@ public class JClassPatcher {
 
       hookClassVariable(
           methodNode, "mudclient", "tt", "I", "Game/Client", "tileSize", "I", true, false);
+    }
+  }
+
+  private void patchMenu(ClassNode node) {
+    Logger.Info("Patching menu (" + node.name + ".class)");
+
+    Iterator<MethodNode> methodNodeList = node.methods.iterator();
+    while (methodNodeList.hasNext()) {
+      MethodNode methodNode = methodNodeList.next();
+
+      // Menu swap hook
+      if (methodNode.name.equals("xc") && methodNode.desc.equals("(I)V")) {
+        AbstractInsnNode first = methodNode.instructions.getFirst();
+
+        LabelNode label = new LabelNode();
+        methodNode.instructions.insertBefore(first, new VarInsnNode(Opcodes.ALOAD, 0));
+        methodNode.instructions.insertBefore(
+            first,
+            new MethodInsnNode(
+                Opcodes.INVOKESTATIC, "Game/Menu", "switchList", "(Ljava/lang/Object;)Z"));
+        methodNode.instructions.insertBefore(first, new JumpInsnNode(Opcodes.IFGT, label));
+        methodNode.instructions.insertBefore(first, new InsnNode(Opcodes.RETURN));
+        methodNode.instructions.insertBefore(first, label);
+      }
     }
   }
 

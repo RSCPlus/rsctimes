@@ -18,6 +18,7 @@
  */
 package Game;
 
+
 /** Handles adjusting the position and behavior of the in-game menu */
 public class Menu {
 
@@ -35,6 +36,8 @@ public class Menu {
 
   /** Keeps track of the last spell book used. 0 for the Magic tab, 1 for the Prayer tab. */
   private static int spell_swap_idx = 0;
+
+  public static int friends_swap_idx = 0;
 
   private static int[] spell_swap_scroll = {0, 0};
 
@@ -76,26 +79,12 @@ public class Menu {
    * @return if the menu is not the spell menu
    */
   public static boolean switchList(Object menu) {
-    /*if (menu == spell_menu) {
-      try {
-        int[] scroll = (int[]) Reflection.menuScroll.get(spell_menu);
-
-        if (Settings.KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(Settings.currentProfile)
-            && !Settings.SPEEDRUNNER_MODE_ACTIVE.get(Settings.currentProfile)) {
-          // Swap scroll values
-          spell_swap_scroll[spell_swap_idx] = scroll[spell_handle];
-          spell_swap_idx ^= 1;
-          scroll[spell_handle] = spell_swap_scroll[spell_swap_idx];
-        } else {
-          scroll[spell_handle] = 0;
-        }
-
-        Reflection.menuScroll.set(spell_menu, scroll);
-
-        return false;
-      } catch (Exception e) {
-      }
-    }*/
+    if (menu == spell_menu) {
+      // Keep track of current view regardless of scrollbar position setting
+      spell_swap_idx ^= 1;
+    } else if (menu == friend_menu) {
+      friends_swap_idx ^= 1;
+    }
 
     return true;
   }
