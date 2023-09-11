@@ -203,7 +203,7 @@ public class Reflection {
       c = classLoader.loadClass("jagex.client.g");
       menuX = c.getDeclaredField("ze");
       menuY = c.getDeclaredField("af");
-      // menuScroll = c.getDeclaredField("j"); //TODO:fix
+      menuScroll = c.getDeclaredField("ue");
       menuWidth = c.getDeclaredField("cf");
       // this menu height for chats I believe
       menuHeight = c.getDeclaredField("df");
