@@ -292,10 +292,11 @@ public class Launcher extends JFrame implements Runnable {
       }
     }
 
+    setStatus("Creating JConfig...");
     JConfig config = Game.getInstance().getJConfig();
-    config.create(1);
+    config.create(Settings.WORLD.get(Settings.currentProfile));
 
-    m_classLoader = new JClassLoader();
+    m_classLoader = new JClassLoader(Thread.currentThread().getContextClassLoader());
     if (!m_classLoader.fetch("/assets/mudclient38-recreated.jar")) {
       error("Unable to fetch Jar");
     }
@@ -429,11 +430,6 @@ public class Launcher extends JFrame implements Runnable {
             }
 
             m_progressBar.setValue(value * 100 / total);
-            try {
-              Thread.sleep(100);
-            } catch (Exception e) {
-              System.out.println("AAAAAAAA interupt");
-            }
           }
         });
   }
