@@ -1233,6 +1233,10 @@ public class ConfigWindow {
 
     addSettingsHeader(generalPanel, "Menu/Item patching");
 
+    generalPanelBypassAttackCheckbox = addCheckbox("Always left click to attack", generalPanel);
+    generalPanelBypassAttackCheckbox.setToolTipText(
+        "Left click attack monsters regardless of level difference");
+
     JPanel generalPanelNamePatchModePanel = new JPanel();
     generalPanelNamePatchModePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
     generalPanelNamePatchModePanel.setMaximumSize(osScaleMul(new Dimension(300, 85)));
@@ -1917,6 +1921,12 @@ public class ConfigWindow {
         "toggle_roof_hiding",
         KeyModifier.CTRL,
         KeyEvent.VK_R);
+    addKeybindSet(
+        keybindContainerPanel,
+        "Toggle bypass attack",
+        "toggle_bypass_attack",
+        KeyModifier.CTRL,
+        KeyEvent.VK_A);
     /*
     addKeybindSet(
             keybindContainerPanel,
@@ -2742,6 +2752,8 @@ public class ConfigWindow {
     generalPanelKeepScrollbarPosMagicPrayerCheckbox.setSelected(
             Settings.KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(Settings.currentProfile));
             */
+    generalPanelBypassAttackCheckbox.setSelected(
+        Settings.ATTACK_ALWAYS_LEFT_CLICK.get(Settings.currentProfile));
     generalPanelSortFriendsCheckbox.setSelected(Settings.SORT_FRIENDS.get(Settings.currentProfile));
     generalPanelRoofHidingCheckbox.setSelected(Settings.HIDE_ROOFS.get(Settings.currentProfile));
     generalPanelDisableUndergroundLightingCheckbox.setSelected(
@@ -3006,6 +3018,8 @@ public class ConfigWindow {
     Settings.KEEP_SCROLLBAR_POS_MAGIC_PRAYER.put(
             Settings.currentProfile, generalPanelKeepScrollbarPosMagicPrayerCheckbox.isSelected());
             */
+    Settings.ATTACK_ALWAYS_LEFT_CLICK.put(
+        Settings.currentProfile, generalPanelBypassAttackCheckbox.isSelected());
     Settings.SORT_FRIENDS.put(
         Settings.currentProfile, generalPanelSortFriendsCheckbox.isSelected());
     Settings.HIDE_ROOFS.put(Settings.currentProfile, generalPanelRoofHidingCheckbox.isSelected());

@@ -74,6 +74,7 @@ public class Settings {
   public static HashMap<String, Boolean> COMBAT_MENU_SHOWN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> COMBAT_MENU_HIDDEN = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> CENTER_XPDROPS = new HashMap<String, Boolean>();
+  public static HashMap<String, Boolean> ATTACK_ALWAYS_LEFT_CLICK = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> SORT_FRIENDS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> HIDE_ROOFS = new HashMap<String, Boolean>();
   public static HashMap<String, Boolean> DISABLE_UNDERGROUND_LIGHTING =
@@ -406,6 +407,15 @@ public class Settings {
     CENTER_XPDROPS.put("all", true);
     CENTER_XPDROPS.put(
         "custom", getPropBoolean(props, "center_xpdrops", CENTER_XPDROPS.get("default")));
+
+    ATTACK_ALWAYS_LEFT_CLICK.put("vanilla", false);
+    ATTACK_ALWAYS_LEFT_CLICK.put("vanilla_resizable", false);
+    ATTACK_ALWAYS_LEFT_CLICK.put("lite", false);
+    ATTACK_ALWAYS_LEFT_CLICK.put("default", false);
+    ATTACK_ALWAYS_LEFT_CLICK.put("heavy", true);
+    ATTACK_ALWAYS_LEFT_CLICK.put("all", true);
+    ATTACK_ALWAYS_LEFT_CLICK.put(
+        "custom", getPropBoolean(props, "bypass_attack", ATTACK_ALWAYS_LEFT_CLICK.get("default")));
 
     SORT_FRIENDS.put("vanilla", false);
     SORT_FRIENDS.put("vanilla_resizable", false);
@@ -1337,6 +1347,9 @@ public class Settings {
       case "toggle_inven_count_overlay":
         Settings.toggleInvCount();
         return true;
+      case "toggle_bypass_attack":
+        Settings.toggleAttackAlwaysLeftClick();
+        return true;
       case "toggle_ipdns":
         // TODO: Settings.toggleShowLoginIpAddress();
         return true;
@@ -1595,7 +1608,7 @@ public class Settings {
     }
   }
 
-  /*public static void toggleAttackAlwaysLeftClick() {
+  public static void toggleAttackAlwaysLeftClick() {
     ATTACK_ALWAYS_LEFT_CLICK.put(
         currentProfile, new Boolean(!ATTACK_ALWAYS_LEFT_CLICK.get(currentProfile)));
 
@@ -1608,7 +1621,7 @@ public class Settings {
     }
 
     save();
-  }*/
+  }
 
   /*public static void toggleNumberedDialogue() {
     NUMBERED_DIALOGUE_OPTIONS.put(
@@ -2127,6 +2140,7 @@ public class Settings {
       props.setProperty(
               "keep_scrollbar_pos_magic_prayer",
               Boolean.toString(KEEP_SCROLLBAR_POS_MAGIC_PRAYER.get(preset)));*/
+      props.setProperty("bypass_attack", Boolean.toString(ATTACK_ALWAYS_LEFT_CLICK.get(preset)));
       props.setProperty("sort_friends", Boolean.toString(SORT_FRIENDS.get(preset)));
       props.setProperty("hide_roofs", Boolean.toString(HIDE_ROOFS.get(preset)));
       props.setProperty(
