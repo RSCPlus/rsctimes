@@ -947,10 +947,8 @@ public class Renderer {
               && bufferedMouseClick.getY() >= mapButtonBounds.y
               && bufferedMouseClick.getY() <= mapButtonBounds.y + mapButtonBounds.height
               && bufferedMouseClick.isMouseClicked()) {
-            if (bufferedMouseClick.isRightClick()) {
+            if (bufferedMouseClick.isMouseClicked() || bufferedMouseClick.isRightClick()) {
               Settings.toggleGoalBar();
-            } else {
-              Settings.toggleGoalBarPin();
             }
           }
         }

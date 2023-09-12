@@ -262,7 +262,6 @@ public class Settings {
           }
         }
       }
-      XPBar.pinnedBar = getPropBoolean(props, "pinXPBar", false);
       XPBar.pinnedSkill = getPropInt(props, "pinnedSkill", -1);
 
       Logger.Info("Loaded settings");
@@ -887,7 +886,7 @@ public class Settings {
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("vanilla", false);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("vanilla_resizable", false);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("lite", false);
-    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("default", false);
+    TOGGLE_XP_BAR_ON_STATS_BUTTON.put("default", true);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("heavy", true);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put("all", true);
     TOGGLE_XP_BAR_ON_STATS_BUTTON.put(
@@ -1702,14 +1701,6 @@ public class Settings {
     save();
   }*/
 
-  public static void toggleXPBarPin() {
-    SHOW_XP_BAR.put(currentProfile, true);
-    if (!XPBar.pinnedBar) Client.displayMessage("@cya@XP Bar is now pinned", Client.CHAT_NONE);
-    else Client.displayMessage("@cya@XP Bar is now unpinned", Client.CHAT_NONE);
-    XPBar.pinnedBar = !XPBar.pinnedBar;
-    save();
-  }
-
   /*public static void toggleShowSeekBar() {
     SHOW_SEEK_BAR.put(currentProfile, !SHOW_SEEK_BAR.get(currentProfile));
     if (SHOW_SEEK_BAR.get(currentProfile))
@@ -1872,17 +1863,17 @@ public class Settings {
 
   public static void toggleGoalBar() {
     SHOW_XP_BAR.put(currentProfile, !SHOW_XP_BAR.get(currentProfile));
-    if (SHOW_XP_BAR.get(currentProfile))
-      Client.displayMessage("@cya@Goal Bar is now shown", Client.CHAT_NONE);
-    else Client.displayMessage("@cya@Goal Bar is now hidden", Client.CHAT_NONE);
-    save();
-  }
-
-  public static void toggleGoalBarPin() {
-    SHOW_XP_BAR.put(currentProfile, true);
-    if (!XPBar.pinnedBar) Client.displayMessage("@cya@Goal Bar is now pinned", Client.CHAT_NONE);
-    else Client.displayMessage("@cya@Goal Bar is now unpinned", Client.CHAT_NONE);
-    XPBar.pinnedBar = !XPBar.pinnedBar;
+    if (SHOW_XP_BAR.get(currentProfile)) {
+      if (XPBar.pinnedSkill == -1) {
+        Client.displayMessage("@cya@Goal Bar is now enabled", Client.CHAT_NONE);
+        Client.displayMessage(
+            "@cya@Click on a skill in the stats menu to track it", Client.CHAT_NONE);
+      } else {
+        Client.displayMessage("@cya@Goal Bar is now shown", Client.CHAT_NONE);
+      }
+    } else {
+      Client.displayMessage("@cya@Goal Bar is now hidden", Client.CHAT_NONE);
+    }
     save();
   }
 
@@ -2192,7 +2183,9 @@ public class Settings {
       props.setProperty("wiki_lookup_on_hbar", Boolean.toString(WIKI_LOOKUP_ON_HBAR.get(preset)));
       props.setProperty(
           "motivational_quotes_button", Boolean.toString(MOTIVATIONAL_QUOTES_BUTTON.get(preset)));
-      props.setProperty("toggle_xp_bar_on_stats_button", Boolean.toString(TOGGLE_XP_BAR_ON_STATS_BUTTON.get(preset)));
+      props.setProperty(
+          "toggle_xp_bar_on_stats_button",
+          Boolean.toString(TOGGLE_XP_BAR_ON_STATS_BUTTON.get(preset)));
       props.setProperty("show_iteminfo", Boolean.toString(SHOW_ITEM_GROUND_OVERLAY.get(preset)));
       props.setProperty("show_playerinfo", Boolean.toString(SHOW_PLAYER_NAME_OVERLAY.get(preset)));
       props.setProperty("show_friendinfo", Boolean.toString(SHOW_FRIEND_NAME_OVERLAY.get(preset)));
@@ -2317,7 +2310,6 @@ public class Settings {
       }
       props.setProperty("numberOfGoalers", String.format("%d", usernameID));
 
-      props.setProperty("pinXPBar", Boolean.toString(XPBar.pinnedBar));
       props.setProperty("pinnedSkill", String.format("%d", XPBar.pinnedSkill));
 
       // World Map

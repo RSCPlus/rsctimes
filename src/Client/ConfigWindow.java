@@ -1466,11 +1466,9 @@ public class ConfigWindow {
         "Click the button on the bottom bar, then click on anything else, and it will look it up on the RSC wiki.");
 
     overlayPanelToggleXPBarOnStatsButtonCheckbox =
-        addCheckbox(
-            "Add left and right click options to the Stats button to control the Goal bar",
-            overlayPanel);
+        addCheckbox("Display the Goal bar when clicking on the Stats button", overlayPanel);
     overlayPanelToggleXPBarOnStatsButtonCheckbox.setToolTipText(
-        "Left click pins/unpins the Goal Bar, Right click enables/disables the Goal Bar");
+        "Clicking shows/hides the Goal Bar");
 
     overlayPanelToggleMotivationalQuotesCheckbox =
         addCheckbox(
