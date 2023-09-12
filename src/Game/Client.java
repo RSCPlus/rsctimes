@@ -131,7 +131,7 @@ public class Client {
   public static int show_changepk;
   public static boolean show_visitad;
 
-  public static XPDropHandler xpdrop_handler = new XPDropHandler();
+  //  public static XPDropHandler xpdrop_handler = new XPDropHandler();
   public static XPBar xpbar = new XPBar();
 
   public static String xpUsername = "";

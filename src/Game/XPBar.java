@@ -18,19 +18,18 @@
  */
 package Game;
 
+import Client.Launcher;
 import Client.Logger;
 import Client.Settings;
 import Client.Util;
 import Game.MouseHandler.BufferedMouseClick;
 import java.awt.*;
-import java.text.NumberFormat;
 
 /** Handles rendering the XP bar and hover information */
 public class XPBar {
   public static boolean showingMenu = false;
   public static boolean hoveringOverMenu = false;
   private static float alpha;
-  public static boolean pinnedBar = false;
   public static int pinnedSkill = -1;
   public static int drawGoalInputState = 0;
 
@@ -45,24 +44,10 @@ public class XPBar {
   // the Settings wrench.
   public static final int xp_bar_y = 20 + Renderer.GAME_RENDER_OFFSET - (bounds.height / 2);
 
-  public static final int TIMER_LENGTH = 5000;
-  public static final long TIMER_FADEOUT = 2000;
-
   public int current_skill;
-
-  /** Keeps track of whether the XP bar from the last XP drop is still showing. */
-  private boolean last_timer_finished = false;
-
-  private long m_timer;
 
   public XPBar() {
     current_skill = -1;
-  }
-
-  void setSkill(int skill) {
-    current_skill = skill;
-    last_timer_finished = m_timer - Renderer.time <= 0;
-    m_timer = Renderer.time + TIMER_LENGTH;
   }
 
   /**
@@ -72,29 +57,11 @@ public class XPBar {
    */
   void draw(Graphics2D g, BufferedMouseClick bufferedMouseClick) {
 
-    // current_skill from skill not known
-    /*if (Renderer.time > m_timer && !pinnedBar) {
-      current_skill = -1;
-      return;
-    }*/
     if (pinnedSkill >= 0) {
       current_skill = pinnedSkill;
     }
 
     if (current_skill == -1) return;
-
-    long delta = m_timer - Renderer.time;
-    alpha = 1.0f;
-    if (!pinnedBar) {
-      // Don't fade in if XP bar is already displayed
-      if (delta >= TIMER_LENGTH - 250 && last_timer_finished) {
-        // Fade in over 1/4th second
-        alpha = (float) (TIMER_LENGTH - delta) / 250.0f;
-      } else if (delta < TIMER_FADEOUT) {
-        // Less than TIMER_FADEOUT milliseconds left to display the XP bar
-        alpha = (float) delta / TIMER_FADEOUT;
-      }
-    }
 
     // Draw bar
 
@@ -186,20 +153,8 @@ public class XPBar {
           drawInfoBox(g, x, y, current_skill);
         }
       }
-      // Don't allow XP bar to disappear while user is still interacting with it.
-      if (delta < TIMER_FADEOUT + 100) {
-        m_timer += TIMER_FADEOUT + 1500;
-        last_timer_finished = false;
-      }
-    } else {
-      if (!hoveringOverMenu) {
-        showingMenu = false;
-      } else {
-        if (delta < TIMER_FADEOUT + 100) {
-          m_timer += TIMER_FADEOUT + 1500;
-          last_timer_finished = false;
-        }
-      }
+    } else if (!hoveringOverMenu) {
+      showingMenu = false;
     }
 
     if (showingMenu) drawMenu(g, x, y, bufferedMouseClick);
@@ -248,21 +203,16 @@ public class XPBar {
     if (MouseHandler.y > y + offset && MouseHandler.y < y + textHeight) {
       textColour = Renderer.color_yellow;
       if (bufferedMouseClick.isMouseClicked()) {
-        togglePinnedBar();
+        Settings.toggleXPBar();
+        if (Launcher.getConfigWindow().isShown()) {
+          Launcher.getConfigWindow().synchronizeGuiValues();
+        }
       }
     } else {
       textColour = Renderer.color_text;
     }
     y += 12;
-    Renderer.drawShadowText(g, pinnedBar ? "Unpin bar" : "Pin bar", x, y, textColour, false);
-  }
-
-  private void pinSkill() {
-    if (pinnedSkill > 0) {
-      pinnedSkill = -1;
-    } else {
-      pinnedSkill = current_skill;
-    }
+    Renderer.drawShadowText(g, "Hide bar", x, y, textColour, false);
   }
 
   private void setLvlGoal() {
@@ -286,10 +236,6 @@ public class XPBar {
       Logger.Error("username: " + username + " current_skill: " + current_skill);
     }
     Settings.save();
-  }
-
-  private void togglePinnedBar() {
-    pinnedBar = !pinnedBar;
   }
 
   private static void drawInfoBox(Graphics2D g, int x, int y, int current_skill) {
@@ -338,17 +284,6 @@ public class XPBar {
     } catch (Exception e) {
       return false;
     }
-  }
-
-  /**
-   * Rounds up a double to the nearest integer and adds commas, periods, etc. according to the
-   * local of the user
-   *
-   * @param number the number to round
-   * @return a formatted version of the double as a String
-   */
-  public static String formatXP(double number) {
-    return NumberFormat.getIntegerInstance().format(Math.ceil(number));
   }
 
   /*
