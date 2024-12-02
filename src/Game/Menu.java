@@ -18,7 +18,6 @@
  */
 package Game;
 
-
 /** Handles adjusting the position and behavior of the in-game menu */
 public class Menu {
 

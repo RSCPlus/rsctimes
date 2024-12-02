@@ -181,7 +181,10 @@ public class Settings {
   public static int WORLDS_TO_DISPLAY = 5;
   public static boolean noWorldsConfigured = true;
 
-  //// nogui
+  //// joystick
+  public static HashMap<String, Boolean> JOYSTICK_ENABLED = new HashMap<String, Boolean>();
+
+  //// no gui
   public static HashMap<String, Integer> COMBAT_STYLE = new HashMap<String, Integer>();
   public static HashMap<String, Integer> WORLD = new HashMap<String, Integer>();
   public static HashMap<String, Boolean> FIRST_TIME = new HashMap<String, Boolean>();
@@ -1159,6 +1162,16 @@ public class Settings {
     //// world list
     initWorlds();
 
+    //// joystick
+    JOYSTICK_ENABLED.put("vanilla", false);
+    JOYSTICK_ENABLED.put("vanilla_resizable", false);
+    JOYSTICK_ENABLED.put("lite", false);
+    JOYSTICK_ENABLED.put("default", false);
+    JOYSTICK_ENABLED.put("heavy", false);
+    JOYSTICK_ENABLED.put("all", true);
+    JOYSTICK_ENABLED.put(
+        "custom", getPropBoolean(props, "joystick_enabled", JOYSTICK_ENABLED.get("default")));
+
     COMBAT_STYLE.put("vanilla", Client.COMBAT_AGGRESSIVE);
     COMBAT_STYLE.put("vanilla_resizable", Client.COMBAT_AGGRESSIVE);
     COMBAT_STYLE.put("lite", Client.COMBAT_AGGRESSIVE);
@@ -1280,6 +1293,10 @@ public class Settings {
     Util.makeDirectory(Dir.REPLAY);
     Dir.WORLDS = Dir.JAR + "/worlds";
     Util.makeDirectory(Dir.WORLDS);
+    Dir.LIB = Dir.JAR + "/lib";
+    Util.makeDirectory(Dir.LIB);
+    Dir.JINPUTNATIVELIB = Dir.LIB + "/jinput-natives";
+    Util.makeDirectory(Dir.JINPUTNATIVELIB);
   }
 
   /**
@@ -2262,6 +2279,9 @@ public class Settings {
       //// world urls
       saveWorlds();
 
+      //// joystick
+      props.setProperty("joystick_enabled", Boolean.toString(JOYSTICK_ENABLED.get(preset)));
+
       //// presets
       props.setProperty("current_profile", currentProfile);
 
@@ -2468,6 +2488,8 @@ public class Settings {
     public static String SCREENSHOT;
     public static String REPLAY;
     public static String WORLDS;
+    public static String LIB;
+    public static String JINPUTNATIVELIB;
   }
 
   public static void updateInjectedVariables() {

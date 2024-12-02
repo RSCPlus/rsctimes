@@ -34,6 +34,8 @@ import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -117,6 +119,9 @@ public class Launcher extends JFrame implements Runnable {
         // No-op
       }
     }
+
+    // Extract libraries that only work outside the jar
+    extractJInputNatives();
 
     // Set size
     getContentPane().setPreferredSize(osScaleMul(new Dimension(280, 32)));
@@ -585,6 +590,42 @@ public class Launcher extends JFrame implements Runnable {
 
   public static void finishedLoading() {
     Game.getInstance().getJConfig().changeWorld(1);
+  }
+
+  public static void extractJInputNatives() {
+    extractResource(
+        "/lib/jinput-natives/jinput-dx8_64.dll",
+        new File(Settings.Dir.JINPUTNATIVELIB + "/jinput-dx8_64.dll"));
+    extractResource(
+        "/lib/jinput-natives/jinput-raw_64.dll",
+        new File(Settings.Dir.JINPUTNATIVELIB + "/jinput-raw_64.dll"));
+    extractResource(
+        "/lib/jinput-natives/jinput-wintab.dll",
+        new File(Settings.Dir.JINPUTNATIVELIB + "/jinput-wintab.dll"));
+    extractResource(
+        "/lib/jinput-natives/libjinput-linux64.so",
+        new File(Settings.Dir.JINPUTNATIVELIB + "/libjinput-linux64.so"));
+    extractResource(
+        "/lib/jinput-natives/libjinput-osx.jnilib",
+        new File(Settings.Dir.JINPUTNATIVELIB + "/libjinput-osx.jnilib"));
+  }
+
+  public static void extractResource(String pathInJar, File destinationPath) {
+    try {
+      BufferedInputStream source = new BufferedInputStream(Launcher.getResourceAsStream(pathInJar));
+      BufferedOutputStream target = new BufferedOutputStream(new FileOutputStream(destinationPath));
+      byte[] buf = new byte[8192];
+      int length;
+      while ((length = source.read(buf)) > 0) {
+        target.write(buf, 0, length);
+      }
+      source.close();
+      target.close();
+      Logger.Info("Successfully extracted " + pathInJar);
+    } catch (Exception e) {
+      Logger.Error("Could not extract " + pathInJar);
+      e.printStackTrace();
+    }
   }
 
   /** @return the window */
