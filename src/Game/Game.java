@@ -101,6 +101,7 @@ public class Game extends JFrame implements AppletStub, ComponentListener, Windo
 
     Reflection.Load();
     Renderer.init();
+    JoystickHandler.init();
   }
 
   public JConfig getJConfig() {

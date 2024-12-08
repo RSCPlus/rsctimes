@@ -265,6 +265,10 @@ public class Client {
     Camera.setLookatTile(getPlayerWaypointX(), getPlayerWaypointY());
     Camera.update(delta_time);
 
+    if (Settings.JOYSTICK_ENABLED.get(Settings.currentProfile)) {
+      JoystickHandler.poll();
+    }
+
     // Replay.update();
 
     /*if (Settings.RECORD_AUTOMATICALLY_FIRST_TIME.get(Settings.currentProfile)

@@ -1030,6 +1030,8 @@ public class Renderer {
         y += 16;
         drawShadowText(g2, "Camera Auto Speed: " + Camera.auto_speed, x, y, color_text, false);
         y += 16;
+        drawShadowText(g2, "Camera Pitch: " + Camera.pitch_internal, x, y, color_text, false);
+        y += 16;
         drawShadowText(g2, "Camera Rotation Y: " + Camera.rotation_y, x, y, color_text, false);
         y += 16;
         drawShadowText(g2, "Camera Lookat X: " + Camera.lookat_x, x, y, color_text, false);

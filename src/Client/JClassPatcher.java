@@ -140,6 +140,17 @@ public class JClassPatcher {
       hookClassVariable(
           methodNode, "mudclient", "bz", "I", "Game/Client", "login_screen", "I", true, true);
 
+      hookClassVariable(
+          methodNode,
+          "jagex/client/j",
+          "dn",
+          "I",
+          "Game/Camera",
+          "pitch_internal",
+          "I",
+          true,
+          true);
+
       hookConditionalClassVariable(
           methodNode,
           "jagex/client/j",
@@ -2260,6 +2271,35 @@ public class JClassPatcher {
             times++;
           }
         }
+      }
+
+      // Set camera routine
+      if (methodNode.name.equals("uh") && methodNode.desc.equals("(IIIIIII)V")) {
+        Logger.Info("patching setCamera()");
+
+        // offset_height hook
+        AbstractInsnNode start = methodNode.instructions.getFirst();
+        while (start != null) {
+          if (start.getOpcode() == Opcodes.PUTFIELD
+              && start.getPrevious().getOpcode() == Opcodes.ISUB) {
+            FieldInsnNode insnNode = (FieldInsnNode) start;
+            if (insnNode.name.equals("bn")) {
+              methodNode.instructions.insertBefore(
+                  start, new FieldInsnNode(Opcodes.GETSTATIC, "Game/Camera", "offset_height", "I"));
+              methodNode.instructions.insertBefore(start, new InsnNode(Opcodes.ISUB));
+
+              break;
+            }
+          }
+
+          start = start.getNext();
+        }
+
+        // post-hook
+        AbstractInsnNode findNode = methodNode.instructions.getLast();
+        methodNode.instructions.insertBefore(
+            findNode,
+            new MethodInsnNode(Opcodes.INVOKESTATIC, "Game/Camera", "postSetCamera", "()V", false));
       }
     }
   }
